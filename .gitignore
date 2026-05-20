@@ -1,0 +1,22 @@
+# Android Studio / IntelliJ
+*.iml
+.gradle
+.idea/
+local.properties
+*.keystore
+*.jks
+
+# Build outputs
+build/
+app/build/
+
+# Gradle wrapper cache
+.gradle/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Sensitive
+local.properties
+google-services.json
