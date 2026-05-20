@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MediTrack</string>
+    <string name="add_medication">הוסף תרופה</string>
+    <string name="edit_medication">ערוך תרופה</string>
+    <string name="medication_name">שם התרופה</string>
+    <string name="medication_dosage">מינון</string>
+    <string name="medication_notes">הערות</string>
+    <string name="save">שמור</string>
+    <string name="cancel">ביטול</string>
+    <string name="delete">מחק</string>
+    <string name="settings">הגדרות</string>
+    <string name="history">היסטוריה</string>
+    <string name="about">אודות</string>
+    <string name="exit">יציאה</string>
+    <string name="no_medications">אין תרופות. לחץ + להוסיף.</string>
+    <string name="taken">נלקח ✓</string>
+    <string name="snooze">דחה 10 דק\'</string>
+</resources>
