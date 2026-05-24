@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.meditrack.app">
+    package="com.samiraa_raghadm_sawsana.meditrack">
+
     <!-- הרשאות נדרשות -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
@@ -8,6 +9,7 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -20,26 +22,24 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MediTrack">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <!-- SplashActivity היא הActivity הראשית -->
+        <!-- SplashActivity - נקודת הכניסה לאפליקציה -->
         <activity
             android:name=".activities.SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.MediTrack.Splash">
+            android:theme="@style/Theme.MediTrack">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- MainActivity - לא נקודת הכניסה -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+
+        <!-- שאר המסכים -->
         <activity
             android:name=".activities.MedicationListActivity"
             android:exported="false" />
@@ -52,14 +52,33 @@
             android:exported="false" />
         <activity
             android:name=".activities.HistoryActivity"
-            android:exported="false" /> <!-- BroadcastReceiver לאזעקות והתנעה -->
+            android:exported="false" />
+
+        <!-- AlarmReceiver - מקבל התראות מ-AlarmManager -->
         <receiver
             android:name=".receivers.AlarmReceiver"
+            android:exported="false" />
+
+        <!-- BootReceiver - מתזמן מחדש לאחר הפעלת מכשיר -->
+        <receiver
+            android:name=".receivers.BootReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <!-- FileProvider - לשמירת תמונות מהמצלמה -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.samiraa_raghadm_sawsana.meditrack.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
     </application>
 
 </manifest>
