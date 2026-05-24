@@ -1,19 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    קובץ המחרוזות של האפליקציה
+    Add these entries to your existing res/values/strings.xml
+    (Do NOT replace the whole file — just add the missing entries)
+-->
 <resources>
     <string name="app_name">MediTrack</string>
+    <string name="app_logo_description">לוגו MediTrack</string>
+
+    <!-- Splash Screen -->
+    <string name="splash_subtitle">ניהול תרופות חכם 💊</string>
+    <string name="splash_student_ids">
+        סמירה אבו אל-הווא | 324909803\n
+        רגד מוחיסן | 212541304\n
+        סוסאן אבו שמא | 213588270
+    </string>
+    <string name="splash_submission_date">תאריך הגשה: 28.6.2026</string>
+
+    <!-- Menu Items -->
+    <string name="menu_about">אודות</string>
+    <string name="menu_settings">הגדרות</string>
+    <string name="menu_exit">יציאה</string>
+
+    <!-- About Dialog -->
+    <string name="about_title">אודות MediTrack</string>
+    <string name="exit_confirm_title">יציאה מהאפליקציה</string>
+    <string name="exit_confirm_message">האם לצאת?</string>
+    <string name="btn_yes">כן</string>
+    <string name="btn_no">לא</string>
+
+    <!-- Medication List -->
     <string name="add_medication">הוסף תרופה</string>
-    <string name="edit_medication">ערוך תרופה</string>
-    <string name="medication_name">שם התרופה</string>
-    <string name="medication_dosage">מינון</string>
-    <string name="medication_notes">הערות</string>
-    <string name="save">שמור</string>
-    <string name="cancel">ביטול</string>
-    <string name="delete">מחק</string>
-    <string name="settings">הגדרות</string>
-    <string name="history">היסטוריה</string>
-    <string name="about">אודות</string>
-    <string name="exit">יציאה</string>
-    <string name="no_medications">אין תרופות. לחץ + להוסיף.</string>
-    <string name="taken">נלקח ✓</string>
-    <string name="snooze">דחה 10 דק\'</string>
+    <string name="no_medications">אין תרופות ברשימה</string>
+    <string name="status_taken">נלקח</string>
+    <string name="status_pending">ממתין</string>
+    <string name="status_missed">הוחמץ</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">תזכורות תרופות</string>
+    <string name="notification_channel_desc">התראות לנטילת תרופות</string>
+    <string name="notification_title">תזכורת תרופה</string>
+    <string name="notification_action_taken">נלקח ✓</string>
+    <string name="notification_action_snooze">דחה 10 דק\'</string>
+
+    <!-- Settings -->
+    <string name="settings_title">הגדרות</string>
+    <string name="settings_reminder_minutes">דקות לפני התזכורת</string>
+    <string name="settings_sound_enabled">צליל התראה</string>
+    <string name="settings_vibration_enabled">רטט</string>
+
+    <!-- History -->
+    <string name="history_title">היסטוריית נטילות</string>
+    <string name="history_filter_date">סנן לפי תאריך</string>
+    <string name="history_filter_name">סנן לפי שם תרופה</string>
+    <string name="history_empty">אין רשומות היסטוריה</string>
+
+    <!-- AddEdit -->
+    <string name="add_medication_title">הוסף תרופה חדשה</string>
+    <string name="edit_medication_title">ערוך תרופה</string>
+    <string name="hint_medication_name">שם התרופה *</string>
+    <string name="hint_dosage">מינון</string>
+    <string name="hint_notes">הערות</string>
+    <string name="btn_take_photo">צלם אריזה</string>
+    <string name="btn_pick_contact">בחר איש קשר לחירום</string>
+    <string name="btn_save">שמור</string>
+    <string name="btn_cancel">ביטול</string>
 </resources>
