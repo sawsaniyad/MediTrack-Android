@@ -11,7 +11,7 @@
 | שם | תחום אחריות | Branch |
 |---|---|---|
 | סמירה אבו אל-הווא | מסד נתונים + SplashActivity | `feature/samira-database` |
-| רע'ד מוחיסן | התראות + הגדרות + היסטוריה | `feature/raghad-notifications` |
+| רגד מוחיסן | התראות + הגדרות + היסטוריה | `feature/raghad-notifications` |
 | סוסאן אבו שמא | UI + מצלמה + רשימה ראשית | `feature/sawsan-ui-camera` |
 
 ## דרישות סביבה
