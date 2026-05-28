@@ -42,6 +42,12 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".ui.CameraActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
+        <activity
             android:name=".ui.SettingsActivity"
             android:exported="false"
             android:parentActivityName=".ui.MedicationListActivity" />
@@ -53,6 +59,35 @@
 
         <activity
             android:name=".ui.MainActivity"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receivers.AlarmReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receivers.TakenActionReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receivers.SnoozeActionReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receivers.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".receivers.MissedDoseReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receivers.ExpiryReceiver"
             android:exported="false" />
 
     </application>

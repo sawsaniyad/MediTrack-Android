@@ -1,13 +1,19 @@
 package com.meditrack.app.ui;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -20,6 +26,8 @@ import com.meditrack.app.data.Medication;
 import com.meditrack.app.data.Schedule;
 import com.meditrack.app.db.DatabaseHelper;
 import com.meditrack.app.db.MedicationDao;
+import com.meditrack.app.services.AlarmScheduler;
+import com.meditrack.app.services.NotificationHelper;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +39,7 @@ public class MedicationListActivity extends BaseActivity {
     private View tvEmptyState;
     private MedicationAdapter adapter;
     private MedicationDao dao;
+    private ActivityResultLauncher<String> notificationPermissionLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +47,22 @@ public class MedicationListActivity extends BaseActivity {
         setContentView(R.layout.activity_medication_list);
 
         dao = new MedicationDao(DatabaseHelper.getInstance(this));
+
+        NotificationHelper.createNotificationChannel(this);
+
+        notificationPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(), granted -> scheduleAlarms());
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            } else {
+                scheduleAlarms();
+            }
+        } else {
+            scheduleAlarms();
+        }
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -109,6 +134,10 @@ public class MedicationListActivity extends BaseActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void scheduleAlarms() {
+        AlarmScheduler.scheduleAllAlarms(getApplicationContext(), dao);
     }
 
     private void showAboutDialog() {

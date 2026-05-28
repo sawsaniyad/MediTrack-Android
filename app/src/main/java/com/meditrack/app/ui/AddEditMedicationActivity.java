@@ -1,6 +1,14 @@
 package com.meditrack.app.ui;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,7 +20,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 
 import com.meditrack.app.R;
 import com.meditrack.app.data.AppExecutors;
@@ -20,6 +31,7 @@ import com.meditrack.app.data.Medication;
 import com.meditrack.app.data.Schedule;
 import com.meditrack.app.db.DatabaseHelper;
 import com.meditrack.app.db.MedicationDao;
+import com.meditrack.app.services.AlarmScheduler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +40,7 @@ import java.util.Locale;
 public class AddEditMedicationActivity extends BaseActivity {
 
     public static final String EXTRA_MEDICATION_ID = "MEDICATION_ID";
+    private static final int REQUEST_READ_CONTACTS = 102;
 
     private EditText etMedicationName;
     private EditText etDosage;
@@ -42,6 +55,13 @@ public class AddEditMedicationActivity extends BaseActivity {
     private int medicationId;
     private boolean editMode;
     private String medicationNameForDelete = "";
+    private String capturedImagePath = null;
+    private String emergencyContactName = null;
+    private String emergencyContactPhone = null;
+
+    private ActivityResultLauncher<String> cameraPermissionLauncher;
+    private ActivityResultLauncher<Intent> cameraLauncher;
+    private ActivityResultLauncher<Intent> contactPickerLauncher;
 
     private final CheckBox[] dayCheckboxes = new CheckBox[7];
 
@@ -53,6 +73,8 @@ public class AddEditMedicationActivity extends BaseActivity {
         dao = new MedicationDao(DatabaseHelper.getInstance(this));
         medicationId = getIntent().getIntExtra(EXTRA_MEDICATION_ID, 0);
         editMode = medicationId > 0;
+
+        registerLaunchers();
 
         etMedicationName = findViewById(R.id.etMedicationName);
         etDosage = findViewById(R.id.etDosage);
@@ -73,10 +95,8 @@ public class AddEditMedicationActivity extends BaseActivity {
 
         findViewById(R.id.btnAddTime).setOnClickListener(v -> addTimeRow("08:00"));
         findViewById(R.id.btnSave).setOnClickListener(v -> saveMedication());
-        findViewById(R.id.btnTakePhoto).setOnClickListener(v ->
-                showToast("צילום יתווסף בשלב הבא"));
-        findViewById(R.id.btnPickContact).setOnClickListener(v ->
-                showToast("בחירת איש קשר תתווסף בשלב הבא"));
+        findViewById(R.id.btnTakePhoto).setOnClickListener(v -> requestCameraPermission());
+        findViewById(R.id.btnPickContact).setOnClickListener(v -> pickContact());
 
         btnDelete.setVisibility(editMode ? View.VISIBLE : View.GONE);
         btnDelete.setOnClickListener(v -> confirmDelete());
@@ -91,6 +111,137 @@ public class AddEditMedicationActivity extends BaseActivity {
         } else {
             loadMedicationForEdit();
         }
+    }
+
+    private void registerLaunchers() {
+        cameraPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(), granted -> {
+                    if (granted) {
+                        openCameraPreview();
+                    } else {
+                        showToast("הרשאת מצלמה נדרשת לצילום האריזה");
+                    }
+                });
+
+        cameraLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        capturedImagePath = result.getData().getStringExtra(CameraActivity.EXTRA_IMAGE_PATH);
+                        loadImageIntoPreview(capturedImagePath);
+                    }
+                });
+
+        contactPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri contactUri = result.getData().getData();
+                        if (contactUri != null) {
+                            resolveContact(contactUri);
+                        }
+                    }
+                });
+    }
+
+    private void requestCameraPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            openCameraPreview();
+        } else if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
+            new AlertDialog.Builder(this)
+                    .setTitle("הרשאת מצלמה")
+                    .setMessage("נדרשת הרשאת מצלמה לצילום תמונת אריזת התרופה")
+                    .setPositiveButton("אישור", (d, w) ->
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA))
+                    .setNegativeButton("ביטול", null)
+                    .show();
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA);
+        }
+    }
+
+    private void openCameraPreview() {
+        Intent intent = new Intent(this, CameraActivity.class);
+        cameraLauncher.launch(intent);
+    }
+
+    private void loadImageIntoPreview(String path) {
+        if (path != null && !path.isEmpty()) {
+            AppExecutors.getInstance().diskIO(() -> {
+                Bitmap bmp = BitmapFactory.decodeFile(path);
+                AppExecutors.getInstance().mainThread(() -> {
+                    if (bmp != null) {
+                        ivMedicationPhoto.setImageBitmap(bmp);
+                    } else {
+                        showToast("לא ניתן לטעון תמונה");
+                    }
+                });
+            });
+        }
+    }
+
+    private void pickContact() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                == PackageManager.PERMISSION_GRANTED) {
+            Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+            contactPickerLauncher.launch(intent);
+        } else {
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_READ_CONTACTS);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_READ_CONTACTS
+                && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+            contactPickerLauncher.launch(intent);
+        }
+    }
+
+    private void resolveContact(Uri contactUri) {
+        AppExecutors.getInstance().diskIO(() -> {
+            String name = "";
+            String phone = "";
+            Cursor nameCursor = null;
+            Cursor phoneCursor = null;
+            try {
+                nameCursor = getContentResolver().query(contactUri,
+                        new String[]{
+                                ContactsContract.Contacts.DISPLAY_NAME,
+                                ContactsContract.Contacts._ID
+                        }, null, null, null);
+                if (nameCursor != null && nameCursor.moveToFirst()) {
+                    name = nameCursor.getString(nameCursor.getColumnIndexOrThrow(
+                            ContactsContract.Contacts.DISPLAY_NAME));
+                    String contactId = nameCursor.getString(nameCursor.getColumnIndexOrThrow(
+                            ContactsContract.Contacts._ID));
+                    phoneCursor = getContentResolver().query(
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                            new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER},
+                            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=?",
+                            new String[]{contactId}, null);
+                    if (phoneCursor != null && phoneCursor.moveToFirst()) {
+                        phone = phoneCursor.getString(0);
+                    }
+                }
+            } finally {
+                if (nameCursor != null) {
+                    nameCursor.close();
+                }
+                if (phoneCursor != null) {
+                    phoneCursor.close();
+                }
+            }
+            final String finalName = name;
+            final String finalPhone = phone;
+            AppExecutors.getInstance().mainThread(() -> {
+                emergencyContactName = finalName;
+                emergencyContactPhone = finalPhone;
+                tvEmergencyContact.setText(finalName + " — " + finalPhone);
+            });
+        });
     }
 
     private void loadMedicationForEdit() {
@@ -117,10 +268,14 @@ public class AddEditMedicationActivity extends BaseActivity {
         etInstructions.setText(medication.getInstructions());
         etExpiryDate.setText(medication.getExpiryDate() != null ? medication.getExpiryDate() : "");
 
-        if (!TextUtils.isEmpty(medication.getEmergencyContactName())
-                || !TextUtils.isEmpty(medication.getEmergencyContactPhone())) {
-            tvEmergencyContact.setText(medication.getEmergencyContactName() + " — "
-                    + medication.getEmergencyContactPhone());
+        emergencyContactName = medication.getEmergencyContactName();
+        emergencyContactPhone = medication.getEmergencyContactPhone();
+        if (!TextUtils.isEmpty(emergencyContactName) || !TextUtils.isEmpty(emergencyContactPhone)) {
+            tvEmergencyContact.setText(emergencyContactName + " — " + emergencyContactPhone);
+        }
+
+        if (!TextUtils.isEmpty(medication.getImagePath())) {
+            loadImageIntoPreview(medication.getImagePath());
         }
 
         llTimesContainer.removeAllViews();
@@ -221,14 +376,27 @@ public class AddEditMedicationActivity extends BaseActivity {
         medication.setInstructions(etInstructions.getText().toString().trim());
         medication.setExpiryDate(etExpiryDate.getText().toString().trim());
         medication.setActive(true);
+        medication.setEmergencyContactName(emergencyContactName);
+        medication.setEmergencyContactPhone(emergencyContactPhone);
 
         showLoading();
         AppExecutors.getInstance().diskIO(() -> {
+            Medication existing = null;
             if (editMode) {
-                Medication existing = dao.getMedicationById(medicationId);
-                if (existing != null) {
-                    medication.setImagePath(existing.getImagePath());
+                existing = dao.getMedicationById(medicationId);
+            }
+
+            if (capturedImagePath != null) {
+                medication.setImagePath(capturedImagePath);
+            } else if (existing != null) {
+                medication.setImagePath(existing.getImagePath());
+            }
+
+            if (existing != null) {
+                if (emergencyContactName == null) {
                     medication.setEmergencyContactName(existing.getEmergencyContactName());
+                }
+                if (emergencyContactPhone == null) {
                     medication.setEmergencyContactPhone(existing.getEmergencyContactPhone());
                 }
             }
@@ -242,6 +410,8 @@ public class AddEditMedicationActivity extends BaseActivity {
             }
 
             int medId = (int) savedId;
+            medication.setId(medId);
+
             dao.deleteSchedulesForMedication(medId);
             for (String time : times) {
                 Schedule schedule = new Schedule();
@@ -249,6 +419,13 @@ public class AddEditMedicationActivity extends BaseActivity {
                 schedule.setIntakeTime(time);
                 schedule.setDaysOfWeek(daysOfWeek);
                 dao.insertSchedule(schedule);
+            }
+
+            Medication savedMedication = dao.getMedicationById(medId);
+            android.content.Context appContext = getApplicationContext();
+            AlarmScheduler.scheduleAllAlarms(appContext, dao);
+            if (savedMedication != null) {
+                AlarmScheduler.scheduleExpiryAlarm(appContext, savedMedication);
             }
 
             AppExecutors.getInstance().mainThread(() -> {
@@ -266,6 +443,8 @@ public class AddEditMedicationActivity extends BaseActivity {
                 .setPositiveButton("מחק", (dialog, which) -> {
                     showLoading();
                     AppExecutors.getInstance().diskIO(() -> {
+                        AlarmScheduler.cancelAlarmsForMedication(
+                                getApplicationContext(), dao, medicationId);
                         dao.deleteMedication(medicationId);
                         AppExecutors.getInstance().mainThread(() -> {
                             hideLoading();

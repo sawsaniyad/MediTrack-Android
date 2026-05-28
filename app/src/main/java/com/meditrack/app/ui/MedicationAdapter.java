@@ -1,5 +1,6 @@
 package com.meditrack.app.ui;
 
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.GradientDrawable;
 import android.text.TextUtils;
@@ -13,12 +14,11 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.meditrack.app.R;
+import com.meditrack.app.data.AppExecutors;
 import com.meditrack.app.data.IntakeLog;
 import com.meditrack.app.data.Medication;
 import com.meditrack.app.data.Schedule;
 import com.meditrack.app.db.MedicationDao;
-
-import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -105,14 +105,24 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
     }
 
     private void bindImage(ImageView imageView, String imagePath) {
-        if (!TextUtils.isEmpty(imagePath)) {
-            File file = new File(imagePath);
-            if (file.exists()) {
-                imageView.setImageBitmap(BitmapFactory.decodeFile(imagePath));
-                return;
-            }
+        if (imagePath != null && !imagePath.isEmpty()) {
+            AppExecutors.getInstance().diskIO(() -> {
+                Bitmap bmp = BitmapFactory.decodeFile(imagePath);
+                if (bmp != null) {
+                    Bitmap thumb = Bitmap.createScaledBitmap(bmp, 80, 80, true);
+                    if (thumb != bmp) {
+                        bmp.recycle();
+                    }
+                    AppExecutors.getInstance().mainThread(() ->
+                            imageView.setImageBitmap(thumb));
+                } else {
+                    AppExecutors.getInstance().mainThread(() ->
+                            imageView.setImageResource(R.drawable.ic_medication_placeholder));
+                }
+            });
+        } else {
+            imageView.setImageResource(R.drawable.ic_medication_placeholder);
         }
-        imageView.setImageResource(R.drawable.ic_medication);
     }
 
     private void bindStatus(View itemView, MedicationViewHolder holder, int medicationId,
