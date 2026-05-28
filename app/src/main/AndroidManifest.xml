@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.meditrack.app">
-    <!-- הרשאות נדרשות -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -20,46 +21,79 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MediTrack">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <!-- SplashActivity היא הActivity הראשית -->
         <activity
-            android:name=".activities.SplashActivity"
+            android:name=".ui.SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.MediTrack.Splash">
+            android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
-            android:name=".activities.MedicationListActivity"
+            android:name=".ui.MedicationListActivity"
             android:exported="false" />
+
         <activity
-            android:name=".activities.AddEditMedicationActivity"
+            android:name=".ui.AddEditMedicationActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+
         <activity
-            android:name=".activities.SettingsActivity"
+            android:name=".ui.CameraActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.MedicationListActivity" />
+
+        <activity
+            android:name=".ui.HistoryActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.MedicationListActivity" />
+
+        <activity
+            android:name=".ui.MainActivity"
             android:exported="false" />
+
         <activity
-            android:name=".activities.HistoryActivity"
-            android:exported="false" /> <!-- BroadcastReceiver לאזעקות והתנעה -->
+            android:name=".ui.DevTestActivity"
+            android:exported="false" />
+
         <receiver
             android:name=".receivers.AlarmReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receivers.TakenActionReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receivers.SnoozeActionReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receivers.BootReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".receivers.MissedDoseReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receivers.ExpiryReceiver"
+            android:exported="false" />
+
     </application>
 
 </manifest>

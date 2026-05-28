@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'com.samiraa_raghadm_sawsana.meditrack'
+    namespace 'com.meditrack.app'
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -11,7 +11,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.samiraa_raghadm_sawsana.meditrack"
+        applicationId "com.meditrack.app"
         minSdk 26
         targetSdk 36
         versionCode 1
@@ -30,13 +30,26 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 dependencies {
+    implementation libs.core
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
     implementation libs.constraintlayout
+    implementation libs.recyclerview
+    implementation libs.lifecycle.viewmodel
+
+    implementation libs.camera.core
+    implementation libs.camera.camera2
+    implementation libs.camera.lifecycle
+    implementation libs.camera.view
+    implementation libs.localbroadcastmanager
+
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

@@ -1,10 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="colorPrimary">#1976D2</color>
+    <color name="colorPrimaryDark">#1565C0</color>
+    <color name="colorAccent">#03A9F4</color>
+    <color name="colorStatusTaken">#4CAF50</color>
+    <color name="colorStatusPending">#FF9800</color>
+    <color name="colorStatusMissed">#F44336</color>
+    <color name="colorDeleteButton">#F44336</color>
+    <color name="colorBackground">#FAFAFA</color>
+    <color name="colorSurface">#FFFFFF</color>
+    <color name="colorTextPrimary">#212121</color>
+    <color name="colorTextSecondary">#757575</color>
+
     <color name="teal_200">#FF80CBC4</color>
     <color name="teal_700">#FF00796B</color>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="status_taken">@color/colorStatusTaken</color>
+    <color name="status_pending">@color/colorStatusPending</color>
+    <color name="status_missed">@color/colorStatusMissed</color>
+    <color name="delete_red">@color/colorDeleteButton</color>
 </resources>
