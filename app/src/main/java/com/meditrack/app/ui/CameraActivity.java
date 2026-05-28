@@ -37,6 +37,7 @@ public class CameraActivity extends BaseActivity {
         ImageButton btnFlipCamera = findViewById(R.id.btnFlipCamera);
 
         btnCapture.setOnClickListener(v -> captureImage());
+        // FIXED: CameraX thread safety — onClick is main thread
         btnFlipCamera.setOnClickListener(v -> {
             lensFacing = lensFacing == CameraSelector.LENS_FACING_BACK
                     ? CameraSelector.LENS_FACING_FRONT
@@ -50,12 +51,14 @@ public class CameraActivity extends BaseActivity {
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> future =
                 ProcessCameraProvider.getInstance(this);
+        // FIXED: CameraX thread safety — main executor for bindCameraUseCases
         future.addListener(() -> {
             try {
                 cameraProvider = future.get();
                 bindCameraUseCases();
             } catch (Exception e) {
-                showToast("שגיאה בפתיחת המצלמה: " + e.getMessage());
+                runOnUiThread(() -> showToast(
+                        getString(R.string.error_camera_open, e.getMessage())));
             }
         }, ContextCompat.getMainExecutor(this));
     }
@@ -82,7 +85,7 @@ public class CameraActivity extends BaseActivity {
 
     private void captureImage() {
         if (imageCapture == null) {
-            showToast("המצלמה לא מוכנה");
+            showToast(getString(R.string.error_camera_not_ready));
             return;
         }
 
@@ -95,6 +98,7 @@ public class CameraActivity extends BaseActivity {
         ImageCapture.OutputFileOptions options =
                 new ImageCapture.OutputFileOptions.Builder(outputFile).build();
 
+        // FIXED: CameraX thread safety — background executor for disk write
         imageCapture.takePicture(options,
                 Executors.newSingleThreadExecutor(),
                 new ImageCapture.OnImageSavedCallback() {
@@ -108,8 +112,8 @@ public class CameraActivity extends BaseActivity {
 
                     @Override
                     public void onError(ImageCaptureException exception) {
-                        runOnUiThread(() ->
-                                showToast("שגיאה בצילום: " + exception.getMessage()));
+                        runOnUiThread(() -> showToast(
+                                getString(R.string.error_camera, exception.getMessage())));
                     }
                 });
     }

@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import com.meditrack.app.data.AppExecutors;
 import com.meditrack.app.db.DatabaseHelper;
 import com.meditrack.app.db.MedicationDao;
 import com.meditrack.app.services.AlarmScheduler;
@@ -18,8 +19,11 @@ public class BootReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         if (Intent.ACTION_BOOT_COMPLETED.equals(action)
                 || "android.intent.action.QUICKBOOT_POWERON".equals(action)) {
-            MedicationDao dao = new MedicationDao(DatabaseHelper.getInstance(context));
-            AlarmScheduler.scheduleAllAlarms(context.getApplicationContext(), dao);
+            // FIXED: moved to diskIO — AlarmScheduler.scheduleAllAlarms uses diskIO internally
+            AppExecutors.getInstance().diskIO(() -> {
+                MedicationDao dao = new MedicationDao(DatabaseHelper.getInstance(context));
+                AlarmScheduler.scheduleAllAlarms(context.getApplicationContext(), dao);
+            });
         }
     }
 }

@@ -30,6 +30,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 dependencies {
@@ -45,6 +48,7 @@ dependencies {
     implementation libs.camera.camera2
     implementation libs.camera.lifecycle
     implementation libs.camera.view
+    implementation libs.localbroadcastmanager
 
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit

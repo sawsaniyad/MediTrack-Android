@@ -61,6 +61,10 @@
             android:name=".ui.MainActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.DevTestActivity"
+            android:exported="false" />
+
         <receiver
             android:name=".receivers.AlarmReceiver"
             android:exported="false" />

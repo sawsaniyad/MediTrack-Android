@@ -1,6 +1,5 @@
 package com.meditrack.app.receivers;
 
-import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +9,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import com.meditrack.app.R;
 import com.meditrack.app.services.NotificationHelper;
 
 public class ExpiryReceiver extends BroadcastReceiver {
@@ -29,13 +29,13 @@ public class ExpiryReceiver extends BroadcastReceiver {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(
                 context, NotificationHelper.CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
-                .setContentTitle("⚠️ תרופה עומדת לפוג")
-                .setContentText(medName + " פגת תוקף בתאריך " + expiryDate)
+                .setContentTitle(context.getString(R.string.expiry_notif_title))
+                .setContentText(context.getString(R.string.expiry_notif_text, medName, expiryDate))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true);
 
         NotificationManagerCompat nm = NotificationManagerCompat.from(context);
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
                 == PackageManager.PERMISSION_GRANTED) {
             nm.notify(NotificationHelper.NOTIFICATION_ID_BASE + medName.hashCode(),
                     builder.build());

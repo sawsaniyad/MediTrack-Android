@@ -83,4 +83,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_MEDICATIONS);
         onCreate(db);
     }
+
+    /** Debug helper — clears all data without dropping schema. */
+    public void resetDatabase() {
+        SQLiteDatabase db = getWritableDatabase();
+        db.execSQL("DELETE FROM " + TABLE_INTAKE_LOG);
+        db.execSQL("DELETE FROM " + TABLE_SCHEDULES);
+        db.execSQL("DELETE FROM " + TABLE_MEDICATIONS);
+    }
 }

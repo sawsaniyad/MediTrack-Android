@@ -11,7 +11,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         app:navigationIcon="?attr/homeAsUpIndicator"
-        app:title="יומן נטילות"
+        app:title="@string/nav_history"
         app:titleTextColor="@android:color/white" />
 
     <LinearLayout
@@ -24,7 +24,7 @@
             android:id="@+id/btnFilterDate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="בחר תאריך" />
+            android:text="@string/btn_filter_date" />
 
         <TextView
             android:id="@+id/tvSelectedDate"
@@ -33,13 +33,13 @@
             android:layout_gravity="center_vertical"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:text="הכל" />
+            android:text="@string/filter_all" />
 
         <Button
             android:id="@+id/btnClearFilter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="נקה סינון" />
+            android:text="@string/btn_clear_filter" />
 
     </LinearLayout>
 
@@ -64,7 +64,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp"
-        android:text="אין רשומות"
+        android:text="@string/msg_empty_history"
         android:textAlignment="center"
         android:visibility="gone" />
 

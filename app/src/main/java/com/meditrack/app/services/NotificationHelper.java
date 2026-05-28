@@ -2,8 +2,10 @@ package com.meditrack.app.services;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.os.Build;
@@ -12,20 +14,17 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import com.meditrack.app.R;
 import com.meditrack.app.data.PrefsManager;
 import com.meditrack.app.receivers.SnoozeActionReceiver;
 import com.meditrack.app.receivers.TakenActionReceiver;
 import com.meditrack.app.ui.MedicationListActivity;
 
-import android.Manifest;
-import android.app.PendingIntent;
-import android.content.pm.PackageManager;
-
 public final class NotificationHelper {
 
     public static final String CHANNEL_ID = "medication_reminders";
-    public static final String CHANNEL_NAME = "תזכורות תרופות";
     public static final int NOTIFICATION_ID_BASE = 1000;
+    public static final int MISSED_DOSE_NOTIFICATION_ID = 9000;
 
     private NotificationHelper() {
     }
@@ -34,9 +33,9 @@ public final class NotificationHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
-                    CHANNEL_NAME,
+                    context.getString(R.string.notification_channel_name),
                     NotificationManager.IMPORTANCE_HIGH);
-            channel.setDescription("תזכורות לנטילת תרופות");
+            channel.setDescription(context.getString(R.string.notification_channel_name));
             channel.enableVibration(true);
             channel.setVibrationPattern(new long[]{0, 500, 200, 500});
             channel.enableLights(true);
@@ -58,6 +57,13 @@ public final class NotificationHelper {
                                               String medicationName,
                                               String dosage,
                                               int scheduleId) {
+        if (medicationName == null) {
+            medicationName = context.getString(R.string.default_medication_name);
+        }
+        if (dosage == null) {
+            dosage = "";
+        }
+
         Intent takenIntent = new Intent(context, TakenActionReceiver.class);
         takenIntent.putExtra("MEDICATION_ID", medicationId);
         takenIntent.putExtra("SCHEDULE_ID", scheduleId);
@@ -71,7 +77,7 @@ public final class NotificationHelper {
         snoozeIntent.putExtra("MEDICATION_ID", medicationId);
         snoozeIntent.putExtra("SCHEDULE_ID", scheduleId);
         snoozeIntent.putExtra("MEDICATION_NAME", medicationName);
-        snoozeIntent.putExtra("DOSAGE", dosage != null ? dosage : "");
+        snoozeIntent.putExtra("DOSAGE", dosage);
         snoozeIntent.putExtra("NOTIFICATION_ID", NOTIFICATION_ID_BASE + scheduleId);
         PendingIntent snoozePI = PendingIntent.getBroadcast(context,
                 scheduleId + 10000,
@@ -88,13 +94,15 @@ public final class NotificationHelper {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("💊 " + medicationName)
-                .setContentText("הגיע הזמן לקחת " + medicationName + " " + (dosage != null ? dosage : ""))
+                .setContentTitle(context.getString(R.string.notif_reminder_title, medicationName))
+                .setContentText(context.getString(R.string.notif_reminder_text, medicationName, dosage))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(mainPI)
                 .setAutoCancel(false)
-                .addAction(android.R.drawable.checkbox_on_background, "✓ נלקח", takenPI)
-                .addAction(android.R.drawable.ic_menu_recent_history, "⏰ דחה", snoozePI);
+                .addAction(android.R.drawable.checkbox_on_background,
+                        context.getString(R.string.notif_taken_action), takenPI)
+                .addAction(android.R.drawable.ic_menu_recent_history,
+                        context.getString(R.string.notif_snooze_action), snoozePI);
 
         if (!vibrate) {
             builder.setVibrate(new long[]{0});
@@ -104,9 +112,27 @@ public final class NotificationHelper {
         }
 
         NotificationManagerCompat nm = NotificationManagerCompat.from(context);
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
                 == PackageManager.PERMISSION_GRANTED) {
             nm.notify(NOTIFICATION_ID_BASE + scheduleId, builder.build());
+        }
+    }
+
+    public static void showMissedDoseAlert(Context context, String medicationName) {
+        if (medicationName == null) {
+            medicationName = context.getString(R.string.default_medication_name);
+        }
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setContentTitle(context.getString(R.string.status_missed))
+                .setContentText(context.getString(R.string.msg_missed_dose_notification, medicationName))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true);
+
+        NotificationManagerCompat nm = NotificationManagerCompat.from(context);
+        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) {
+            nm.notify(MISSED_DOSE_NOTIFICATION_ID + medicationName.hashCode(), builder.build());
         }
     }
 }

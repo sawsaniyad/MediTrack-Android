@@ -2,6 +2,8 @@ package com.meditrack.app.ui;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -18,7 +20,7 @@ import com.meditrack.app.data.AppExecutors;
 import com.meditrack.app.data.IntakeLog;
 import com.meditrack.app.data.Medication;
 import com.meditrack.app.data.Schedule;
-import com.meditrack.app.db.MedicationDao;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -36,29 +38,29 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
     }
 
     private final List<Medication> medications = new ArrayList<>();
-    private final List<IntakeLog> todayLogs = new ArrayList<>();
+    private final Map<Integer, IntakeLog> todayLogsByMedicationId = new HashMap<>();
     private final Map<Integer, List<Schedule>> schedulesByMedication = new HashMap<>();
-    private final MedicationDao medicationDao;
     private final OnMedicationClickListener listener;
 
-    public MedicationAdapter(List<Medication> medications, MedicationDao medicationDao,
-                             OnMedicationClickListener listener) {
-        if (medications != null) {
-            this.medications.addAll(medications);
-        }
-        this.medicationDao = medicationDao;
+    public MedicationAdapter(OnMedicationClickListener listener) {
         this.listener = listener;
     }
 
-    public void updateList(List<Medication> newList, List<IntakeLog> todayLogs,
-                           Map<Integer, List<Schedule>> schedulesMap) {
+    public void updateList(List<Medication> newList,
+                           List<IntakeLog> todayLogs,
+                           Map<Integer, List<Schedule>> schedulesMap,
+                           Map<Integer, IntakeLog> todayLogsMap) {
         medications.clear();
         if (newList != null) {
             medications.addAll(newList);
         }
-        this.todayLogs.clear();
-        if (todayLogs != null) {
-            this.todayLogs.addAll(todayLogs);
+        todayLogsByMedicationId.clear();
+        if (todayLogsMap != null) {
+            todayLogsByMedicationId.putAll(todayLogsMap);
+        } else if (todayLogs != null) {
+            for (IntakeLog log : todayLogs) {
+                todayLogsByMedicationId.put(log.getMedicationId(), log);
+            }
         }
         schedulesByMedication.clear();
         if (schedulesMap != null) {
@@ -83,13 +85,9 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                 TextUtils.isEmpty(medication.getDosage()) ? "" : medication.getDosage());
 
         List<Schedule> schedules = schedulesByMedication.get(medication.getId());
-        if (schedules == null) {
-            schedules = medicationDao.getSchedulesForMedication(medication.getId());
-            schedulesByMedication.put(medication.getId(), schedules);
-        }
-        holder.tvNextTime.setText(buildNextTimeLabel(schedules));
+        holder.tvNextTime.setText(buildNextTimeLabel(holder.itemView, schedules));
 
-        bindImage(holder.ivMedicationImage, medication.getImagePath());
+        bindImage(holder, medication.getImagePath());
         bindStatus(holder.itemView, holder, medication.getId(), schedules);
 
         holder.itemView.setOnClickListener(v -> {
@@ -104,7 +102,9 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         return medications.size();
     }
 
-    private void bindImage(ImageView imageView, String imagePath) {
+    private void bindImage(MedicationViewHolder holder, String imagePath) {
+        recycleOldBitmap(holder.ivMedicationImage);
+
         if (imagePath != null && !imagePath.isEmpty()) {
             AppExecutors.getInstance().diskIO(() -> {
                 Bitmap bmp = BitmapFactory.decodeFile(imagePath);
@@ -114,14 +114,28 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                         bmp.recycle();
                     }
                     AppExecutors.getInstance().mainThread(() ->
-                            imageView.setImageBitmap(thumb));
+                            holder.ivMedicationImage.setImageBitmap(thumb));
                 } else {
                     AppExecutors.getInstance().mainThread(() ->
-                            imageView.setImageResource(R.drawable.ic_medication_placeholder));
+                            holder.ivMedicationImage.setImageResource(
+                                    R.drawable.ic_medication_placeholder));
                 }
             });
         } else {
-            imageView.setImageResource(R.drawable.ic_medication_placeholder);
+            holder.ivMedicationImage.setImageResource(R.drawable.ic_medication_placeholder);
+        }
+    }
+
+    private void recycleOldBitmap(ImageView imageView) {
+        try {
+            Drawable drawable = imageView.getDrawable();
+            if (drawable instanceof BitmapDrawable) {
+                Bitmap old = ((BitmapDrawable) drawable).getBitmap();
+                if (old != null && !old.isRecycled()) {
+                    old.recycle();
+                }
+            }
+        } catch (ClassCastException ignored) {
         }
     }
 
@@ -138,34 +152,20 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
     }
 
     private StatusInfo resolveStatus(View itemView, int medicationId, List<Schedule> schedules) {
-        IntakeLog todayLog = findTodayLog(medicationId);
+        IntakeLog todayLog = todayLogsByMedicationId.get(medicationId);
         if (todayLog != null && todayLog.isTaken()) {
-            return new StatusInfo("נלקח", colorFromRes(itemView, R.color.status_taken));
+            return new StatusInfo(itemView.getContext().getString(R.string.status_taken),
+                    colorFromRes(itemView, R.color.status_taken));
         }
-        if (isMissed(medicationId, schedules, todayLog)) {
-            return new StatusInfo("הוחמץ", colorFromRes(itemView, R.color.status_missed));
+        if (isMissed(itemView, schedules, todayLog)) {
+            return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
+                    colorFromRes(itemView, R.color.status_missed));
         }
-        return new StatusInfo("ממתין", colorFromRes(itemView, R.color.status_pending));
+        return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
+                colorFromRes(itemView, R.color.status_pending));
     }
 
-    private IntakeLog findTodayLog(int medicationId) {
-        for (IntakeLog log : todayLogs) {
-            if (log.getMedicationId() == medicationId) {
-                return log;
-            }
-        }
-        List<IntakeLog> logs = medicationDao.getLogsByMedication(medicationId);
-        String today = LocalDate.now().toString();
-        for (IntakeLog log : logs) {
-            if (log.getScheduledDatetime() != null
-                    && log.getScheduledDatetime().startsWith(today)) {
-                return log;
-            }
-        }
-        return null;
-    }
-
-    private boolean isMissed(int medicationId, List<Schedule> schedules, IntakeLog todayLog) {
+    private boolean isMissed(View itemView, List<Schedule> schedules, IntakeLog todayLog) {
         if (todayLog != null && !todayLog.isTaken()) {
             return isScheduledTimePassed(todayLog.getScheduledDatetime());
         }
@@ -178,10 +178,13 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             if (!isDayIncluded(schedule.getDaysOfWeek(), todayDow)) {
                 continue;
             }
-            LocalTime intakeTime = LocalTime.parse(schedule.getIntakeTime(),
-                    DateTimeFormatter.ofPattern("HH:mm"));
-            if (intakeTime.isBefore(now)) {
-                return true;
+            try {
+                LocalTime intakeTime = LocalTime.parse(schedule.getIntakeTime(),
+                        DateTimeFormatter.ofPattern("HH:mm"));
+                if (intakeTime.isBefore(now)) {
+                    return true;
+                }
+            } catch (Exception ignored) {
             }
         }
         return false;
@@ -196,9 +199,9 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         }
     }
 
-    private String buildNextTimeLabel(List<Schedule> schedules) {
+    private String buildNextTimeLabel(View itemView, List<Schedule> schedules) {
         if (schedules == null || schedules.isEmpty()) {
-            return "אין שעה מתוכננת";
+            return itemView.getContext().getString(R.string.next_time_none);
         }
         int todayDow = LocalDate.now().getDayOfWeek().getValue();
         LocalTime now = LocalTime.now();
@@ -219,9 +222,10 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             }
         }
         if (next == null) {
-            return "היום: " + schedules.get(0).getIntakeTime();
+            return itemView.getContext().getString(R.string.next_time_today,
+                    schedules.get(0).getIntakeTime());
         }
-        return "הבא: " + next;
+        return itemView.getContext().getString(R.string.next_time_upcoming, next);
     }
 
     private boolean isDayIncluded(String daysOfWeek, int dayValue) {

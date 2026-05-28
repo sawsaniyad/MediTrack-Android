@@ -2,8 +2,11 @@ package com.meditrack.app.ui;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.switchmaterial.SwitchMaterial;
@@ -72,7 +75,16 @@ public class SettingsActivity extends BaseActivity {
         });
     }
 
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     private void updateMinutesLabel(int minutes) {
-        tvReminderMinutesValue.setText(minutes + " דקות");
+        tvReminderMinutesValue.setText(getString(R.string.settings_minutes_format, minutes));
     }
 }

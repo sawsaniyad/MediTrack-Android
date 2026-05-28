@@ -1,7 +1,9 @@
 package com.meditrack.app.ui;
 
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -9,6 +11,7 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -59,6 +62,8 @@ public class HistoryActivity extends BaseActivity {
         adapter = new HistoryAdapter();
         recyclerView.setAdapter(adapter);
 
+        tvSelectedDate.setText(R.string.filter_all);
+
         Button btnFilterDate = findViewById(R.id.btnFilterDate);
         Button btnClearFilter = findViewById(R.id.btnClearFilter);
 
@@ -80,12 +85,21 @@ public class HistoryActivity extends BaseActivity {
         populateSpinner();
     }
 
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     private void populateSpinner() {
         AppExecutors.getInstance().diskIO(() -> {
             List<Medication> medications = dao.getAllMedications();
             AppExecutors.getInstance().mainThread(() -> {
                 spinnerItems.clear();
-                spinnerItems.add(new MedicationSpinnerItem(-1, "הכל"));
+                spinnerItems.add(new MedicationSpinnerItem(-1, getString(R.string.filter_all)));
                 for (Medication medication : medications) {
                     spinnerItems.add(new MedicationSpinnerItem(
                             medication.getId(), medication.getName()));
@@ -114,7 +128,7 @@ public class HistoryActivity extends BaseActivity {
     private void clearFilters() {
         selectedDate = null;
         selectedMedId = -1;
-        tvSelectedDate.setText("הכל");
+        tvSelectedDate.setText(R.string.filter_all);
         spinnerMedication.setSelection(0);
         loadHistory(null, -1);
     }

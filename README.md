@@ -1,100 +1,40 @@
-# MediTrack - תרופות חכמות 💊
+# MediTrack — מדי-טראק
 
-> פרויקט גמר בקורס פיתוח אנדרואיד | מכללת אזריאלי
+## Team
 
-## תיאור הפרויקט
+- סמירה אבו אלהוא — 324909803
+- רגד מחיסן — 212541304
+- סאוסן אבו שמעה — 213588270
 
-אפליקציה לניהול תרופות המאפשרת למשתמשים לעקוב אחר נטילת תרופות יומית, לקבל תזכורות, לראות היסטוריית נטילה, ולנהל אנשי קשר לחירום.
+## Architecture
 
-## הצוות
+- Language: Java (no Kotlin)
+- Min SDK: 26 | Target SDK: 36
+- DB: SQLiteOpenHelper (no Room)
+- Threading: AppExecutors (ExecutorService + Handler)
+- Camera: CameraX 1.4.2 (in-app, no system Intent)
 
-| שם | תחום אחריות | Branch |
-|---|---|---|
-| סמירה אבו אל-הווא | מסד נתונים + SplashActivity | `feature/samira-database` |
-| רגד מוחיסן | התראות + הגדרות + היסטוריה | `feature/raghad-notifications` |
-| סוסאן אבו שמא | UI + מצלמה + רשימה ראשית | `feature/sawsan-ui-camera` |
+## Features
 
-## דרישות סביבה
+- Medication list with status badges
+- Add/Edit with CameraX photo capture
+- AlarmManager reminders with Taken/Snooze actions
+- Emergency contact via ContactsContract
+- Missed-dose SMS alert (or in-app notification if SMS denied)
+- Expiry date notification (7 days before)
+- Boot receiver for alarm persistence
+- Intake log with date/medication filters
 
-- **Android Studio**: Panda (2024.2.x / 2025.x)
-- **Compile SDK / Target SDK**: API 30 (Android 11.0 R)
-- **Minimum SDK**: API 24
-- **אמולטור**: Pixel 3 + API 30 Google Play
-
-## רכיבים טכניים
-
-- ✅ SQLite + SQLiteOpenHelper + DAOs
-- ✅ CameraX (צילום תמונת אריזה)
-- ✅ AlarmManager + BroadcastReceiver + BOOT_COMPLETED
-- ✅ NotificationChannel עם פעולות (נלקח / דחה)
-- ✅ ContactsContract לבחירת איש קשר
-- ✅ ExecutorService לפעולות רקע
-- ✅ View Binding + RecyclerView + ListAdapter
-- ✅ SharedPreferences (הגדרות)
-
-## מבנה הפרויקט
-
-```
-app/src/main/java/com/meditrack/app/
-├── activities/
-│   ├── SplashActivity.kt          ← סמירה
-│   ├── MedicationListActivity.kt  ← סוסאן
-│   ├── AddEditMedicationActivity.kt ← סוסאן
-│   ├── SettingsActivity.kt        ← רע'ד
-│   └── HistoryActivity.kt         ← רע'ד
-├── adapters/
-│   ├── MedicationAdapter.kt       ← סוסאן
-│   └── HistoryAdapter.kt          ← רע'ד
-├── database/
-│   ├── DatabaseHelper.kt          ← סמירה
-│   ├── MedicationDAO.kt           ← סמירה
-│   ├── ScheduleDAO.kt             ← סמירה
-│   └── IntakeLogDAO.kt            ← סמירה
-├── models/
-│   ├── Medication.kt              ← סמירה
-│   ├── Schedule.kt                ← סמירה
-│   └── IntakeLog.kt               ← סמירה
-├── notifications/
-│   └── NotificationHelper.kt     ← רע'ד
-├── receivers/
-│   └── AlarmReceiver.kt          ← רע'ד
-└── utils/
-    └── AlarmScheduler.kt         ← רע'ד
-```
-
-## Branch Strategy
-
-```
-main          ← גרסה סופית מאושרת בלבד
-└── dev       ← ענף אינטגרציה
-    ├── feature/samira-database
-    ├── feature/raghad-notifications
-    └── feature/sawsan-ui-camera
-```
-
-## התחלת עבודה - כל חבר צוות
+## Build
 
 ```bash
-# 1. Clone
-git clone https://github.com/YOUR_REPO/MediTrack-Android.git
-cd MediTrack-Android
-
-# 2. עבור לענף שלך
-git checkout dev
-git checkout -b feature/YOUR-branch
-
-# 3. עבוד, commit, push
-git add -p                            # בחר שינויים ספציפיים
-git commit -m "feat: תיאור השינוי"
-git push origin feature/YOUR-branch
-
-# 4. פתח Pull Request → dev בגיטהאב
+./gradlew assembleDebug
 ```
 
-## כללי עבודה
+APK: `app/build/outputs/apk/debug/app-debug.apk`
 
-- **אסור** לדחוף ישירות ל-`dev` או `main`
-- תמיד `git pull origin dev` לפני התחלת עבודה
-- commit messages בפורמט: `feat:` / `fix:` / `refactor:`
-- **סמירה** אחראית על `DatabaseHelper` ו-`build.gradle`
-- תאמו שינויים ב-`AndroidManifest.xml` ו-`strings.xml`
+## Debug testing
+
+```bash
+adb shell am start -n com.meditrack.app/.ui.DevTestActivity
+```

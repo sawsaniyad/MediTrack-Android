@@ -7,13 +7,14 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.telephony.SmsManager;
 
-import androidx.core.app.ActivityCompat;
-
+import com.meditrack.app.R;
 import com.meditrack.app.data.AppExecutors;
 import com.meditrack.app.data.IntakeLog;
 import com.meditrack.app.data.Medication;
 import com.meditrack.app.db.DatabaseHelper;
 import com.meditrack.app.db.MedicationDao;
+import com.meditrack.app.services.NotificationHelper;
+import com.meditrack.app.ui.PermissionManager;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class MissedDoseReceiver extends BroadcastReceiver {
             return;
         }
 
+        // FIXED: moved to diskIO
         AppExecutors.getInstance().diskIO(() -> {
             MedicationDao dao = new MedicationDao(DatabaseHelper.getInstance(context));
             List<IntakeLog> logs = dao.getLogsByMedication(medicationId);
@@ -51,23 +53,22 @@ public class MissedDoseReceiver extends BroadcastReceiver {
 
             String phone = med.getEmergencyContactPhone();
             String name = med.getEmergencyContactName();
-            if (phone == null || phone.isEmpty()) {
-                return;
-            }
 
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS)
-                    == PackageManager.PERMISSION_GRANTED) {
+            if (PermissionManager.isGranted(context, Manifest.permission.SEND_SMS)
+                    && phone != null && !phone.isEmpty()) {
                 try {
                     SmsManager sms = SmsManager.getDefault();
                     String contactName = name != null ? name : "";
                     sms.sendTextMessage(phone, null,
-                            "שלום " + contactName + ", "
-                                    + med.getName() + " לא נלקחה במועד. "
-                                    + "אנא בדוק/י את המטופל.",
+                            context.getString(R.string.sms_missed_dose,
+                                    contactName, med.getName()),
                             null, null);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    android.util.Log.w("MissedDoseReceiver", "SMS failed", e);
+                    NotificationHelper.showMissedDoseAlert(context, med.getName());
                 }
+            } else {
+                NotificationHelper.showMissedDoseAlert(context, med.getName());
             }
         });
     }

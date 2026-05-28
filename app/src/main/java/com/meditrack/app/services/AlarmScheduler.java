@@ -21,6 +21,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * PendingIntent requestCode ranges:
+ * 1–999:       intake alarms (schedule IDs)
+ * 10001–10999: snooze action (scheduleId + 10000)
+ * 20001–20999: snooze re-alarm (scheduleId + 20000)
+ * 30001–30999: missed-dose check (scheduleId + 30000)
+ * 50001–50999: expiry alarms (medicationId + 50000)
+ */
 public final class AlarmScheduler {
 
     private AlarmScheduler() {
@@ -68,6 +76,7 @@ public final class AlarmScheduler {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
+        // setExactAndAllowWhileIdle ensures delivery in Doze
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (am.canScheduleExactAlarms()) {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);

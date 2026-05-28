@@ -48,32 +48,35 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         IntakeLog log = logs.get(position);
         String medName = medicationNames.get(log.getMedicationId());
         if (medName == null) {
-            medName = "תרופה #" + log.getMedicationId();
+            medName = holder.itemView.getContext().getString(
+                    R.string.history_med_fallback, log.getMedicationId());
         }
 
-        holder.tvScheduledTime.setText("מתוכנן: " + log.getScheduledDatetime());
+        holder.tvScheduledTime.setText(holder.itemView.getContext().getString(
+                R.string.history_scheduled, log.getScheduledDatetime()));
         holder.tvHistoryMedName.setText(medName);
 
         if (log.isTaken() && !TextUtils.isEmpty(log.getActualDatetime())) {
-            holder.tvActualTime.setText("נלקח: " + log.getActualDatetime());
+            holder.tvActualTime.setText(holder.itemView.getContext().getString(
+                    R.string.history_taken_at, log.getActualDatetime()));
         } else {
-            holder.tvActualTime.setText("לא נלקח");
+            holder.tvActualTime.setText(R.string.history_not_taken);
         }
 
         int colorRes;
-        String statusLabel;
+        int statusLabelRes;
         if (log.isTaken()) {
             colorRes = R.color.status_taken;
-            statusLabel = "נלקח";
+            statusLabelRes = R.string.status_taken;
         } else if (isMissedLog(log)) {
             colorRes = R.color.status_missed;
-            statusLabel = "הוחמץ";
+            statusLabelRes = R.string.status_missed;
         } else {
             colorRes = R.color.status_pending;
-            statusLabel = "ממתין";
+            statusLabelRes = R.string.status_pending;
         }
 
-        holder.tvHistoryStatus.setText(statusLabel);
+        holder.tvHistoryStatus.setText(statusLabelRes);
         GradientDrawable badge = (GradientDrawable) holder.viewHistoryBadge.getBackground();
         int color = holder.itemView.getContext().getResources()
                 .getColor(colorRes, holder.itemView.getContext().getTheme());
@@ -85,7 +88,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
 
         if (log.isWasDelayed()) {
             holder.tvDelayInfo.setVisibility(View.VISIBLE);
-            holder.tvDelayInfo.setText("נטילה באיחור");
+            holder.tvDelayInfo.setText(R.string.history_delayed);
         } else {
             holder.tvDelayInfo.setVisibility(View.GONE);
         }

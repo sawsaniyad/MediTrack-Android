@@ -1,173 +1,156 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:title="@string/edit_medication"
+        app:titleTextColor="@android:color/white" />
 
-        <EditText
-            android:id="@+id/etMedicationName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="שם תרופה *"
-            android:inputType="text" />
-
-        <EditText
-            android:id="@+id/etDosage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="מינון (לדוג׳ 500מ״ג)"
-            android:inputType="text" />
-
-        <EditText
-            android:id="@+id/etInstructions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="top"
-            android:hint="הוראות / הערות"
-            android:inputType="textMultiLine"
-            android:minLines="3" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="שעות נטילה"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:id="@+id/llTimesContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="vertical" />
-
-        <Button
-            android:id="@+id/btnAddTime"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="הוסף שעה" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="ימי נטילה"
-            android:textStyle="bold" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <CheckBox
-                android:id="@+id/cbMon"
+            <EditText
+                android:id="@+id/etMedicationName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_medication_name"
+                android:inputType="text" />
+
+            <EditText
+                android:id="@+id/etDosage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/hint_dosage"
+                android:inputType="text" />
+
+            <EditText
+                android:id="@+id/etInstructions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="top"
+                android:hint="@string/hint_instructions"
+                android:inputType="textMultiLine"
+                android:minLines="3" />
+
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="ב׳" />
+                android:layout_marginTop="12dp"
+                android:text="@string/label_intake_times"
+                android:textStyle="bold" />
 
-            <CheckBox
-                android:id="@+id/cbTue"
+            <LinearLayout
+                android:id="@+id/llTimesContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical" />
+
+            <Button
+                android:id="@+id/btnAddTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/btn_add_time" />
+
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="ג׳" />
+                android:layout_marginTop="12dp"
+                android:text="@string/label_intake_days"
+                android:textStyle="bold" />
 
-            <CheckBox
-                android:id="@+id/cbWed"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="ד׳" />
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
 
-            <CheckBox
-                android:id="@+id/cbThu"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ה׳" />
+                <CheckBox android:id="@+id/cbMon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/days_mon" />
+                <CheckBox android:id="@+id/cbTue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/days_tue" />
+                <CheckBox android:id="@+id/cbWed" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/days_wed" />
+                <CheckBox android:id="@+id/cbThu" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/days_thu" />
+                <CheckBox android:id="@+id/cbFri" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/days_fri" />
+                <CheckBox android:id="@+id/cbSat" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/days_sat" />
+                <CheckBox android:id="@+id/cbSun" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/days_sun" />
 
-            <CheckBox
-                android:id="@+id/cbFri"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ו׳" />
+            </LinearLayout>
 
-            <CheckBox
-                android:id="@+id/cbSat"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ש׳" />
+            <ImageView
+                android:id="@+id/ivMedicationPhoto"
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                android:layout_marginTop="12dp"
+                android:contentDescription="@string/label_medication_name"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_medication_placeholder" />
 
-            <CheckBox
-                android:id="@+id/cbSun"
-                android:layout_width="wrap_content"
+            <Button
+                android:id="@+id/btnTakePhoto"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="א׳" />
+                android:layout_marginTop="8dp"
+                android:text="@string/btn_take_photo" />
+
+            <TextView
+                android:id="@+id/tvEmergencyContact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/no_emergency_contact"
+                android:textColor="@color/colorTextSecondary" />
+
+            <Button
+                android:id="@+id/btnPickContact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/btn_pick_contact" />
+
+            <EditText
+                android:id="@+id/etExpiryDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="@string/hint_expiry_date"
+                android:inputType="date" />
+
+            <Button
+                android:id="@+id/btnSave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/btn_save" />
+
+            <Button
+                android:id="@+id/btnDelete"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/colorDeleteButton"
+                android:text="@string/btn_delete"
+                android:visibility="gone" />
 
         </LinearLayout>
 
-        <ImageView
-            android:id="@+id/ivMedicationPhoto"
-            android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:layout_marginTop="12dp"
-            android:contentDescription="@string/medication_name"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_medication" />
+    </ScrollView>
 
-        <Button
-            android:id="@+id/btnTakePhoto"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="צלם אריזה" />
-
-        <TextView
-            android:id="@+id/tvEmergencyContact"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="לא נבחר איש קשר לחירום"
-            android:textColor="#666666" />
-
-        <Button
-            android:id="@+id/btnPickContact"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="בחר איש קשר לחירום" />
-
-        <EditText
-            android:id="@+id/etExpiryDate"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="תאריך תפוגה (YYYY-MM-DD)"
-            android:inputType="date" />
-
-        <Button
-            android:id="@+id/btnSave"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="שמור" />
-
-        <Button
-            android:id="@+id/btnDelete"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:backgroundTint="@color/delete_red"
-            android:text="מחק תרופה"
-            android:visibility="gone" />
-
-    </LinearLayout>
-
-</ScrollView>
+</LinearLayout>

@@ -7,6 +7,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.meditrack.app.R;
 import com.meditrack.app.data.AppExecutors;
 import com.meditrack.app.data.IntakeLog;
 import com.meditrack.app.data.Medication;
@@ -19,7 +22,6 @@ import com.meditrack.app.services.NotificationHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 public class AlarmReceiver extends BroadcastReceiver {
@@ -31,10 +33,21 @@ public class AlarmReceiver extends BroadcastReceiver {
         String dosage = intent.getStringExtra("DOSAGE");
         int scheduleId = intent.getIntExtra("SCHEDULE_ID", -1);
 
+        if (medicationName == null) {
+            medicationName = context.getString(R.string.default_medication_name);
+        }
+        if (dosage == null) {
+            dosage = "";
+        }
+
         if (medicationId == -1 || scheduleId == -1) {
             return;
         }
 
+        final String finalMedName = medicationName;
+        final String finalDosage = dosage;
+
+        // FIXED: moved to diskIO
         AppExecutors.getInstance().diskIO(() -> {
             MedicationDao dao = new MedicationDao(DatabaseHelper.getInstance(context));
             IntakeLog log = new IntakeLog();
@@ -46,13 +59,16 @@ public class AlarmReceiver extends BroadcastReceiver {
         });
 
         NotificationHelper.showMedicationReminder(context,
-                medicationId,
-                medicationName != null ? medicationName : "",
-                dosage != null ? dosage : "",
-                scheduleId);
+                medicationId, finalMedName, finalDosage, scheduleId);
+
+        Intent localIntent = new Intent(context.getString(R.string.broadcast_medication_due));
+        localIntent.putExtra(context.getString(R.string.extra_medication_id), medicationId);
+        localIntent.putExtra(context.getString(R.string.extra_medication_name), finalMedName);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(localIntent);
 
         scheduleMissedDoseCheck(context, medicationId, scheduleId);
 
+        // FIXED: moved to diskIO — reschedule for next day
         AppExecutors.getInstance().diskIO(() -> {
             MedicationDao dao = new MedicationDao(DatabaseHelper.getInstance(context));
             Schedule schedule = null;

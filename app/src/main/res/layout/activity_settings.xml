@@ -11,7 +11,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         app:navigationIcon="?attr/homeAsUpIndicator"
-        app:title="הגדרות"
+        app:title="@string/nav_settings"
         app:titleTextColor="@android:color/white" />
 
     <LinearLayout
