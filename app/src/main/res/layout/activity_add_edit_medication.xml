@@ -2,102 +2,171 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        >
+        android:padding="16dp">
 
-        <com.google.android.material.textfield.TextInputLayout
+        <EditText
+            android:id="@+id/etMedicationName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="שם התרופה *">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text" />
-        </com.google.android.material.textfield.TextInputLayout>
+            android:hint="שם תרופה *"
+            android:inputType="text" />
 
-        <com.google.android.material.textfield.TextInputLayout
+        <EditText
+            android:id="@+id/etDosage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="מינון (למשל 500mg) *">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editDosage"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text" />
-        </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="8dp"
+            android:hint="מינון (לדוג׳ 500מ״ג)"
+            android:inputType="text" />
 
-        <com.google.android.material.textfield.TextInputLayout
+        <EditText
+            android:id="@+id/etInstructions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="הערות">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editNotes"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textMultiLine"
-                android:lines="3" />
-        </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="8dp"
+            android:gravity="top"
+            android:hint="הוראות / הערות"
+            android:inputType="textMultiLine"
+            android:minLines="3" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="שעת תזכורת:"
-            android:textStyle="bold"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="12dp"
+            android:text="שעות נטילה"
+            android:textStyle="bold" />
 
-        <TimePicker
-            android:id="@+id/timePicker"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/llTimesContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:timePickerMode="spinner" />
+            android:layout_marginTop="8dp"
+            android:orientation="vertical" />
 
         <Button
-            android:id="@+id/btnCamera"
+            android:id="@+id/btnAddTime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="📷 צלם תמונת אריזה"
-            android:layout_marginTop="8dp" />
-
-        <!-- Preview מצלמה -->
-        <androidx.camera.view.PreviewView
-            android:id="@+id/cameraPreview"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:visibility="gone" />
+            android:layout_marginTop="8dp"
+            android:text="הוסף שעה" />
 
         <TextView
-            android:id="@+id/textPhotoStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=""
-            android:textColor="#4CAF50" />
+            android:layout_marginTop="12dp"
+            android:text="ימי נטילה"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/cbMon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ב׳" />
+
+            <CheckBox
+                android:id="@+id/cbTue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ג׳" />
+
+            <CheckBox
+                android:id="@+id/cbWed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ד׳" />
+
+            <CheckBox
+                android:id="@+id/cbThu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ה׳" />
+
+            <CheckBox
+                android:id="@+id/cbFri"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ו׳" />
+
+            <CheckBox
+                android:id="@+id/cbSat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ש׳" />
+
+            <CheckBox
+                android:id="@+id/cbSun"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="א׳" />
+
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/ivMedicationPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            android:layout_marginTop="12dp"
+            android:contentDescription="@string/medication_name"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_medication" />
+
+        <Button
+            android:id="@+id/btnTakePhoto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="צלם אריזה" />
+
+        <TextView
+            android:id="@+id/tvEmergencyContact"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="לא נבחר איש קשר לחירום"
+            android:textColor="#666666" />
 
         <Button
             android:id="@+id/btnPickContact"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="👤 בחר איש קשר לחירום" />
+            android:layout_marginTop="8dp"
+            android:text="בחר איש קשר לחירום" />
 
-        <TextView
-            android:id="@+id/textContact"
-            android:layout_width="wrap_content"
+        <EditText
+            android:id="@+id/etExpiryDate"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="לא נבחר"
-            android:textColor="#666666" />
+            android:layout_marginTop="12dp"
+            android:hint="תאריך תפוגה (YYYY-MM-DD)"
+            android:inputType="date" />
 
         <Button
             android:id="@+id/btnSave"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="💾 שמור תרופה"
             android:layout_marginTop="16dp"
-            android:backgroundTint="?attr/colorPrimary" />
+            android:text="שמור" />
+
+        <Button
+            android:id="@+id/btnDelete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@color/delete_red"
+            android:text="מחק תרופה"
+            android:visibility="gone" />
 
     </LinearLayout>
 
