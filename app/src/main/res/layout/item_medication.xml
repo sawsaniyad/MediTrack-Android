@@ -1,77 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="6dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    android:layout_marginStart="10dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginEnd="10dp"
+    android:layout_marginBottom="4dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:layoutDirection="rtl"
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#E0E0E0"
+    app:strokeWidth="1dp">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
         android:padding="12dp">
 
         <ImageView
             android:id="@+id/ivMedicationImage"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:contentDescription="@string/medication_name"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="#E3F2FD"
             android:scaleType="centerCrop"
-            android:src="@drawable/ic_medication" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/tvMedicationName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:layout_marginEnd="4dp"
+            android:textColor="#212121"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/viewStatusBadge"
+            app:layout_constraintStart_toEndOf="@+id/ivMedicationImage"
+            app:layout_constraintTop_toTopOf="@+id/ivMedicationImage" />
 
-            <TextView
-                android:id="@+id/tvMedicationName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textStyle="bold"
-                android:textSize="18sp" />
+        <TextView
+            android:id="@+id/tvDosage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="#757575"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="@+id/tvMedicationName"
+            app:layout_constraintStart_toStartOf="@+id/tvMedicationName"
+            app:layout_constraintTop_toBottomOf="@+id/tvMedicationName" />
 
-            <TextView
-                android:id="@+id/tvDosage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp" />
+        <LinearLayout
+            android:id="@+id/llNextTime"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="@+id/tvDosage"
+            app:layout_constraintStart_toStartOf="@+id/tvDosage"
+            app:layout_constraintTop_toBottomOf="@+id/tvDosage">
+
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_marginEnd="3dp"
+                android:src="@android:drawable/ic_menu_recent_history"
+                android:tint="#1976D2" />
 
             <TextView
                 android:id="@+id/tvNextTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="#666666" />
+                android:textColor="#1976D2"
+                android:textSize="11sp" />
 
         </LinearLayout>
 
-        <LinearLayout
+        <View
+            android:id="@+id/viewStatusBadge"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_marginEnd="4dp"
+            android:background="@drawable/bg_status_badge"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:orientation="vertical">
+            android:layout_marginTop="3dp"
+            android:textColor="#757575"
+            android:textSize="10sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/viewStatusBadge" />
 
-            <View
-                android:id="@+id/viewStatusBadge"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:background="@drawable/bg_status_badge" />
-
-            <TextView
-                android:id="@+id/tvStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textSize="12sp" />
-
-        </LinearLayout>
-
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>

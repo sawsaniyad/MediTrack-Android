@@ -148,4 +148,59 @@
 
     <string name="sms_missed_dose">שלום %1$s, %2$s לא נלקחה במועד. אנא בדוק/י את המטופל.</string>
     <string name="snackbar_action_taken">נלקח</string>
+
+    <!-- Splash feature labels -->
+    <string name="feat_reminders">תזכורות חכמות</string>
+    <string name="feat_camera">צילום אריזה</string>
+    <string name="feat_history">יומן נטילות</string>
+    <string name="feat_contacts">איש קשר חירום</string>
+
+    <!-- Date chips -->
+    <string name="chip_yesterday">אתמול</string>
+    <string name="chip_today">היום</string>
+    <string name="chip_tomorrow">מחר</string>
+
+    <!-- Add/Edit medication toolbar title -->
+    <string name="title_add_medication">הוסף תרופה</string>
+
+    <!-- Day abbreviations for checkboxes -->
+    <string name="day_sun">א׳</string>
+    <string name="day_mon">ב׳</string>
+    <string name="day_tue">ג׳</string>
+    <string name="day_wed">ד׳</string>
+    <string name="day_thu">ה׳</string>
+    <string name="day_fri">ו׳</string>
+    <string name="day_sat">ש׳</string>
+
+    <!-- Settings labels -->
+    <string name="label_reminder_minutes">דקות תזכורת מראש</string>
+    <string name="label_vibrate">רטט בתזכורות</string>
+    <string name="label_sound">צליל בתזכורות</string>
+    <string name="label_reminder_minutes_default">15 דקות</string>
+
+    <!-- Progress card -->
+    <string name="label_progress_today">התקדמות היום</string>
+    <string name="label_progress_default">0 / 0 נלקחו</string>
+    <string name="label_count_taken">נלקח 0</string>
+    <string name="label_count_pending">ממתין 0</string>
+    <string name="label_count_missed">הוחמץ 0</string>
+
+    <!-- Card section headers -->
+    <string name="label_section_info">פרטי התרופה</string>
+    <string name="label_section_times">זמני נטילה</string>
+    <string name="label_section_photo">תמונת האריזה</string>
+    <string name="label_section_reminders">תזמון תזכורות</string>
+
+    <!-- Settings info rows -->
+    <string name="label_permissions_subtitle">מצלמה, אנשי קשר, התראות</string>
+    <string name="label_app_version">MediTrack v1.0</string>
+    <string name="label_clear_data">נקה כל הנתונים</string>
+    <string name="label_clear_data_subtitle">מחיקת כל התרופות והיסטוריה</string>
+
+    <!-- Camera overlay -->
+    <string name="hint_camera_frame">מסגר את שם התרופה, המינון ותאריך התפוגה</string>
+    <string name="label_camera_title">צלם אריזה</string>
+
+    <!-- Clear filter button -->
+    <string name="btn_clear_x">✕</string>
 </resources>
