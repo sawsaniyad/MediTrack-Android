@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="8dp"
-        android:gap="8dp">
+        >
 
         <Button
             android:id="@+id/btnFilterToday"
