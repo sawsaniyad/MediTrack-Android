@@ -15,6 +15,11 @@
 - Camera: CameraX 1.4.2 (in-app, no system Intent)
 
 ## Features
+| שם | תחום אחריות | Branch |
+|---|---|---|
+| סמירה אבו אל-הווא | מסד נתונים + SplashActivity | `feature/samira-database` |
+| סאסאן אבו שמא | התראות + הגדרות + היסטוריה | `feature/sawsan-notifications` |
+| רגד מחיסן | UI + מצלמה + רשימה ראשית | `feature/raghad-ui-camera` |
 
 - Medication list with status badges
 - Add/Edit with CameraX photo capture
