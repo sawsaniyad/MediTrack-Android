@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.samiraa_raghadm_sawsana.meditrack">
 
+    <!-- הרשאות נדרשות -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -22,52 +23,62 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MediTrack">
 
+        <!-- SplashActivity - נקודת הכניסה לאפליקציה -->
         <activity
-            android:name=".ui.SplashActivity"
+            android:name=".activities.SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.NoActionBar">
+            android:theme="@style/Theme.MediTrack">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <!-- MainActivity - לא נקודת הכניסה -->
         <activity
-            android:name=".ui.MedicationListActivity"
+            android:name=".MainActivity"
+            android:exported="false" />
+
+        <!-- שאר המסכים -->
+        <activity
+            android:name=".activities.MedicationListActivity"
             android:exported="false" />
 
         <activity
-            android:name=".ui.AddEditMedicationActivity"
+            android:name=".activities.AddEditMedicationActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".ui.CameraActivity"
+            android:name=".activities.CameraActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
 
         <activity
-            android:name=".ui.SettingsActivity"
+            android:name=".activities.SettingsActivity"
             android:exported="false"
-            android:parentActivityName=".ui.MedicationListActivity" />
+            android:parentActivityName=".activities.MedicationListActivity" />
 
         <activity
-            android:name=".ui.HistoryActivity"
+            android:name=".activities.HistoryActivity"
             android:exported="false"
-            android:parentActivityName=".ui.MedicationListActivity" />
+            android:parentActivityName=".activities.MedicationListActivity" />
 
-        <activity
-            android:name=".ui.MainActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ui.DevTestActivity"
-            android:exported="false" />
-
+        <!-- AlarmReceiver - מקבל התראות מ-AlarmManager -->
         <receiver
             android:name=".receivers.AlarmReceiver"
             android:exported="false" />
+
+        <!-- BootReceiver - מתזמן מחדש לאחר הפעלת מכשיר -->
+        <receiver
+            android:name=".receivers.BootReceiver"
+            android:exported="true" />
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
 
         <receiver
             android:name=".receivers.TakenActionReceiver"
@@ -78,21 +89,23 @@
             android:exported="false" />
 
         <receiver
-            android:name=".receivers.BootReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
             android:name=".receivers.MissedDoseReceiver"
             android:exported="false" />
 
         <receiver
             android:name=".receivers.ExpiryReceiver"
             android:exported="false" />
+
+        <!-- FileProvider - לשמירת תמונות מהמצלמה -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.samiraa_raghadm_sawsana.meditrack.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

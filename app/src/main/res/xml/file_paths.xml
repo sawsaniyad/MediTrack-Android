@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- נתיב לשמירת תמונות מהמצלמה -->
+    <files-path
+        name="medication_photos"
+        path="photos/" />
+</paths>
