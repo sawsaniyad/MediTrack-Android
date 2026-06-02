@@ -1,4 +1,4 @@
-package com.samiraa_raghadm_sawsana.meditrack.ui;
+package com.samiraa_raghadm_sawsana.meditrack.activities;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.data.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
 
 public class SettingsActivity extends BaseActivity {
 

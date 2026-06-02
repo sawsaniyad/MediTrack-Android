@@ -1,4 +1,4 @@
-package com.samiraa_raghadm_sawsana.meditrack.services;
+package com.samiraa_raghadm_sawsana.meditrack.helpers;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -15,10 +15,10 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.data.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.SnoozeActionReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.TakenActionReceiver;
-import com.samiraa_raghadm_sawsana.meditrack.ui.MedicationListActivity;
+import com.samiraa_raghadm_sawsana.meditrack.activities.MedicationListActivity;
 
 public final class NotificationHelper {
 

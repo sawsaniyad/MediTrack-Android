@@ -1,4 +1,4 @@
-package com.samiraa_raghadm_sawsana.meditrack.ui;
+package com.samiraa_raghadm_sawsana.meditrack.activities;
 
 import android.content.Intent;
 import android.os.Bundle;

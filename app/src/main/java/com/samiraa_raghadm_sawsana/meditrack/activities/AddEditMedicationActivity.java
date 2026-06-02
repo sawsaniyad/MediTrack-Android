@@ -1,4 +1,4 @@
-package com.samiraa_raghadm_sawsana.meditrack.ui;
+package com.samiraa_raghadm_sawsana.meditrack.activities;
 
 import android.Manifest;
 import android.app.AlarmManager;
@@ -29,12 +29,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.data.AppExecutors;
-import com.samiraa_raghadm_sawsana.meditrack.data.Medication;
-import com.samiraa_raghadm_sawsana.meditrack.data.Schedule;
-import com.samiraa_raghadm_sawsana.meditrack.db.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.db.MedicationDao;
-import com.samiraa_raghadm_sawsana.meditrack.services.AlarmScheduler;
+import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
+import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
+import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 
 import java.io.File;
 import java.util.ArrayList;

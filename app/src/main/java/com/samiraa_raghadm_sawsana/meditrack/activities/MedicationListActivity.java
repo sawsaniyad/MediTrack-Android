@@ -1,4 +1,4 @@
-package com.samiraa_raghadm_sawsana.meditrack.ui;
+package com.samiraa_raghadm_sawsana.meditrack.activities;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
@@ -25,14 +25,14 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.samiraa_raghadm_sawsana.meditrack.BuildConfig;
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.data.AppExecutors;
-import com.samiraa_raghadm_sawsana.meditrack.data.IntakeLog;
-import com.samiraa_raghadm_sawsana.meditrack.data.Medication;
-import com.samiraa_raghadm_sawsana.meditrack.data.Schedule;
-import com.samiraa_raghadm_sawsana.meditrack.db.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.db.MedicationDao;
-import com.samiraa_raghadm_sawsana.meditrack.services.AlarmScheduler;
-import com.samiraa_raghadm_sawsana.meditrack.services.NotificationHelper;
+import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
+import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
+import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
+import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

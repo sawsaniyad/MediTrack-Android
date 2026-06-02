@@ -1,4 +1,4 @@
-package com.samiraa_raghadm_sawsana.meditrack.ui;
+package com.samiraa_raghadm_sawsana.meditrack.adapters;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -16,10 +16,10 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.data.AppExecutors;
-import com.samiraa_raghadm_sawsana.meditrack.data.IntakeLog;
-import com.samiraa_raghadm_sawsana.meditrack.data.Medication;
-import com.samiraa_raghadm_sawsana.meditrack.data.Schedule;
+import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
+import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
+import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

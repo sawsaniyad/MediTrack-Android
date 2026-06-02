@@ -1,4 +1,4 @@
-package com.samiraa_raghadm_sawsana.meditrack.services;
+package com.samiraa_raghadm_sawsana.meditrack.helpers;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -6,11 +6,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
-import com.samiraa_raghadm_sawsana.meditrack.data.AppExecutors;
-import com.samiraa_raghadm_sawsana.meditrack.data.Medication;
-import com.samiraa_raghadm_sawsana.meditrack.data.PrefsManager;
-import com.samiraa_raghadm_sawsana.meditrack.data.Schedule;
-import com.samiraa_raghadm_sawsana.meditrack.db.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
+import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.AlarmReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.ExpiryReceiver;
 

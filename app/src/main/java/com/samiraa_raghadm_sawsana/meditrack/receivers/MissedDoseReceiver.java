@@ -8,13 +8,13 @@ import android.content.pm.PackageManager;
 import android.telephony.SmsManager;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.data.AppExecutors;
-import com.samiraa_raghadm_sawsana.meditrack.data.IntakeLog;
-import com.samiraa_raghadm_sawsana.meditrack.data.Medication;
-import com.samiraa_raghadm_sawsana.meditrack.db.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.db.MedicationDao;
-import com.samiraa_raghadm_sawsana.meditrack.services.NotificationHelper;
-import com.samiraa_raghadm_sawsana.meditrack.ui.PermissionManager;
+import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
+import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
+import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
+import com.samiraa_raghadm_sawsana.meditrack.activities.PermissionManager;
 
 import java.util.List;
 

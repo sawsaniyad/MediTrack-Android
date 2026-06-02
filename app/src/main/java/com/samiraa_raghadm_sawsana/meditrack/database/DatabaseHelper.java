@@ -1,4 +1,4 @@
-package com.samiraa_raghadm_sawsana.meditrack.db;
+package com.samiraa_raghadm_sawsana.meditrack.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

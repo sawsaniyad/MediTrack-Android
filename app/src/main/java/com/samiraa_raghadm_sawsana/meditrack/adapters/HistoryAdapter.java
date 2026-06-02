@@ -1,4 +1,4 @@
-package com.samiraa_raghadm_sawsana.meditrack.ui;
+package com.samiraa_raghadm_sawsana.meditrack.adapters;
 
 import android.graphics.drawable.GradientDrawable;
 import android.text.TextUtils;
@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.data.IntakeLog;
+import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 
 import java.util.ArrayList;
 import java.util.HashMap;

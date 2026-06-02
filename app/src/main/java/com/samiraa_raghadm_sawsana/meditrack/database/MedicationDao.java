@@ -1,12 +1,12 @@
-package com.samiraa_raghadm_sawsana.meditrack.db;
+package com.samiraa_raghadm_sawsana.meditrack.database;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.samiraa_raghadm_sawsana.meditrack.data.IntakeLog;
-import com.samiraa_raghadm_sawsana.meditrack.data.Medication;
-import com.samiraa_raghadm_sawsana.meditrack.data.Schedule;
+import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
+import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
+import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

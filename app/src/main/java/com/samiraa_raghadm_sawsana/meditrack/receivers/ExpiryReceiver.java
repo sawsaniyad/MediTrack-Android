@@ -10,7 +10,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.services.NotificationHelper;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
 
 public class ExpiryReceiver extends BroadcastReceiver {
 

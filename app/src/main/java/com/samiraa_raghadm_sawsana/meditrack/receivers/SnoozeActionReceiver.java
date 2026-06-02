@@ -9,7 +9,7 @@ import android.os.Build;
 
 import androidx.core.app.NotificationManagerCompat;
 
-import com.samiraa_raghadm_sawsana.meditrack.data.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
 
 public class SnoozeActionReceiver extends BroadcastReceiver {
 

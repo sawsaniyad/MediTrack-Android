@@ -6,10 +6,10 @@ import android.content.Intent;
 
 import androidx.core.app.NotificationManagerCompat;
 
-import com.samiraa_raghadm_sawsana.meditrack.data.AppExecutors;
-import com.samiraa_raghadm_sawsana.meditrack.data.IntakeLog;
-import com.samiraa_raghadm_sawsana.meditrack.db.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.db.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
+import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

@@ -1,4 +1,4 @@
-package com.samiraa_raghadm_sawsana.meditrack.data;
+package com.samiraa_raghadm_sawsana.meditrack.models;
 
 import android.content.Context;
 import android.content.SharedPreferences;
