@@ -36,7 +36,7 @@
 
         <!-- MainActivity - לא נקודת הכניסה -->
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:exported="false" />
 
         <!-- שאר המסכים -->
@@ -73,7 +73,7 @@
         <!-- BootReceiver - מתזמן מחדש לאחר הפעלת מכשיר -->
         <receiver
             android:name=".receivers.BootReceiver"
-            android:exported="true" />
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
