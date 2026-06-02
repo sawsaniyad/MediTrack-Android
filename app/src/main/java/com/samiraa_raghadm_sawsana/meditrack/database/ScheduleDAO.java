@@ -13,9 +13,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * DAO לתזמונים - כל פעולות CRUD על טבלת Schedules
+ * DAO לתזמונים - כל פעולות CRUD על טבלת schedules
  * Data Access Object for the Schedules table.
  * All operations run on a background thread via ExecutorService.
+ *
+ * עודכן לשמות שדות חדשים:
+ * - intakeTime (במקום time)
+ * - daysOfWeek (במקום days)
+ * - isEnabled (נשמר)
+ *
+ * כותבת: סמירה אבו אל-הווא
  */
 public class ScheduleDAO {
 
@@ -47,7 +54,7 @@ public class ScheduleDAO {
     }
 
     // ================================================================
-    // INSERT
+    // INSERT - הוספת תזמון חדש
     // ================================================================
 
     /**
@@ -58,14 +65,12 @@ public class ScheduleDAO {
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             ContentValues values = buildContentValues(schedule);
             long id = db.insert(DatabaseHelper.TABLE_SCHEDULES, null, values);
-            if (callback != null) {
-                callback.onResult(id);
-            }
+            if (callback != null) callback.onResult(id);
         });
     }
 
     // ================================================================
-    // UPDATE
+    // UPDATE - עדכון תזמון קיים
     // ================================================================
 
     /**
@@ -74,21 +79,18 @@ public class ScheduleDAO {
     public void update(Schedule schedule, OnOperationResult callback) {
         executor.execute(() -> {
             SQLiteDatabase db = dbHelper.getWritableDatabase();
-            ContentValues values = buildContentValues(schedule);
-            int rowsAffected = db.update(
+            int rows = db.update(
                     DatabaseHelper.TABLE_SCHEDULES,
-                    values,
+                    buildContentValues(schedule),
                     DatabaseHelper.COL_SCH_ID + " = ?",
                     new String[]{String.valueOf(schedule.getId())}
             );
-            if (callback != null) {
-                callback.onResult(rowsAffected > 0);
-            }
+            if (callback != null) callback.onResult(rows > 0);
         });
     }
 
     // ================================================================
-    // DELETE
+    // DELETE - מחיקת תזמון
     // ================================================================
 
     /**
@@ -97,57 +99,52 @@ public class ScheduleDAO {
     public void delete(int scheduleId, OnOperationResult callback) {
         executor.execute(() -> {
             SQLiteDatabase db = dbHelper.getWritableDatabase();
-            int rowsDeleted = db.delete(
+            int rows = db.delete(
                     DatabaseHelper.TABLE_SCHEDULES,
                     DatabaseHelper.COL_SCH_ID + " = ?",
                     new String[]{String.valueOf(scheduleId)}
             );
-            if (callback != null) {
-                callback.onResult(rowsDeleted > 0);
-            }
+            if (callback != null) callback.onResult(rows > 0);
         });
     }
 
     /**
      * מוחק את כל התזמונים של תרופה מסוימת בthread רקע
+     * נקרא לפני מחיקת תרופה (CASCADE יטפל אוטומטית אם מוגדר)
      */
     public void deleteByMedicationId(int medicationId, OnOperationResult callback) {
         executor.execute(() -> {
             SQLiteDatabase db = dbHelper.getWritableDatabase();
-            int rowsDeleted = db.delete(
+            int rows = db.delete(
                     DatabaseHelper.TABLE_SCHEDULES,
                     DatabaseHelper.COL_SCH_MEDICATION_ID + " = ?",
                     new String[]{String.valueOf(medicationId)}
             );
-            if (callback != null) {
-                callback.onResult(rowsDeleted > 0);
-            }
+            if (callback != null) callback.onResult(rows > 0);
         });
     }
 
     // ================================================================
-    // GET ALL
+    // GET ALL - קבלת כל התזמונים
     // ================================================================
 
     /**
      * מחזיר את כל התזמונים בthread רקע
+     * Used by BootReceiver to reschedule ALL alarms after reboot
      */
     public void getAll(OnScheduleListResult callback) {
         executor.execute(() -> {
-            List<Schedule> list = new ArrayList<>();
             SQLiteDatabase db = dbHelper.getReadableDatabase();
-            Cursor cursor = db.query(
-                    DatabaseHelper.TABLE_SCHEDULES,
-                    null, null, null, null, null, null
-            );
-            if (cursor != null) {
-                while (cursor.moveToNext()) {
-                    list.add(cursorToSchedule(cursor));
-                }
-                cursor.close();
-            }
-            if (callback != null) {
-                callback.onResult(list);
+            Cursor cursor = null;
+            try {
+                cursor = db.query(
+                        DatabaseHelper.TABLE_SCHEDULES,
+                        null, null, null, null, null,
+                        DatabaseHelper.COL_SCH_INTAKE_TIME + " ASC"
+                );
+                if (callback != null) callback.onResult(cursorToScheduleList(cursor));
+            } finally {
+                if (cursor != null) cursor.close();
             }
         });
     }
@@ -158,27 +155,53 @@ public class ScheduleDAO {
 
     /**
      * מחזיר את כל התזמונים של תרופה מסוימת בthread רקע
-     * Used by BootReceiver to reschedule alarms after reboot.
+     * Used by BootReceiver and AddEditMedicationActivity
      */
     public void getByMedicationId(int medicationId, OnScheduleListResult callback) {
         executor.execute(() -> {
-            List<Schedule> list = new ArrayList<>();
             SQLiteDatabase db = dbHelper.getReadableDatabase();
-            Cursor cursor = db.query(
-                    DatabaseHelper.TABLE_SCHEDULES,
-                    null,
-                    DatabaseHelper.COL_SCH_MEDICATION_ID + " = ?",
-                    new String[]{String.valueOf(medicationId)},
-                    null, null, null
-            );
-            if (cursor != null) {
-                while (cursor.moveToNext()) {
-                    list.add(cursorToSchedule(cursor));
-                }
-                cursor.close();
+            Cursor cursor = null;
+            try {
+                cursor = db.query(
+                        DatabaseHelper.TABLE_SCHEDULES,
+                        null,
+                        DatabaseHelper.COL_SCH_MEDICATION_ID + " = ?",
+                        new String[]{String.valueOf(medicationId)},
+                        null, null,
+                        DatabaseHelper.COL_SCH_INTAKE_TIME + " ASC"
+                );
+                if (callback != null) callback.onResult(cursorToScheduleList(cursor));
+            } finally {
+                if (cursor != null) cursor.close();
             }
-            if (callback != null) {
-                callback.onResult(list);
+        });
+    }
+
+    // ================================================================
+    // GET ENABLED BY MEDICATION ID - תזמונים פעילים בלבד
+    // ================================================================
+
+    /**
+     * מחזיר רק תזמונים פעילים של תרופה מסוימת בthread רקע
+     * Used by AlarmScheduler to only schedule enabled alarms
+     */
+    public void getEnabledByMedicationId(int medicationId, OnScheduleListResult callback) {
+        executor.execute(() -> {
+            SQLiteDatabase db = dbHelper.getReadableDatabase();
+            Cursor cursor = null;
+            try {
+                cursor = db.query(
+                        DatabaseHelper.TABLE_SCHEDULES,
+                        null,
+                        DatabaseHelper.COL_SCH_MEDICATION_ID + " = ? AND " +
+                        DatabaseHelper.COL_SCH_IS_ENABLED + " = 1",
+                        new String[]{String.valueOf(medicationId)},
+                        null, null,
+                        DatabaseHelper.COL_SCH_INTAKE_TIME + " ASC"
+                );
+                if (callback != null) callback.onResult(cursorToScheduleList(cursor));
+            } finally {
+                if (cursor != null) cursor.close();
             }
         });
     }
@@ -187,25 +210,28 @@ public class ScheduleDAO {
     // GET BY ID
     // ================================================================
 
+    /**
+     * מחזיר תזמון בודד לפי id בthread רקע
+     */
     public void getById(int scheduleId, OnScheduleResult callback) {
         executor.execute(() -> {
-            Schedule schedule = null;
             SQLiteDatabase db = dbHelper.getReadableDatabase();
-            Cursor cursor = db.query(
-                    DatabaseHelper.TABLE_SCHEDULES,
-                    null,
-                    DatabaseHelper.COL_SCH_ID + " = ?",
-                    new String[]{String.valueOf(scheduleId)},
-                    null, null, null
-            );
-            if (cursor != null) {
+            Cursor cursor = null;
+            try {
+                cursor = db.query(
+                        DatabaseHelper.TABLE_SCHEDULES,
+                        null,
+                        DatabaseHelper.COL_SCH_ID + " = ?",
+                        new String[]{String.valueOf(scheduleId)},
+                        null, null, null
+                );
+                Schedule schedule = null;
                 if (cursor.moveToFirst()) {
                     schedule = cursorToSchedule(cursor);
                 }
-                cursor.close();
-            }
-            if (callback != null) {
-                callback.onResult(schedule);
+                if (callback != null) callback.onResult(schedule);
+            } finally {
+                if (cursor != null) cursor.close();
             }
         });
     }
@@ -217,8 +243,8 @@ public class ScheduleDAO {
     private ContentValues buildContentValues(Schedule schedule) {
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.COL_SCH_MEDICATION_ID, schedule.getMedicationId());
-        values.put(DatabaseHelper.COL_SCH_TIME,          schedule.getTime());
-        values.put(DatabaseHelper.COL_SCH_DAYS,          schedule.getDays());
+        values.put(DatabaseHelper.COL_SCH_INTAKE_TIME,   schedule.getIntakeTime());
+        values.put(DatabaseHelper.COL_SCH_DAYS_OF_WEEK,  schedule.getDaysOfWeek());
         values.put(DatabaseHelper.COL_SCH_IS_ENABLED,    schedule.isEnabled() ? 1 : 0);
         return values;
     }
@@ -227,9 +253,17 @@ public class ScheduleDAO {
         Schedule schedule = new Schedule();
         schedule.setId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_SCH_ID)));
         schedule.setMedicationId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_SCH_MEDICATION_ID)));
-        schedule.setTime(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_SCH_TIME)));
-        schedule.setDays(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_SCH_DAYS)));
+        schedule.setIntakeTime(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_SCH_INTAKE_TIME)));
+        schedule.setDaysOfWeek(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_SCH_DAYS_OF_WEEK)));
         schedule.setEnabled(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_SCH_IS_ENABLED)) == 1);
         return schedule;
+    }
+
+    private List<Schedule> cursorToScheduleList(Cursor cursor) {
+        List<Schedule> list = new ArrayList<>();
+        while (cursor.moveToNext()) {
+            list.add(cursorToSchedule(cursor));
+        }
+        return list;
     }
 }

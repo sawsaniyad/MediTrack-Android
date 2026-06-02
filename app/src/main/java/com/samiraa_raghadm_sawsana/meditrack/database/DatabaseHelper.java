@@ -9,8 +9,9 @@ import android.database.sqlite.SQLiteOpenHelper;
  * DatabaseHelper: manages SQLite database creation and version management.
  * Extends SQLiteOpenHelper as required by the course.
  *
- * טבלאות: Medications, Schedules, IntakeLog
- * Tables: Medications, Schedules, IntakeLog
+ * טבלאות: medications, schedules, intake_log
+ *
+ * כותבת: סמירה אבו אל-הווא
  */
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -19,80 +20,93 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final int    DB_VERSION = 1;
 
     // -------- שמות טבלאות / Table Names --------
-    public static final String TABLE_MEDICATIONS = "Medications";
-    public static final String TABLE_SCHEDULES   = "Schedules";
-    public static final String TABLE_INTAKE_LOG  = "IntakeLog";
+    public static final String TABLE_MEDICATIONS = "medications";
+    public static final String TABLE_SCHEDULES   = "schedules";
+    public static final String TABLE_INTAKE_LOG  = "intake_log";
 
-    // -------- עמודות טבלת Medications --------
-    public static final String COL_MED_ID         = "id";
-    public static final String COL_MED_NAME       = "name";
-    public static final String COL_MED_DOSAGE     = "dosage";
-    public static final String COL_MED_NOTES      = "notes";
-    public static final String COL_MED_PHOTO_PATH = "photo_path";
-    public static final String COL_MED_IS_ACTIVE  = "is_active";
+    // -------- עמודות טבלת medications --------
+    public static final String COL_MED_ID                    = "id";
+    public static final String COL_MED_NAME                  = "name";
+    public static final String COL_MED_DOSAGE                = "dosage";
+    public static final String COL_MED_INSTRUCTIONS          = "instructions";
+    public static final String COL_MED_IMAGE_PATH            = "image_path";
+    public static final String COL_MED_EXPIRY_DATE           = "expiry_date";
+    public static final String COL_MED_EMERGENCY_CONTACT_NAME  = "emergency_contact_name";
+    public static final String COL_MED_EMERGENCY_CONTACT_PHONE = "emergency_contact_phone";
+    public static final String COL_MED_IS_ACTIVE             = "is_active";
 
-    // -------- עמודות טבלת Schedules --------
+    // -------- עמודות טבלת schedules --------
     public static final String COL_SCH_ID            = "id";
     public static final String COL_SCH_MEDICATION_ID = "medication_id";
-    public static final String COL_SCH_TIME          = "time";
-    public static final String COL_SCH_DAYS          = "days";
+    public static final String COL_SCH_INTAKE_TIME   = "intake_time";
+    public static final String COL_SCH_DAYS_OF_WEEK  = "days_of_week";
     public static final String COL_SCH_IS_ENABLED    = "is_enabled";
 
-    // -------- עמודות טבלת IntakeLog --------
-    public static final String COL_LOG_ID              = "id";
-    public static final String COL_LOG_MEDICATION_ID   = "medication_id";
-    public static final String COL_LOG_SCHEDULE_ID     = "schedule_id";
-    public static final String COL_LOG_MEDICATION_NAME = "medication_name";
-    public static final String COL_LOG_SCHEDULED_TIME  = "scheduled_time";
-    public static final String COL_LOG_DATE            = "date";
-    public static final String COL_LOG_STATUS          = "status";
-    public static final String COL_LOG_TIMESTAMP       = "timestamp";
+    // -------- עמודות טבלת intake_log --------
+    public static final String COL_LOG_ID                 = "id";
+    public static final String COL_LOG_MEDICATION_ID      = "medication_id";
+    public static final String COL_LOG_MEDICATION_NAME    = "medication_name";
+    public static final String COL_LOG_SCHEDULED_DATETIME = "scheduled_datetime";
+    public static final String COL_LOG_TAKEN              = "taken";
+    public static final String COL_LOG_ACTUAL_DATETIME    = "actual_datetime";
+    public static final String COL_LOG_WAS_DELAYED        = "was_delayed";
+    public static final String COL_LOG_STATUS             = "status";
 
     // -------- פקודות יצירת טבלאות / CREATE TABLE Statements --------
 
     private static final String CREATE_TABLE_MEDICATIONS =
             "CREATE TABLE " + TABLE_MEDICATIONS + " (" +
-                    COL_MED_ID         + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    COL_MED_NAME       + " TEXT NOT NULL, " +
-                    COL_MED_DOSAGE     + " TEXT, " +
-                    COL_MED_NOTES      + " TEXT, " +
-                    COL_MED_PHOTO_PATH + " TEXT, " +
-                    COL_MED_IS_ACTIVE  + " INTEGER DEFAULT 1" +
-                    ");";
+                    COL_MED_ID                      + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    COL_MED_NAME                    + " TEXT NOT NULL, " +
+                    COL_MED_DOSAGE                  + " TEXT, " +
+                    COL_MED_INSTRUCTIONS            + " TEXT, " +
+                    COL_MED_IMAGE_PATH              + " TEXT, " +
+                    COL_MED_EXPIRY_DATE             + " TEXT, " +
+                    COL_MED_EMERGENCY_CONTACT_NAME  + " TEXT, " +
+                    COL_MED_EMERGENCY_CONTACT_PHONE + " TEXT, " +
+                    COL_MED_IS_ACTIVE               + " INTEGER DEFAULT 1" +
+                    ")";
 
     private static final String CREATE_TABLE_SCHEDULES =
             "CREATE TABLE " + TABLE_SCHEDULES + " (" +
                     COL_SCH_ID            + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     COL_SCH_MEDICATION_ID + " INTEGER NOT NULL, " +
-                    COL_SCH_TIME          + " TEXT NOT NULL, " +
-                    COL_SCH_DAYS          + " TEXT, " +
+                    COL_SCH_INTAKE_TIME   + " TEXT NOT NULL, " +
+                    COL_SCH_DAYS_OF_WEEK  + " TEXT NOT NULL, " +
                     COL_SCH_IS_ENABLED    + " INTEGER DEFAULT 1, " +
                     "FOREIGN KEY(" + COL_SCH_MEDICATION_ID + ") REFERENCES " +
                     TABLE_MEDICATIONS + "(" + COL_MED_ID + ") ON DELETE CASCADE" +
-                    ");";
+                    ")";
 
     private static final String CREATE_TABLE_INTAKE_LOG =
             "CREATE TABLE " + TABLE_INTAKE_LOG + " (" +
-                    COL_LOG_ID              + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    COL_LOG_MEDICATION_ID   + " INTEGER NOT NULL, " +
-                    COL_LOG_SCHEDULE_ID     + " INTEGER, " +
-                    COL_LOG_MEDICATION_NAME + " TEXT, " +
-                    COL_LOG_SCHEDULED_TIME  + " TEXT, " +
-                    COL_LOG_DATE            + " TEXT NOT NULL, " +
-                    COL_LOG_STATUS          + " TEXT NOT NULL, " +
-                    COL_LOG_TIMESTAMP       + " INTEGER" +
-                    ");";
+                    COL_LOG_ID                 + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    COL_LOG_MEDICATION_ID      + " INTEGER NOT NULL, " +
+                    COL_LOG_MEDICATION_NAME    + " TEXT, " +
+                    COL_LOG_SCHEDULED_DATETIME + " TEXT NOT NULL, " +
+                    COL_LOG_TAKEN              + " INTEGER DEFAULT 0, " +
+                    COL_LOG_ACTUAL_DATETIME    + " TEXT, " +
+                    COL_LOG_WAS_DELAYED        + " INTEGER DEFAULT 0, " +
+                    COL_LOG_STATUS             + " TEXT DEFAULT 'ממתין', " +
+                    "FOREIGN KEY(" + COL_LOG_MEDICATION_ID + ") REFERENCES " +
+                    TABLE_MEDICATIONS + "(" + COL_MED_ID + ") ON DELETE CASCADE" +
+                    ")";
 
     // -------- Singleton Instance --------
-    private static DatabaseHelper instance;
+    // double-checked locking — thread safe
+    private static volatile DatabaseHelper instance;
 
     /**
-     * Singleton pattern - מונע יצירת מספר חיבורים במקביל
-     * Returns a single shared instance of DatabaseHelper.
+     * Singleton — מונע יצירת מספר חיבורים במקביל
+     * Returns single shared instance of DatabaseHelper.
      */
-    public static synchronized DatabaseHelper getInstance(Context context) {
+    public static DatabaseHelper getInstance(Context context) {
         if (instance == null) {
-            instance = new DatabaseHelper(context.getApplicationContext());
+            synchronized (DatabaseHelper.class) {
+                if (instance == null) {
+                    instance = new DatabaseHelper(context.getApplicationContext());
+                }
+            }
         }
         return instance;
     }
@@ -103,15 +117,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     /**
+     * מפעיל Foreign Keys אוטומטית בכל פתיחה
+     * Using onConfigure (Raghad's approach) — cleaner than PRAGMA in onCreate
+     */
+    @Override
+    public void onConfigure(SQLiteDatabase db) {
+        super.onConfigure(db);
+        db.setForeignKeyConstraintsEnabled(true);
+    }
+
+    /**
      * נקרא בפעם הראשונה שמסד הנתונים נוצר
      * Called when the database is created for the first time.
      */
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // הפעלת CASCADE Deletes
-        db.execSQL("PRAGMA foreign_keys = ON;");
-
-        // יצירת הטבלאות
         db.execSQL(CREATE_TABLE_MEDICATIONS);
         db.execSQL(CREATE_TABLE_SCHEDULES);
         db.execSQL(CREATE_TABLE_INTAKE_LOG);
@@ -119,7 +139,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     /**
      * נקרא כשגרסת מסד הנתונים עולה
-     * Called when DB version is bumped — drop and recreate all tables.
+     * Called when DB version is bumped — drops and recreates all tables.
      */
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -131,13 +151,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     /**
-     * מאפשר Foreign Keys בכל פתיחה של מסד הנתונים
+     * מנקה את כל הנתונים ללא מחיקת הסכמה
+     * Debug helper — clears all data without dropping schema.
+     * שימושי לבדיקות בזמן פיתוח
      */
-    @Override
-    public void onOpen(SQLiteDatabase db) {
-        super.onOpen(db);
-        if (!db.isReadOnly()) {
-            db.execSQL("PRAGMA foreign_keys = ON;");
-        }
+    public void resetDatabase() {
+        SQLiteDatabase db = getWritableDatabase();
+        db.execSQL("DELETE FROM " + TABLE_INTAKE_LOG);
+        db.execSQL("DELETE FROM " + TABLE_SCHEDULES);
+        db.execSQL("DELETE FROM " + TABLE_MEDICATIONS);
     }
 }
