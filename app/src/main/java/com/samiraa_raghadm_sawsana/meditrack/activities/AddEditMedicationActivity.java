@@ -85,7 +85,8 @@ public class AddEditMedicationActivity extends BaseActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle(editMode
-                    ? R.string.edit_medication : R.string.add_medication);
+                    ? R.string.edit_medication
+                    : R.string.add_medication);
         }
         toolbar.setNavigationOnClickListener(v -> finish());
 
@@ -146,8 +147,8 @@ public class AddEditMedicationActivity extends BaseActivity {
                         new AlertDialog.Builder(this)
                                 .setTitle(R.string.error_camera_denied_title)
                                 .setMessage(R.string.error_camera_denied_message)
-                                .setPositiveButton(R.string.open_settings, (d, w) ->
-                                        PermissionManager.openAppSettings(this))
+                                .setPositiveButton(R.string.open_settings,
+                                        (d, w) -> PermissionManager.openAppSettings(this))
                                 .setNegativeButton(R.string.error_camera_continue_without, null)
                                 .show();
                     } else {
@@ -198,8 +199,8 @@ public class AddEditMedicationActivity extends BaseActivity {
             new AlertDialog.Builder(this)
                     .setTitle(R.string.perm_camera_rationale_title)
                     .setMessage(R.string.perm_camera_rationale_message)
-                    .setPositiveButton(R.string.perm_notif_allow, (d, w) ->
-                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA))
+                    .setPositiveButton(R.string.perm_notif_allow,
+                            (d, w) -> cameraPermissionLauncher.launch(Manifest.permission.CAMERA))
                     .setNegativeButton(R.string.cancel, null)
                     .show();
         } else {
@@ -235,7 +236,7 @@ public class AddEditMedicationActivity extends BaseActivity {
             contactPickerLauncher.launch(new Intent(Intent.ACTION_PICK,
                     ContactsContract.Contacts.CONTENT_URI));
         } else {
-            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_READ_CONTACTS);
+            requestPermissions(new String[] { Manifest.permission.READ_CONTACTS }, REQUEST_READ_CONTACTS);
         }
     }
 
@@ -249,8 +250,7 @@ public class AddEditMedicationActivity extends BaseActivity {
             } else if (!shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS)) {
                 new AlertDialog.Builder(this)
                         .setMessage(R.string.perm_contacts_denied)
-                        .setPositiveButton(R.string.open_settings, (d, w) ->
-                                PermissionManager.openAppSettings(this))
+                        .setPositiveButton(R.string.open_settings, (d, w) -> PermissionManager.openAppSettings(this))
                         .setNegativeButton(R.string.cancel, null)
                         .show();
             }
@@ -265,7 +265,7 @@ public class AddEditMedicationActivity extends BaseActivity {
             Cursor phoneCursor = null;
             try {
                 nameCursor = getContentResolver().query(contactUri,
-                        new String[]{
+                        new String[] {
                                 ContactsContract.Contacts.DISPLAY_NAME,
                                 ContactsContract.Contacts._ID
                         }, null, null, null);
@@ -276,9 +276,9 @@ public class AddEditMedicationActivity extends BaseActivity {
                             ContactsContract.Contacts._ID));
                     phoneCursor = getContentResolver().query(
                             ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                            new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER},
+                            new String[] { ContactsContract.CommonDataKinds.Phone.NUMBER },
                             ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=?",
-                            new String[]{contactId}, null);
+                            new String[] { contactId }, null);
                     if (phoneCursor != null && phoneCursor.moveToFirst()) {
                         phone = phoneCursor.getString(phoneCursor.getColumnIndexOrThrow(
                                 ContactsContract.CommonDataKinds.Phone.NUMBER));
@@ -349,7 +349,8 @@ public class AddEditMedicationActivity extends BaseActivity {
         }
 
         setDaysFromString(!schedules.isEmpty()
-                ? schedules.get(0).getDaysOfWeek() : "1,2,3,4,5,6,7");
+                ? schedules.get(0).getDaysOfWeek()
+                : "1,2,3,4,5,6,7");
     }
 
     private void setDaysFromString(String daysOfWeek) {
