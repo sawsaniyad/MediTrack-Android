@@ -8,7 +8,6 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -25,12 +24,13 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.samiraa_raghadm_sawsana.meditrack.BuildConfig;
 import com.samiraa_raghadm_sawsana.meditrack.R;
+import com.samiraa_raghadm_sawsana.meditrack.adapters.MedicationAdapter;
 import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
 
@@ -46,7 +46,7 @@ public class MedicationListActivity extends BaseActivity {
     private RecyclerView recyclerView;
     private View emptyStateContainer;
     private MedicationAdapter adapter;
-    private MedicationDao dao;
+    private MedicationDAO dao;
     private ActivityResultLauncher<String> notifPermLauncher;
 
     private final BroadcastReceiver medicationDueReceiver = new BroadcastReceiver() {
@@ -75,7 +75,7 @@ public class MedicationListActivity extends BaseActivity {
                     .build());
         }
 
-        dao = new MedicationDao(DatabaseHelper.getInstance(this));
+        dao = new MedicationDAO(DatabaseHelper.getInstance(this));
 
         NotificationHelper.createNotificationChannel(this);
 
@@ -92,6 +92,7 @@ public class MedicationListActivity extends BaseActivity {
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        setupOverflowMenu(toolbar, null);
 
         recyclerView = findViewById(R.id.recyclerViewMedications);
         emptyStateContainer = findViewById(R.id.emptyStateContainer);
@@ -204,36 +205,10 @@ public class MedicationListActivity extends BaseActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_medication_list, menu);
-        return true;
-    }
-
-    @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_about) {
-            showAboutDialog();
-            return true;
-        } else if (id == R.id.action_history) {
-            startActivity(new Intent(this, HistoryActivity.class));
-            return true;
-        } else if (id == R.id.action_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            return true;
-        } else if (id == R.id.action_exit) {
-            finish();
-            System.exit(0);
+        if (handleOverflowMenuItem(item)) {
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    private void showAboutDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.about_title)
-                .setMessage(R.string.about_message)
-                .setPositiveButton(R.string.about_close, null)
-                .show();
     }
 }

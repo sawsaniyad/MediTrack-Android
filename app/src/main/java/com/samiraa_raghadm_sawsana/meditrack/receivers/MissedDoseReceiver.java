@@ -12,7 +12,7 @@ import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
 import com.samiraa_raghadm_sawsana.meditrack.activities.PermissionManager;
 
@@ -29,7 +29,7 @@ public class MissedDoseReceiver extends BroadcastReceiver {
 
         // FIXED: moved to diskIO
         AppExecutors.getInstance().diskIO(() -> {
-            MedicationDao dao = new MedicationDao(DatabaseHelper.getInstance(context));
+            MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
             List<IntakeLog> logs = dao.getLogsByMedication(medicationId);
             boolean stillUntaken = false;
             for (int i = logs.size() - 1; i >= 0; i--) {

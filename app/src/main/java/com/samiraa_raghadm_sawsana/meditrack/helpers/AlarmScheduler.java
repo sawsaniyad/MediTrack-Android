@@ -10,7 +10,7 @@ import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
-import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.AlarmReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.ExpiryReceiver;
 
@@ -86,7 +86,7 @@ public final class AlarmScheduler {
         }
     }
 
-    public static void scheduleAllAlarms(Context context, MedicationDao dao) {
+    public static void scheduleAllAlarms(Context context, MedicationDAO dao) {
         AppExecutors.getInstance().diskIO(() -> {
             List<Schedule> schedules = dao.getAllSchedules();
             for (Schedule schedule : schedules) {
@@ -111,7 +111,7 @@ public final class AlarmScheduler {
         am.cancel(pi);
     }
 
-    public static void cancelAlarmsForMedication(Context context, MedicationDao dao, int medicationId) {
+    public static void cancelAlarmsForMedication(Context context, MedicationDAO dao, int medicationId) {
         AppExecutors.getInstance().diskIO(() -> {
             List<Schedule> schedules = dao.getSchedulesForMedication(medicationId);
             for (Schedule schedule : schedules) {

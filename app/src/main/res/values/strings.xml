@@ -6,6 +6,10 @@
 -->
 <resources>
     <string name="app_name">MediTrack</string>
+    <string name="app_logo_description">MediTrack app logo</string>
+    <string name="splash_subtitle">Medication reminder and tracking app</string>
+    <string name="splash_student_ids">Samira Abu Al-Hawa - 324909803&#10;Raghad Mohiسن - 212541304&#10;Sawsan Abu Shama - 213588270</string>
+    <string name="splash_submission_date">Submission date: 28.6.2026</string>
     <string name="splash_tagline">MediTrack / מדי-טראק</string>
 
     <string name="nav_medications">MediTrack</string>

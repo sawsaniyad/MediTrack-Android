@@ -22,7 +22,7 @@ import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +32,7 @@ import java.util.Map;
 
 public class HistoryActivity extends BaseActivity {
 
-    private MedicationDao dao;
+    private MedicationDAO dao;
     private HistoryAdapter adapter;
     private TextView tvSelectedDate;
     private TextView tvHistoryEmpty;
@@ -48,13 +48,14 @@ public class HistoryActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
-        dao = new MedicationDao(DatabaseHelper.getInstance(this));
+        dao = new MedicationDAO(DatabaseHelper.getInstance(this));
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
+        setupOverflowMenu(toolbar, R.id.action_history);
         toolbar.setNavigationOnClickListener(v -> finish());
 
         tvSelectedDate = findViewById(R.id.tvSelectedDate);
@@ -95,6 +96,9 @@ public class HistoryActivity extends BaseActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             finish();
+            return true;
+        }
+        if (handleOverflowMenuItem(item)) {
             return true;
         }
         return super.onOptionsItemSelected(item);

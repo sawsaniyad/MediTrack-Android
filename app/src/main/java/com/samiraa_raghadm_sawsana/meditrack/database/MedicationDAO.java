@@ -75,6 +75,11 @@ public class MedicationDAO {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
+    public MedicationDAO(DatabaseHelper dbHelper) {
+        this.dbHelper = dbHelper;
+        this.executor = Executors.newSingleThreadExecutor();
+    }
+
     // ================================================================
     // MEDICATIONS — פעולות על טבלת תרופות
     // ================================================================
@@ -89,6 +94,12 @@ public class MedicationDAO {
                     medicationToContentValues(medication));
             if (callback != null) callback.onResult(id);
         });
+    }
+
+    public long insertMedication(Medication medication) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        return db.insert(DatabaseHelper.TABLE_MEDICATIONS, null,
+                medicationToContentValues(medication));
     }
 
     /**
@@ -107,6 +118,16 @@ public class MedicationDAO {
         });
     }
 
+    public int updateMedication(Medication medication) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        return db.update(
+                DatabaseHelper.TABLE_MEDICATIONS,
+                medicationToContentValues(medication),
+                DatabaseHelper.COL_MED_ID + " = ?",
+                new String[]{String.valueOf(medication.getId())}
+        );
+    }
+
     /**
      * מחיקת תרופה בthread רקע
      * CASCADE ימחק גם את ה-schedules וה-intake_log המקושרים
@@ -121,6 +142,15 @@ public class MedicationDAO {
             );
             if (callback != null) callback.onResult(rows > 0);
         });
+    }
+
+    public int deleteMedication(int medicationId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        return db.delete(
+                DatabaseHelper.TABLE_MEDICATIONS,
+                DatabaseHelper.COL_MED_ID + " = ?",
+                new String[]{String.valueOf(medicationId)}
+        );
     }
 
     /**
@@ -149,6 +179,27 @@ public class MedicationDAO {
         });
     }
 
+    public Medication getMedicationById(int medicationId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    DatabaseHelper.TABLE_MEDICATIONS, null,
+                    DatabaseHelper.COL_MED_ID + " = ?",
+                    new String[]{String.valueOf(medicationId)},
+                    null, null, null
+            );
+            if (cursor.moveToFirst()) {
+                return cursorToMedication(cursor);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
     /**
      * קבלת כל התרופות בthread רקע
      */
@@ -167,6 +218,23 @@ public class MedicationDAO {
                 if (cursor != null) cursor.close();
             }
         });
+    }
+
+    public List<Medication> getAllMedications() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    DatabaseHelper.TABLE_MEDICATIONS, null,
+                    null, null, null, null,
+                    DatabaseHelper.COL_MED_NAME + " ASC"
+            );
+            return cursorToMedicationList(cursor);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
     }
 
     /**
@@ -192,6 +260,25 @@ public class MedicationDAO {
         });
     }
 
+    public List<Medication> getActiveMedications() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    DatabaseHelper.TABLE_MEDICATIONS, null,
+                    DatabaseHelper.COL_MED_IS_ACTIVE + " = ?",
+                    new String[]{"1"},
+                    null, null,
+                    DatabaseHelper.COL_MED_NAME + " ASC"
+            );
+            return cursorToMedicationList(cursor);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
     // ================================================================
     // SCHEDULES — פעולות על טבלת תזמונים
     // ================================================================
@@ -206,6 +293,12 @@ public class MedicationDAO {
                     scheduleToContentValues(schedule));
             if (callback != null) callback.onResult(id);
         });
+    }
+
+    public long insertSchedule(Schedule schedule) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        return db.insert(DatabaseHelper.TABLE_SCHEDULES, null,
+                scheduleToContentValues(schedule));
     }
 
     /**
@@ -231,6 +324,25 @@ public class MedicationDAO {
         });
     }
 
+    public List<Schedule> getSchedulesForMedication(int medicationId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    DatabaseHelper.TABLE_SCHEDULES, null,
+                    DatabaseHelper.COL_SCH_MEDICATION_ID + " = ?",
+                    new String[]{String.valueOf(medicationId)},
+                    null, null,
+                    DatabaseHelper.COL_SCH_INTAKE_TIME + " ASC"
+            );
+            return cursorToScheduleList(cursor);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
     /**
      * קבלת כל התזמונים בthread רקע
      * Used by BootReceiver to reschedule ALL alarms after reboot
@@ -252,6 +364,23 @@ public class MedicationDAO {
         });
     }
 
+    public List<Schedule> getAllSchedules() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    DatabaseHelper.TABLE_SCHEDULES, null,
+                    null, null, null, null,
+                    DatabaseHelper.COL_SCH_INTAKE_TIME + " ASC"
+            );
+            return cursorToScheduleList(cursor);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
     /**
      * מחיקת כל התזמונים של תרופה בthread רקע
      */
@@ -265,6 +394,15 @@ public class MedicationDAO {
             );
             if (callback != null) callback.onResult(rows > 0);
         });
+    }
+
+    public int deleteSchedulesForMedication(int medicationId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        return db.delete(
+                DatabaseHelper.TABLE_SCHEDULES,
+                DatabaseHelper.COL_SCH_MEDICATION_ID + " = ?",
+                new String[]{String.valueOf(medicationId)}
+        );
     }
 
     // ================================================================
@@ -283,6 +421,12 @@ public class MedicationDAO {
         });
     }
 
+    public long insertIntakeLog(IntakeLog log) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        return db.insert(DatabaseHelper.TABLE_INTAKE_LOG, null,
+                intakeLogToContentValues(log));
+    }
+
     /**
      * עדכון רשומת נטילה בthread רקע
      */
@@ -297,6 +441,16 @@ public class MedicationDAO {
             );
             if (callback != null) callback.onResult(rows > 0);
         });
+    }
+
+    public int updateIntakeLog(IntakeLog log) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        return db.update(
+                DatabaseHelper.TABLE_INTAKE_LOG,
+                intakeLogToContentValues(log),
+                DatabaseHelper.COL_LOG_ID + " = ?",
+                new String[]{String.valueOf(log.getId())}
+        );
     }
 
     /**
@@ -320,6 +474,20 @@ public class MedicationDAO {
         });
     }
 
+    public int markAsTaken(int logId, String actualDatetime) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(DatabaseHelper.COL_LOG_TAKEN, 1);
+        values.put(DatabaseHelper.COL_LOG_ACTUAL_DATETIME, actualDatetime);
+        values.put(DatabaseHelper.COL_LOG_STATUS, "נלקח");
+        return db.update(
+                DatabaseHelper.TABLE_INTAKE_LOG,
+                values,
+                DatabaseHelper.COL_LOG_ID + " = ?",
+                new String[]{String.valueOf(logId)}
+        );
+    }
+
     /**
      * קבלת לוג של היום בthread רקע
      * Used by MedicationListActivity to show today's intake status
@@ -328,6 +496,11 @@ public class MedicationDAO {
         // LocalDate.now() בטוח לשימוש ב-API 26+
         String today = LocalDate.now().toString();
         getLogsByDateRange(today, today, callback);
+    }
+
+    public List<IntakeLog> getTodayLogs() {
+        String today = LocalDate.now().toString();
+        return getLogsByDateRange(today, today);
     }
 
     /**
@@ -354,6 +527,25 @@ public class MedicationDAO {
         });
     }
 
+    public List<IntakeLog> getLogsByDateRange(String startDate, String endDate) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    DatabaseHelper.TABLE_INTAKE_LOG, null,
+                    "substr(" + DatabaseHelper.COL_LOG_SCHEDULED_DATETIME + ", 1, 10) BETWEEN ? AND ?",
+                    new String[]{startDate, endDate},
+                    null, null,
+                    DatabaseHelper.COL_LOG_SCHEDULED_DATETIME + " ASC"
+            );
+            return cursorToIntakeLogList(cursor);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
     /**
      * קבלת כל הלוג בthread רקע
      * Used by HistoryActivity to show full history
@@ -373,6 +565,23 @@ public class MedicationDAO {
                 if (cursor != null) cursor.close();
             }
         });
+    }
+
+    public List<IntakeLog> getAllLogs() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    DatabaseHelper.TABLE_INTAKE_LOG, null,
+                    null, null, null, null,
+                    DatabaseHelper.COL_LOG_SCHEDULED_DATETIME + " DESC"
+            );
+            return cursorToIntakeLogList(cursor);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
     }
 
     /**
@@ -396,6 +605,25 @@ public class MedicationDAO {
                 if (cursor != null) cursor.close();
             }
         });
+    }
+
+    public List<IntakeLog> getLogsByMedication(int medicationId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    DatabaseHelper.TABLE_INTAKE_LOG, null,
+                    DatabaseHelper.COL_LOG_MEDICATION_ID + " = ?",
+                    new String[]{String.valueOf(medicationId)},
+                    null, null,
+                    DatabaseHelper.COL_LOG_SCHEDULED_DATETIME + " DESC"
+            );
+            return cursorToIntakeLogList(cursor);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
     }
 
     // ================================================================

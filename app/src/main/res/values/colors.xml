@@ -18,6 +18,8 @@
 
     <color name="teal_200">#FF80CBC4</color>
     <color name="teal_700">#FF00796B</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="splash_background">#1976D2</color>
     <color name="status_taken">@color/colorStatusTaken</color>
     <color name="status_pending">@color/colorStatusPending</color>
     <color name="status_missed">@color/colorStatusMissed</color>

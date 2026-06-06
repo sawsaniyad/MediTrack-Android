@@ -57,7 +57,7 @@ public class AddEditMedicationActivity extends BaseActivity {
     private EditText etExpiryDate;
     private Button btnDelete;
 
-    private MedicationDao dao;
+    private MedicationDAO dao;
     private int medicationId;
     private boolean editMode;
     private String medicationNameForDelete = "";
@@ -76,7 +76,7 @@ public class AddEditMedicationActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_edit_medication);
 
-        dao = new MedicationDao(DatabaseHelper.getInstance(this));
+        dao = new MedicationDAO(DatabaseHelper.getInstance(this));
         medicationId = getIntent().getIntExtra(EXTRA_MEDICATION_ID, 0);
         editMode = medicationId > 0;
 

@@ -7,7 +7,7 @@ import android.widget.Button;
 import com.samiraa_raghadm_sawsana.meditrack.R;
 import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.BootReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
 
@@ -41,7 +41,7 @@ public class DevTestActivity extends BaseActivity {
             String actualTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
                     Locale.getDefault()).format(new Date());
             AppExecutors.getInstance().diskIO(() -> {
-                MedicationDao dao = new MedicationDao(DatabaseHelper.getInstance(this));
+                MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(this));
                 dao.markAsTaken(1, actualTime);
             });
             showToast(getString(R.string.dev_test_mark_taken_toast));
