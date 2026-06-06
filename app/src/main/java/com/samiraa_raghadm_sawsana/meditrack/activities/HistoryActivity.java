@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.samiraa_raghadm_sawsana.meditrack.R;
+import com.samiraa_raghadm_sawsana.meditrack.adapters.HistoryAdapter;
 import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
@@ -39,6 +40,8 @@ public class HistoryActivity extends BaseActivity {
     private String selectedDate;
     private int selectedMedId = -1;
     private final List<MedicationSpinnerItem> spinnerItems = new ArrayList<>();
+    private final Map<Integer, String> medicationNameMap = new HashMap<>();
+    private boolean suppressMedicationSelection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +76,9 @@ public class HistoryActivity extends BaseActivity {
         spinnerMedication.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (suppressMedicationSelection) {
+                    return;
+                }
                 selectedMedId = spinnerItems.get(position).getId();
                 loadHistory(selectedDate, selectedMedId);
             }
@@ -99,8 +105,10 @@ public class HistoryActivity extends BaseActivity {
             List<Medication> medications = dao.getAllMedications();
             AppExecutors.getInstance().mainThread(() -> {
                 spinnerItems.clear();
+                medicationNameMap.clear();
                 spinnerItems.add(new MedicationSpinnerItem(-1, getString(R.string.filter_all)));
                 for (Medication medication : medications) {
+                    medicationNameMap.put(medication.getId(), medication.getName());
                     spinnerItems.add(new MedicationSpinnerItem(
                             medication.getId(), medication.getName()));
                 }
@@ -129,11 +137,14 @@ public class HistoryActivity extends BaseActivity {
         selectedDate = null;
         selectedMedId = -1;
         tvSelectedDate.setText(R.string.filter_all);
+        suppressMedicationSelection = true;
         spinnerMedication.setSelection(0);
+        suppressMedicationSelection = false;
         loadHistory(null, -1);
     }
 
     private void loadHistory(String dateFilter, int medicationIdFilter) {
+        Map<Integer, String> names = new HashMap<>(medicationNameMap);
         AppExecutors.getInstance().diskIO(() -> {
             List<IntakeLog> logs;
             if (dateFilter != null && medicationIdFilter > 0) {
@@ -146,7 +157,6 @@ public class HistoryActivity extends BaseActivity {
                 logs = dao.getTodayLogs();
             }
 
-            Map<Integer, String> names = buildMedicationNameMap();
             AppExecutors.getInstance().mainThread(() -> {
                 adapter.updateList(logs, names);
                 tvHistoryEmpty.setVisibility(logs.isEmpty() ? View.VISIBLE : View.GONE);
@@ -165,11 +175,4 @@ public class HistoryActivity extends BaseActivity {
         return filtered;
     }
 
-    private Map<Integer, String> buildMedicationNameMap() {
-        Map<Integer, String> map = new HashMap<>();
-        for (Medication medication : dao.getAllMedications()) {
-            map.put(medication.getId(), medication.getName());
-        }
-        return map;
-    }
 }

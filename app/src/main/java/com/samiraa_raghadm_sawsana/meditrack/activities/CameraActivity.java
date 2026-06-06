@@ -16,6 +16,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.samiraa_raghadm_sawsana.meditrack.R;
 
 import java.io.File;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class CameraActivity extends BaseActivity {
@@ -25,19 +26,20 @@ public class CameraActivity extends BaseActivity {
     private PreviewView previewView;
     private ProcessCameraProvider cameraProvider;
     private ImageCapture imageCapture;
+    private ExecutorService cameraExecutor;
     private int lensFacing = CameraSelector.LENS_FACING_BACK;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
+        cameraExecutor = Executors.newSingleThreadExecutor();
 
         previewView = findViewById(R.id.previewView);
         ImageButton btnCapture = findViewById(R.id.btnCapture);
         ImageButton btnFlipCamera = findViewById(R.id.btnFlipCamera);
 
         btnCapture.setOnClickListener(v -> captureImage());
-        // FIXED: CameraX thread safety — onClick is main thread
         btnFlipCamera.setOnClickListener(v -> {
             lensFacing = lensFacing == CameraSelector.LENS_FACING_BACK
                     ? CameraSelector.LENS_FACING_FRONT
@@ -51,7 +53,6 @@ public class CameraActivity extends BaseActivity {
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> future =
                 ProcessCameraProvider.getInstance(this);
-        // FIXED: CameraX thread safety — main executor for bindCameraUseCases
         future.addListener(() -> {
             try {
                 cameraProvider = future.get();
@@ -90,17 +91,17 @@ public class CameraActivity extends BaseActivity {
         }
 
         File outputDir = new File(getFilesDir(), "images");
-        if (!outputDir.exists()) {
-            outputDir.mkdirs();
+        if (!outputDir.exists() && !outputDir.mkdirs()) {
+            showToast(getString(R.string.error_camera_not_ready));
+            return;
         }
         File outputFile = new File(outputDir, "med_" + System.currentTimeMillis() + ".jpg");
 
         ImageCapture.OutputFileOptions options =
                 new ImageCapture.OutputFileOptions.Builder(outputFile).build();
 
-        // FIXED: CameraX thread safety — background executor for disk write
         imageCapture.takePicture(options,
-                Executors.newSingleThreadExecutor(),
+                cameraExecutor,
                 new ImageCapture.OnImageSavedCallback() {
                     @Override
                     public void onImageSaved(ImageCapture.OutputFileResults outputFileResults) {
@@ -116,5 +117,16 @@ public class CameraActivity extends BaseActivity {
                                 getString(R.string.error_camera, exception.getMessage())));
                     }
                 });
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (cameraProvider != null) {
+            cameraProvider.unbindAll();
+        }
+        super.onDestroy();
+        if (cameraExecutor != null) {
+            cameraExecutor.shutdown();
+        }
     }
 }
