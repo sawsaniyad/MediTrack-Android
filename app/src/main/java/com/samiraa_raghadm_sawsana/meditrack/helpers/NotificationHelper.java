@@ -57,6 +57,8 @@ public final class NotificationHelper {
                                               String medicationName,
                                               String dosage,
                                               int scheduleId) {
+        createNotificationChannel(context);
+
         if (medicationName == null) {
             medicationName = context.getString(R.string.default_medication_name);
         }
@@ -119,6 +121,8 @@ public final class NotificationHelper {
     }
 
     public static void showMissedDoseAlert(Context context, String medicationName) {
+        createNotificationChannel(context);
+
         if (medicationName == null) {
             medicationName = context.getString(R.string.default_medication_name);
         }

@@ -118,6 +118,10 @@ public class MedicationListActivity extends BaseActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 medicationDueReceiver,
                 new IntentFilter(getString(R.string.broadcast_medication_due)));
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+                || PermissionManager.isGranted(this, Manifest.permission.POST_NOTIFICATIONS)) {
+            scheduleAlarms();
+        }
         loadMedications();
     }
 

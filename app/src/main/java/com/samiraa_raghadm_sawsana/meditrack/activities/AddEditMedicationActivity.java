@@ -68,6 +68,9 @@ public class AddEditMedicationActivity extends BaseActivity {
     private ActivityResultLauncher<String> cameraPermissionLauncher;
     private ActivityResultLauncher<Intent> cameraLauncher;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
+    private ActivityResultLauncher<Intent> exactAlarmSettingsLauncher;
+    private AlertDialog exactAlarmDialog;
+    private boolean saveAfterExactAlarmSettings;
 
     private final CheckBox[] dayCheckboxes = new CheckBox[7];
 
@@ -130,12 +133,29 @@ public class AddEditMedicationActivity extends BaseActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (dao != null) {
+            AlarmScheduler.scheduleAllAlarms(getApplicationContext(), dao);
+        }
+    }
+
+    @Override
     public boolean onOptionsItemSelected(@NonNull android.view.MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             finish();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (exactAlarmDialog != null && exactAlarmDialog.isShowing()) {
+            exactAlarmDialog.dismiss();
+        }
+        exactAlarmDialog = null;
+        super.onDestroy();
     }
 
     private void registerLaunchers() {
@@ -173,23 +193,53 @@ public class AddEditMedicationActivity extends BaseActivity {
                         }
                     }
                 });
+
+        exactAlarmSettingsLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), result -> {
+                    if (saveAfterExactAlarmSettings) {
+                        saveAfterExactAlarmSettings = false;
+                        AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S
+                                || am == null
+                                || am.canScheduleExactAlarms()) {
+                            saveMedication(true);
+                        }
+                    }
+                });
     }
 
-    private void checkExactAlarmPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-            if (am != null && !am.canScheduleExactAlarms()) {
-                new AlertDialog.Builder(this)
-                        .setTitle(R.string.perm_exact_alarm_title)
-                        .setMessage(R.string.perm_exact_alarm_message)
-                        .setPositiveButton(R.string.perm_exact_alarm_open, (d, w) -> {
-                            Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-                            startActivity(intent);
-                        })
-                        .setNegativeButton(R.string.perm_exact_alarm_skip, null)
-                        .show();
-            }
+    private boolean ensureExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return true;
         }
+
+        AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+        if (am == null || am.canScheduleExactAlarms()) {
+            return true;
+        }
+
+        if (isFinishing() || isDestroyed()) {
+            return false;
+        }
+
+        if (exactAlarmDialog != null && exactAlarmDialog.isShowing()) {
+            return false;
+        }
+
+        exactAlarmDialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.perm_exact_alarm_title)
+                .setMessage(R.string.perm_exact_alarm_message)
+                .setPositiveButton(R.string.perm_exact_alarm_open, (d, w) -> {
+                    saveAfterExactAlarmSettings = true;
+                    Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                    exactAlarmSettingsLauncher.launch(intent);
+                })
+                .setNegativeButton(R.string.perm_exact_alarm_skip, (d, w) ->
+                        saveMedication(true))
+                .setOnDismissListener(d -> exactAlarmDialog = null)
+                .create();
+        exactAlarmDialog.show();
+        return false;
     }
 
     private void requestCameraPermission() {
@@ -417,6 +467,10 @@ public class AddEditMedicationActivity extends BaseActivity {
     }
 
     private void saveMedication() {
+        saveMedication(false);
+    }
+
+    private void saveMedication(boolean skipExactAlarmCheck) {
         String name = etMedicationName.getText().toString().trim();
         if (TextUtils.isEmpty(name)) {
             showToast(getString(R.string.msg_validation_name));
@@ -429,7 +483,9 @@ public class AddEditMedicationActivity extends BaseActivity {
             return;
         }
 
-        checkExactAlarmPermission();
+        if (!skipExactAlarmCheck && !ensureExactAlarmPermission()) {
+            return;
+        }
 
         String daysOfWeek = collectDaysOfWeek();
         Medication medication = new Medication();
