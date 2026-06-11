@@ -17,7 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.adapters.HistoryAdapter;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.models.MedicationSpinnerItem;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;

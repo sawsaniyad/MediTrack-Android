@@ -57,6 +57,33 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvAppName" />
 
+    <TextView
+        android:id="@+id/tvSubmitters"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.5"
+        android:text="@string/splash_submitters"
+        android:textColor="#BBDEFB"
+        android:textSize="13sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvTagline" />
+
+    <TextView
+        android:id="@+id/tvSubmissionDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:text="@string/splash_submission_date"
+        android:textColor="#90CAF9"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvSubmitters" />
+
     <LinearLayout
         android:id="@+id/llFeatures"
         android:layout_width="wrap_content"
@@ -66,7 +93,7 @@
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvTagline">
+        app:layout_constraintTop_toBottomOf="@+id/tvSubmissionDate">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -170,7 +197,7 @@
         style="@style/Widget.AppCompat.ProgressBar"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:layout_marginBottom="52dp"
+        android:layout_marginBottom="40dp"
         android:indeterminateTint="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

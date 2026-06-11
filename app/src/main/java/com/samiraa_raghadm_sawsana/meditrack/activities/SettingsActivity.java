@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 
 public class SettingsActivity extends BaseActivity {
 

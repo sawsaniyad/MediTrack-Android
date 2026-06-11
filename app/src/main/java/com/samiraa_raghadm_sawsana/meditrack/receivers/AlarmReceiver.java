@@ -10,10 +10,10 @@ import android.os.Build;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
-import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
@@ -87,6 +87,15 @@ public class AlarmReceiver extends BroadcastReceiver {
         });
     }
 
+    private static boolean canScheduleExact(android.app.AlarmManager am) {
+        if (Build.VERSION.SDK_INT < 31) return true;
+        try {
+            return (Boolean) android.app.AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
     private void scheduleMissedDoseCheck(Context context, int medicationId, int scheduleId) {
         int checkDelay = PrefsManager.getReminderMinutes(context) * 2;
         long checkAt = System.currentTimeMillis() + checkDelay * 60 * 1000L;
@@ -105,8 +114,8 @@ public class AlarmReceiver extends BroadcastReceiver {
             return;
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (am.canScheduleExactAlarms()) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            if (canScheduleExact(am)) {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, checkAt, checkPI);
             }
         } else {

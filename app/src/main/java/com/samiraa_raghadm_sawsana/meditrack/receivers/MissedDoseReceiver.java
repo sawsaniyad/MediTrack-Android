@@ -5,16 +5,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.telephony.SmsManager;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
-import com.samiraa_raghadm_sawsana.meditrack.activities.PermissionManager;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PermissionManager;
 
 import java.util.List;
 
@@ -57,12 +58,19 @@ public class MissedDoseReceiver extends BroadcastReceiver {
             if (PermissionManager.isGranted(context, Manifest.permission.SEND_SMS)
                     && phone != null && !phone.isEmpty()) {
                 try {
-                    SmsManager sms = SmsManager.getDefault();
-                    String contactName = name != null ? name : "";
-                    sms.sendTextMessage(phone, null,
-                            context.getString(R.string.sms_missed_dose,
-                                    contactName, med.getName()),
-                            null, null);
+                    SmsManager sms;
+                    if (Build.VERSION.SDK_INT >= 31) {
+                        sms = context.getSystemService(SmsManager.class);
+                    } else {
+                        sms = SmsManager.getDefault();
+                    }
+                    if (sms != null) {
+                        String contactName = name != null ? name : "";
+                        sms.sendTextMessage(phone, null,
+                                context.getString(R.string.sms_missed_dose,
+                                        contactName, med.getName()),
+                                null, null);
+                    }
                 } catch (Exception e) {
                     android.util.Log.w("MissedDoseReceiver", "SMS failed", e);
                     NotificationHelper.showMissedDoseAlert(context, med.getName());

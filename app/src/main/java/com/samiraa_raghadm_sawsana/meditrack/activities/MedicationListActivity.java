@@ -25,7 +25,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.samiraa_raghadm_sawsana.meditrack.BuildConfig;
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.adapters.MedicationAdapter;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PermissionManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
@@ -127,18 +129,18 @@ public class MedicationListActivity extends BaseActivity {
     }
 
     private void requestNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (!PermissionManager.isGranted(this, Manifest.permission.POST_NOTIFICATIONS)) {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (!PermissionManager.isGranted(this, "android.permission.POST_NOTIFICATIONS")) {
+                if (shouldShowRequestPermissionRationale("android.permission.POST_NOTIFICATIONS")) {
                     new AlertDialog.Builder(this)
                             .setTitle(R.string.perm_notif_title)
                             .setMessage(R.string.perm_notif_message)
                             .setPositiveButton(R.string.perm_notif_allow, (d, w) ->
-                                    notifPermLauncher.launch(Manifest.permission.POST_NOTIFICATIONS))
+                                    notifPermLauncher.launch("android.permission.POST_NOTIFICATIONS"))
                             .setNegativeButton(R.string.perm_notif_later, null)
                             .show();
                 } else {
-                    notifPermLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                    notifPermLauncher.launch("android.permission.POST_NOTIFICATIONS");
                 }
             } else {
                 scheduleAlarms();
@@ -222,18 +224,36 @@ public class MedicationListActivity extends BaseActivity {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
         } else if (id == R.id.action_exit) {
-            finish();
-            System.exit(0);
+            new AlertDialog.Builder(this)
+                    .setTitle("יציאה מהאפליקציה")
+                    .setMessage("האם לצאת מהאפליקציה?")
+                    .setPositiveButton("כן", (dialog, which) -> {
+                        finish();
+                        System.exit(0);
+                    })
+                    .setNegativeButton("לא", null)
+                    .show();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
     private void showAboutDialog() {
+        String aboutMessage =
+                "MediTrack — מדי-טראק\n" +
+                "מזהה: " + getPackageName() + "\n\n" +
+                "מערכת הפעלה: Android " + Build.VERSION.RELEASE +
+                " (API " + Build.VERSION.SDK_INT + ")\n\n" +
+                "פותח על ידי:\n" +
+                "סמירה אבו אלהוא — 324909803\n" +
+                "רגד מחיסן — 212541304\n" +
+                "סאוסן אבו שמעה — 213588270\n\n" +
+                "תאריך הגשה: 28.6.26";
+
         new AlertDialog.Builder(this)
-                .setTitle(R.string.about_title)
-                .setMessage(R.string.about_message)
-                .setPositiveButton(R.string.about_close, null)
+                .setTitle("אודות האפליקציה")
+                .setMessage(aboutMessage)
+                .setPositiveButton("סגור", null)
                 .show();
     }
 }

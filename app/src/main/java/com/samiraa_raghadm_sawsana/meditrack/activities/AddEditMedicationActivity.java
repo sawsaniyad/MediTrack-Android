@@ -29,11 +29,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PermissionManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 
 import java.io.File;
@@ -175,15 +176,24 @@ public class AddEditMedicationActivity extends BaseActivity {
                 });
     }
 
+    private static boolean canScheduleExact(AlarmManager am) {
+        if (Build.VERSION.SDK_INT < 31) return true;
+        try {
+            return (Boolean) AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
     private void checkExactAlarmPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= 31) {
             AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-            if (am != null && !am.canScheduleExactAlarms()) {
+            if (am != null && !canScheduleExact(am)) {
                 new AlertDialog.Builder(this)
                         .setTitle(R.string.perm_exact_alarm_title)
                         .setMessage(R.string.perm_exact_alarm_message)
                         .setPositiveButton(R.string.perm_exact_alarm_open, (d, w) -> {
-                            Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                            Intent intent = new Intent("android.settings.REQUEST_SCHEDULE_EXACT_ALARM");
                             startActivity(intent);
                         })
                         .setNegativeButton(R.string.perm_exact_alarm_skip, null)

@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.widget.Button;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.BootReceiver;

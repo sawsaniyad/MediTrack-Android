@@ -15,7 +15,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.SnoozeActionReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.TakenActionReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.activities.MedicationListActivity;
@@ -112,8 +112,15 @@ public final class NotificationHelper {
         }
 
         NotificationManagerCompat nm = NotificationManagerCompat.from(context);
-        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
-                == PackageManager.PERMISSION_GRANTED) {
+        boolean canNotify;
+        if (Build.VERSION.SDK_INT >= 33) {
+            canNotify = ActivityCompat.checkSelfPermission(context,
+                    "android.permission.POST_NOTIFICATIONS")
+                    == PackageManager.PERMISSION_GRANTED;
+        } else {
+            canNotify = true;
+        }
+        if (canNotify) {
             nm.notify(NOTIFICATION_ID_BASE + scheduleId, builder.build());
         }
     }
@@ -130,8 +137,15 @@ public final class NotificationHelper {
                 .setAutoCancel(true);
 
         NotificationManagerCompat nm = NotificationManagerCompat.from(context);
-        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
-                == PackageManager.PERMISSION_GRANTED) {
+        boolean canNotify;
+        if (Build.VERSION.SDK_INT >= 33) {
+            canNotify = ActivityCompat.checkSelfPermission(context,
+                    "android.permission.POST_NOTIFICATIONS")
+                    == PackageManager.PERMISSION_GRANTED;
+        } else {
+            canNotify = true;
+        }
+        if (canNotify) {
             nm.notify(MISSED_DOSE_NOTIFICATION_ID + medicationName.hashCode(), builder.build());
         }
     }

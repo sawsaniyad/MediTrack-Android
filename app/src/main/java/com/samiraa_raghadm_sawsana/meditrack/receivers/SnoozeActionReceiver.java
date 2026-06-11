@@ -9,9 +9,18 @@ import android.os.Build;
 
 import androidx.core.app.NotificationManagerCompat;
 
-import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 
 public class SnoozeActionReceiver extends BroadcastReceiver {
+
+    private static boolean canScheduleExact(AlarmManager am) {
+        if (android.os.Build.VERSION.SDK_INT < 31) return true;
+        try {
+            return (Boolean) AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
+        } catch (Exception e) {
+            return true;
+        }
+    }
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -48,8 +57,8 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
             return;
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (am.canScheduleExactAlarms()) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            if (canScheduleExact(am)) {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
             }
         } else {
