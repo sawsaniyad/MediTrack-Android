@@ -225,13 +225,13 @@ public class MedicationListActivity extends BaseActivity {
             return true;
         } else if (id == R.id.action_exit) {
             new AlertDialog.Builder(this)
-                    .setTitle("יציאה מהאפליקציה")
-                    .setMessage("האם לצאת מהאפליקציה?")
-                    .setPositiveButton("כן", (dialog, which) -> {
+                    .setTitle(R.string.exit_dialog_title)
+                    .setMessage(R.string.exit_dialog_message)
+                    .setPositiveButton(R.string.btn_yes, (dialog, which) -> {
                         finish();
                         System.exit(0);
                     })
-                    .setNegativeButton("לא", null)
+                    .setNegativeButton(R.string.btn_no, null)
                     .show();
             return true;
         }
@@ -251,9 +251,9 @@ public class MedicationListActivity extends BaseActivity {
                 "תאריך הגשה: 28.6.26";
 
         new AlertDialog.Builder(this)
-                .setTitle("אודות האפליקציה")
+                .setTitle(R.string.about_dialog_title)
                 .setMessage(aboutMessage)
-                .setPositiveButton("סגור", null)
+                .setPositiveButton(R.string.about_close, null)
                 .show();
     }
 }

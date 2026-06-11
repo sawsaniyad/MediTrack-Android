@@ -211,4 +211,13 @@
 
     <string name="splash_submitters">סמירה אבו אלהוא — 324909803\nרגד מחיסן — 212541304\nסאוסן אבו שמעה — 213588270</string>
     <string name="splash_submission_date">תאריך הגשה: 28.6.26</string>
+
+    <!-- Exit dialog -->
+    <string name="exit_dialog_title">יציאה מהאפליקציה</string>
+    <string name="exit_dialog_message">האם לצאת מהאפליקציה?</string>
+    <string name="btn_yes">כן</string>
+    <string name="btn_no">לא</string>
+
+    <!-- About dialog -->
+    <string name="about_dialog_title">אודות האפליקציה</string>
 </resources>

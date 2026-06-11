@@ -17,7 +17,7 @@ import java.util.Locale;
 
 /**
  * Manual testing helpers — not linked from production UI.
- * Launch via: adb shell am start -n com.meditrack.app/.ui.DevTestActivity
+ * Launch via: adb shell am start -n com.samiraa_raghadm_sawsana.meditrack/.activities.DevTestActivity
  */
 public class DevTestActivity extends BaseActivity {
 
