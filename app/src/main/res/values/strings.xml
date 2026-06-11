@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    קובץ המחרוזות של האפליקציה
+    Add these entries to your existing res/values/strings.xml
+    (Do NOT replace the whole file — just add the missing entries)
+-->
 <resources>
     <string name="app_name">MediTrack</string>
     <string name="splash_tagline">MediTrack / מדי-טראק</string>
