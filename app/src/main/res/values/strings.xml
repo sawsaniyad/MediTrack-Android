@@ -217,4 +217,12 @@
 
     <!-- Clear filter button -->
     <string name="btn_clear_x">✕</string>
+    <string name="error_camera_generic">Unknown camera error</string>
+    <string name="error_camera_save">Failed to save photo: %1$s</string>
+    <string name="error_camera_unavailable">No available camera was found on this device</string>
+    <string name="error_camera_switch_unavailable">Only one camera is available on this device</string>
+    <string name="error_camera_flash_unavailable">Flash is not available for this camera</string>
+    <string name="perm_sms_title">SMS permission</string>
+    <string name="perm_sms_message">Allow SMS so missed-dose alerts can notify the emergency contact.</string>
+    <string name="perm_sms_denied">SMS permission was permanently denied. Open app settings to enable emergency alerts.</string>
 </resources>

@@ -68,6 +68,7 @@ public final class NotificationHelper {
 
         Intent takenIntent = new Intent(context, TakenActionReceiver.class);
         takenIntent.putExtra("MEDICATION_ID", medicationId);
+        takenIntent.putExtra("MEDICATION_NAME", medicationName);
         takenIntent.putExtra("SCHEDULE_ID", scheduleId);
         takenIntent.putExtra("NOTIFICATION_ID", NOTIFICATION_ID_BASE + scheduleId);
         PendingIntent takenPI = PendingIntent.getBroadcast(context,

@@ -13,6 +13,8 @@ import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
 
 public class SnoozeActionReceiver extends BroadcastReceiver {
 
+    public static final String EXTRA_FROM_SNOOZE = "FROM_SNOOZE";
+
     @Override
     public void onReceive(Context context, Intent intent) {
         int medicationId = intent.getIntExtra("MEDICATION_ID", -1);
@@ -29,6 +31,8 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
             NotificationManagerCompat.from(context).cancel(notificationId);
         }
 
+        cancelMissedDoseCheck(context, medicationId, scheduleId);
+
         int snoozeMinutes = PrefsManager.getReminderMinutes(context);
         long triggerAt = System.currentTimeMillis() + snoozeMinutes * 60 * 1000L;
 
@@ -37,6 +41,7 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
         snoozeFireIntent.putExtra("MEDICATION_NAME", medicationName);
         snoozeFireIntent.putExtra("DOSAGE", dosage);
         snoozeFireIntent.putExtra("SCHEDULE_ID", scheduleId);
+        snoozeFireIntent.putExtra(EXTRA_FROM_SNOOZE, true);
 
         PendingIntent pi = PendingIntent.getBroadcast(context,
                 scheduleId + 20000,
@@ -55,5 +60,26 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
         } else {
             am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
         }
+    }
+
+    private void cancelMissedDoseCheck(Context context, int medicationId, int scheduleId) {
+        if (scheduleId == -1) {
+            return;
+        }
+
+        Intent checkIntent = new Intent(context, MissedDoseReceiver.class);
+        checkIntent.putExtra("MEDICATION_ID", medicationId);
+        checkIntent.putExtra("SCHEDULE_ID", scheduleId);
+
+        PendingIntent checkPI = PendingIntent.getBroadcast(context,
+                scheduleId + 30000,
+                checkIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (am != null) {
+            am.cancel(checkPI);
+        }
+        checkPI.cancel();
     }
 }

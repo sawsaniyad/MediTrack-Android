@@ -66,6 +66,7 @@ public class AddEditMedicationActivity extends BaseActivity {
     private String emergencyContactPhone = null;
 
     private ActivityResultLauncher<String> cameraPermissionLauncher;
+    private ActivityResultLauncher<String> smsPermissionLauncher;
     private ActivityResultLauncher<Intent> cameraLauncher;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
     private ActivityResultLauncher<Intent> exactAlarmSettingsLauncher;
@@ -184,6 +185,19 @@ public class AddEditMedicationActivity extends BaseActivity {
                     }
                 });
 
+        smsPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(), granted -> {
+                    if (!granted && !shouldShowRequestPermissionRationale(Manifest.permission.SEND_SMS)) {
+                        new AlertDialog.Builder(this)
+                                .setTitle(R.string.perm_sms_title)
+                                .setMessage(R.string.perm_sms_denied)
+                                .setPositiveButton(R.string.open_settings,
+                                        (d, w) -> PermissionManager.openAppSettings(this))
+                                .setNegativeButton(R.string.cancel, null)
+                                .show();
+                    }
+                });
+
         contactPickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
@@ -260,6 +274,7 @@ public class AddEditMedicationActivity extends BaseActivity {
 
     private void openCameraPreview() {
         Intent intent = new Intent(this, CameraActivity.class);
+        intent.putExtra(CameraActivity.EXTRA_MEDICATION_ID, medicationId);
         cameraLauncher.launch(intent);
     }
 
@@ -348,8 +363,28 @@ public class AddEditMedicationActivity extends BaseActivity {
                 emergencyContactName = finalName;
                 emergencyContactPhone = finalPhone;
                 tvEmergencyContact.setText(finalName + " — " + finalPhone);
+                maybeRequestSmsPermission();
             });
         });
+    }
+
+    private void maybeRequestSmsPermission() {
+        if (TextUtils.isEmpty(emergencyContactPhone)
+                || PermissionManager.isGranted(this, Manifest.permission.SEND_SMS)) {
+            return;
+        }
+
+        if (shouldShowRequestPermissionRationale(Manifest.permission.SEND_SMS)) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.perm_sms_title)
+                    .setMessage(R.string.perm_sms_message)
+                    .setPositiveButton(R.string.perm_notif_allow,
+                            (d, w) -> smsPermissionLauncher.launch(Manifest.permission.SEND_SMS))
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
+        } else {
+            smsPermissionLauncher.launch(Manifest.permission.SEND_SMS);
+        }
     }
 
     private void loadMedicationForEdit() {

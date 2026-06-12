@@ -1,8 +1,7 @@
-- Added CameraX dependencies and initial setup in Gradle
-- Added camera hardware / permission support in manifest
-- Helped with runtime permissions flow
-- Focused on Camera and Contacts permission handling
-- Built `SettingsActivity`
-- Built `PrefsManager`
-- Built `HistoryActivity`
-- Built `HistoryAdapter`
+- Add runtime CAMERA permission handling in the camera flow, including rationale and a settings redirect if the permission is denied.
+- Build the in-app Camera2 preview screen using the back camera, a `TextureView`, and a shutter button. Do not use the system camera intent.
+- Capture a photo with Camera2 and save it as a JPEG in `filesDir/images/`, then save the image path to `Medication.image_path` in the database.
+- Show the saved medication photo in the app screens: full-size in Add/Edit Medication and as a thumbnail in the medication list.
+- Implement snooze reminder logic that creates a one-time reminder for `now + PREF_REMIND_MINUTES` and stops repeating after the medication is marked taken.
+- Let the user pick an emergency contact from Contacts, read the contact phone number, and save the contact name and phone on the medication.
+- Send a missed-dose SMS alert to the saved emergency contact after the allowed delay, only if `SEND_SMS` permission is granted.
