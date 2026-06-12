@@ -1,0 +1,8 @@
+- Added CameraX dependencies and initial setup in Gradle
+- Added camera hardware / permission support in manifest
+- Helped with runtime permissions flow
+- Focused on Camera and Contacts permission handling
+- Built `SettingsActivity`
+- Built `PrefsManager`
+- Built `HistoryActivity`
+- Built `HistoryAdapter`

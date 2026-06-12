@@ -1,132 +1,59 @@
 package com.samiraa_raghadm_sawsana.meditrack.activities;
 
-import android.content.Intent;
 import android.os.Bundle;
+import android.view.TextureView;
 import android.widget.ImageButton;
 
-import androidx.camera.core.CameraSelector;
-import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCaptureException;
-import androidx.camera.core.Preview;
-import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.camera.view.PreviewView;
-import androidx.core.content.ContextCompat;
-
-import com.google.common.util.concurrent.ListenableFuture;
 import com.samiraa_raghadm_sawsana.meditrack.R;
 
-import java.io.File;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
+/**
+ * In-app camera screen for capturing a medication photo.
+ *
+ * NOTE: CameraX has been removed from the project. This screen must be
+ * rebuilt using the Camera2 API in Java (task 3.2 in the corrected plan):
+ *   - CameraManager to list cameras and open the back CameraDevice
+ *   - TextureView (R.id.previewView) bound via SurfaceTexture for live preview
+ *   - CameraCaptureSession for the preview + capture requests
+ *   - ImageReader to receive the JPEG, saved to filesDir/images/ on a
+ *     background thread (ExecutorService)
+ *   - Close CameraDevice + CaptureSession in onPause()/onDestroy()
+ *
+ * This is a temporary compiling stub so the rest of the app still builds
+ * while the Camera2 implementation is in progress.
+ */
 public class CameraActivity extends BaseActivity {
 
     public static final String EXTRA_IMAGE_PATH = "IMAGE_PATH";
 
-    private PreviewView previewView;
-    private ProcessCameraProvider cameraProvider;
-    private ImageCapture imageCapture;
-    private ExecutorService cameraExecutor;
-    private int lensFacing = CameraSelector.LENS_FACING_BACK;
+    private TextureView previewView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
-        cameraExecutor = Executors.newSingleThreadExecutor();
 
         previewView = findViewById(R.id.previewView);
+
+        ImageButton btnClose = findViewById(R.id.btnClose);
         ImageButton btnCapture = findViewById(R.id.btnCapture);
         ImageButton btnFlipCamera = findViewById(R.id.btnFlipCamera);
 
-        btnCapture.setOnClickListener(v -> captureImage());
-        btnFlipCamera.setOnClickListener(v -> {
-            lensFacing = lensFacing == CameraSelector.LENS_FACING_BACK
-                    ? CameraSelector.LENS_FACING_FRONT
-                    : CameraSelector.LENS_FACING_BACK;
-            bindCameraUseCases();
-        });
-
-        startCamera();
-    }
-
-    private void startCamera() {
-        ListenableFuture<ProcessCameraProvider> future =
-                ProcessCameraProvider.getInstance(this);
-        future.addListener(() -> {
-            try {
-                cameraProvider = future.get();
-                bindCameraUseCases();
-            } catch (Exception e) {
-                runOnUiThread(() -> showToast(
-                        getString(R.string.error_camera_open, e.getMessage())));
-            }
-        }, ContextCompat.getMainExecutor(this));
-    }
-
-    private void bindCameraUseCases() {
-        if (cameraProvider == null) {
-            return;
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> finish());
         }
 
-        CameraSelector selector = new CameraSelector.Builder()
-                .requireLensFacing(lensFacing)
-                .build();
+        // TODO (task 3.2): open Camera2 device and start preview on previewView.
 
-        Preview preview = new Preview.Builder().build();
-        preview.setSurfaceProvider(previewView.getSurfaceProvider());
-
-        imageCapture = new ImageCapture.Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                .build();
-
-        cameraProvider.unbindAll();
-        cameraProvider.bindToLifecycle(this, selector, preview, imageCapture);
-    }
-
-    private void captureImage() {
-        if (imageCapture == null) {
-            showToast(getString(R.string.error_camera_not_ready));
-            return;
+        if (btnCapture != null) {
+            btnCapture.setOnClickListener(v ->
+                    // TODO (task 3.3): capture via ImageReader, save JPEG, return path.
+                    showToast(getString(R.string.error_camera_not_ready)));
         }
 
-        File outputDir = new File(getFilesDir(), "images");
-        if (!outputDir.exists() && !outputDir.mkdirs()) {
-            showToast(getString(R.string.error_camera_not_ready));
-            return;
-        }
-        File outputFile = new File(outputDir, "med_" + System.currentTimeMillis() + ".jpg");
-
-        ImageCapture.OutputFileOptions options =
-                new ImageCapture.OutputFileOptions.Builder(outputFile).build();
-
-        imageCapture.takePicture(options,
-                cameraExecutor,
-                new ImageCapture.OnImageSavedCallback() {
-                    @Override
-                    public void onImageSaved(ImageCapture.OutputFileResults outputFileResults) {
-                        Intent result = new Intent();
-                        result.putExtra(EXTRA_IMAGE_PATH, outputFile.getAbsolutePath());
-                        setResult(RESULT_OK, result);
-                        runOnUiThread(() -> finish());
-                    }
-
-                    @Override
-                    public void onError(ImageCaptureException exception) {
-                        runOnUiThread(() -> showToast(
-                                getString(R.string.error_camera, exception.getMessage())));
-                    }
-                });
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (cameraProvider != null) {
-            cameraProvider.unbindAll();
-        }
-        super.onDestroy();
-        if (cameraExecutor != null) {
-            cameraExecutor.shutdown();
+        if (btnFlipCamera != null) {
+            btnFlipCamera.setOnClickListener(v ->
+                    // TODO (task 3.2): switch between back/front CameraDevice.
+                    showToast(getString(R.string.error_camera_not_ready)));
         }
     }
 }
