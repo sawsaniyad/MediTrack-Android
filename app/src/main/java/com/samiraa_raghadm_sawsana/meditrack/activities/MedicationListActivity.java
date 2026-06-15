@@ -32,7 +32,7 @@ import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
 
@@ -48,7 +48,7 @@ public class MedicationListActivity extends BaseActivity {
     private RecyclerView recyclerView;
     private View emptyStateContainer;
     private MedicationAdapter adapter;
-    private MedicationDao dao;
+    private MedicationDAO dao;
     private ActivityResultLauncher<String> notifPermLauncher;
 
     private final BroadcastReceiver medicationDueReceiver = new BroadcastReceiver() {
@@ -77,7 +77,7 @@ public class MedicationListActivity extends BaseActivity {
                     .build());
         }
 
-        dao = new MedicationDao(DatabaseHelper.getInstance(this));
+        dao = new MedicationDAO(DatabaseHelper.getInstance(this));
 
         NotificationHelper.createNotificationChannel(this);
 
@@ -107,8 +107,7 @@ public class MedicationListActivity extends BaseActivity {
         recyclerView.setAdapter(adapter);
 
         FloatingActionButton fab = findViewById(R.id.fabAddMedication);
-        fab.setOnClickListener(v ->
-                startActivity(new Intent(this, AddEditMedicationActivity.class)));
+        fab.setOnClickListener(v -> startActivity(new Intent(this, AddEditMedicationActivity.class)));
 
         loadMedications();
     }
@@ -135,8 +134,8 @@ public class MedicationListActivity extends BaseActivity {
                     new AlertDialog.Builder(this)
                             .setTitle(R.string.perm_notif_title)
                             .setMessage(R.string.perm_notif_message)
-                            .setPositiveButton(R.string.perm_notif_allow, (d, w) ->
-                                    notifPermLauncher.launch("android.permission.POST_NOTIFICATIONS"))
+                            .setPositiveButton(R.string.perm_notif_allow,
+                                    (d, w) -> notifPermLauncher.launch("android.permission.POST_NOTIFICATIONS"))
                             .setNegativeButton(R.string.perm_notif_later, null)
                             .show();
                 } else {
@@ -183,8 +182,8 @@ public class MedicationListActivity extends BaseActivity {
 
     private void showMedicationDueSnackbar(String medName, int medicationId) {
         Snackbar.make(recyclerView,
-                        getString(R.string.msg_medication_due, medName),
-                        Snackbar.LENGTH_LONG)
+                getString(R.string.msg_medication_due, medName),
+                Snackbar.LENGTH_LONG)
                 .setAction(R.string.snackbar_action_taken, v -> markMedicationTaken(medicationId))
                 .show();
     }
@@ -239,8 +238,7 @@ public class MedicationListActivity extends BaseActivity {
     }
 
     private void showAboutDialog() {
-        String aboutMessage =
-                "MediTrack — מדי-טראק\n" +
+        String aboutMessage = "MediTrack — מדי-טראק\n" +
                 "מזהה: " + getPackageName() + "\n\n" +
                 "מערכת הפעלה: Android " + Build.VERSION.RELEASE +
                 " (API " + Build.VERSION.SDK_INT + ")\n\n" +

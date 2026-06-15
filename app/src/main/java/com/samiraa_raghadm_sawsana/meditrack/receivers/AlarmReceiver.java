@@ -16,7 +16,7 @@ import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
 
@@ -49,7 +49,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         // FIXED: moved to diskIO
         AppExecutors.getInstance().diskIO(() -> {
-            MedicationDao dao = new MedicationDao(DatabaseHelper.getInstance(context));
+            MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
             IntakeLog log = new IntakeLog();
             log.setMedicationId(medicationId);
             log.setScheduledDatetime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
@@ -70,7 +70,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         // FIXED: moved to diskIO — reschedule for next day
         AppExecutors.getInstance().diskIO(() -> {
-            MedicationDao dao = new MedicationDao(DatabaseHelper.getInstance(context));
+            MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
             Schedule schedule = null;
             for (Schedule s : dao.getAllSchedules()) {
                 if (s.getId() == scheduleId) {
@@ -88,7 +88,8 @@ public class AlarmReceiver extends BroadcastReceiver {
     }
 
     private static boolean canScheduleExact(android.app.AlarmManager am) {
-        if (Build.VERSION.SDK_INT < 31) return true;
+        if (Build.VERSION.SDK_INT < 31)
+            return true;
         try {
             return (Boolean) android.app.AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
         } catch (Exception e) {

@@ -10,7 +10,7 @@ import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
-import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.AlarmReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.ExpiryReceiver;
 
@@ -23,7 +23,7 @@ import java.util.Locale;
 
 /**
  * PendingIntent requestCode ranges:
- * 1–999:       intake alarms (schedule IDs)
+ * 1–999: intake alarms (schedule IDs)
  * 10001–10999: snooze action (scheduleId + 10000)
  * 20001–20999: snooze re-alarm (scheduleId + 20000)
  * 30001–30999: missed-dose check (scheduleId + 30000)
@@ -35,7 +35,8 @@ public final class AlarmScheduler {
     }
 
     private static boolean canScheduleExact(AlarmManager am) {
-        if (Build.VERSION.SDK_INT < 31) return true;
+        if (Build.VERSION.SDK_INT < 31)
+            return true;
         try {
             return (Boolean) AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
         } catch (Exception e) {
@@ -95,7 +96,7 @@ public final class AlarmScheduler {
         }
     }
 
-    public static void scheduleAllAlarms(Context context, MedicationDao dao) {
+    public static void scheduleAllAlarms(Context context, MedicationDAO dao) {
         AppExecutors.getInstance().diskIO(() -> {
             List<Schedule> schedules = dao.getAllSchedules();
             for (Schedule schedule : schedules) {
@@ -120,7 +121,7 @@ public final class AlarmScheduler {
         am.cancel(pi);
     }
 
-    public static void cancelAlarmsForMedication(Context context, MedicationDao dao, int medicationId) {
+    public static void cancelAlarmsForMedication(Context context, MedicationDAO dao, int medicationId) {
         AppExecutors.getInstance().diskIO(() -> {
             List<Schedule> schedules = dao.getSchedulesForMedication(medicationId);
             for (Schedule schedule : schedules) {
