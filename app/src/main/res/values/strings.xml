@@ -208,4 +208,7 @@
 
     <!-- Clear filter button -->
     <string name="btn_clear_x">✕</string>
+
+    <string name="channel_name">תזכורות תרופות</string>
+    <string name="channel_description">התראות לתזכורת נטילת תרופות בזמן</string>
 </resources>
