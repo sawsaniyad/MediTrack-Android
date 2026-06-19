@@ -26,22 +26,6 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 }
-// Suppress AAR minCompileSdk advisory — libraries still function at runtime on API 30
-tasks.configureEach {
-    if (name.contains('checkDebugAarMetadata') || name.contains('checkReleaseAarMetadata')) {
-        enabled = false
-    }
-}
-
-configurations.all {
-    resolutionStrategy {
-        force 'androidx.lifecycle:lifecycle-livedata:2.8.7'
-        force 'androidx.lifecycle:lifecycle-livedata-core:2.8.7'
-        force 'androidx.lifecycle:lifecycle-viewmodel:2.8.7'
-        force 'androidx.lifecycle:lifecycle-common:2.8.7'
-        force 'androidx.lifecycle:lifecycle-runtime:2.8.7'
-    }
-}
 
 dependencies {
     implementation libs.appcompat
@@ -51,10 +35,6 @@ dependencies {
     implementation libs.core
     implementation libs.recyclerview
     implementation libs.localbroadcastmanager
-    implementation libs.camera.core
-    implementation libs.camera.camera2
-    implementation libs.camera.lifecycle
-    implementation libs.camera.view
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

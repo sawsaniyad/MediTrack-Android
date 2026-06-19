@@ -12,11 +12,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MedicationDao {
+public class MedicationDAO {
 
     private final DatabaseHelper dbHelper;
 
-    public MedicationDao(DatabaseHelper dbHelper) {
+    public MedicationDAO(DatabaseHelper dbHelper) {
         this.dbHelper = dbHelper;
     }
 
