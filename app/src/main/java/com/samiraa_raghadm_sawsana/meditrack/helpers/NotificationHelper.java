@@ -56,7 +56,8 @@ public final class NotificationHelper {
                                               int medicationId,
                                               String medicationName,
                                               String dosage,
-                                              int scheduleId) {
+                                              int scheduleId,
+                                              String scheduledDatetime) {
         createNotificationChannel(context);
 
         if (medicationName == null) {
@@ -71,6 +72,7 @@ public final class NotificationHelper {
         takenIntent.putExtra("MEDICATION_NAME", medicationName);
         takenIntent.putExtra("SCHEDULE_ID", scheduleId);
         takenIntent.putExtra("NOTIFICATION_ID", NOTIFICATION_ID_BASE + scheduleId);
+        takenIntent.putExtra("SCHEDULED_DATETIME", scheduledDatetime);
         PendingIntent takenPI = PendingIntent.getBroadcast(context,
                 scheduleId,
                 takenIntent,
@@ -82,6 +84,7 @@ public final class NotificationHelper {
         snoozeIntent.putExtra("MEDICATION_NAME", medicationName);
         snoozeIntent.putExtra("DOSAGE", dosage);
         snoozeIntent.putExtra("NOTIFICATION_ID", NOTIFICATION_ID_BASE + scheduleId);
+        snoozeIntent.putExtra("SCHEDULED_DATETIME", scheduledDatetime);
         PendingIntent snoozePI = PendingIntent.getBroadcast(context,
                 scheduleId + 10000,
                 snoozeIntent,

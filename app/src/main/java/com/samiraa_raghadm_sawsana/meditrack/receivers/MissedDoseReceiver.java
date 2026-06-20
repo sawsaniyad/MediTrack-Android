@@ -23,26 +23,17 @@ public class MissedDoseReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         int medicationId = intent.getIntExtra("MEDICATION_ID", -1);
+        String scheduledDatetime = intent.getStringExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME);
         if (medicationId == -1) {
             return;
         }
 
-        // FIXED: moved to diskIO
         AppExecutors.getInstance().diskIO(() -> {
             MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
             List<IntakeLog> logs = dao.getLogsByMedication(medicationId);
-            boolean stillUntaken = false;
-            for (int i = logs.size() - 1; i >= 0; i--) {
-                IntakeLog log = logs.get(i);
-                if (!log.isTaken()) {
-                    stillUntaken = true;
-                    break;
-                } else {
-                    break;
-                }
-            }
+            IntakeLog pendingLog = findPendingLog(logs, scheduledDatetime);
 
-            if (!stillUntaken) {
+            if (pendingLog == null) {
                 return;
             }
 
@@ -50,6 +41,9 @@ public class MissedDoseReceiver extends BroadcastReceiver {
             if (med == null) {
                 return;
             }
+
+            pendingLog.setStatus(IntakeLog.STATUS_MISSED);
+            dao.updateIntakeLog(pendingLog);
 
             String phone = med.getEmergencyContactPhone();
             String name = med.getEmergencyContactName();
@@ -78,5 +72,21 @@ public class MissedDoseReceiver extends BroadcastReceiver {
                 NotificationHelper.showMissedDoseAlert(context, med.getName());
             }
         });
+    }
+
+    private IntakeLog findPendingLog(List<IntakeLog> logs, String scheduledDatetime) {
+        IntakeLog newestPendingLog = null;
+        for (IntakeLog log : logs) {
+            if (log.isTaken()) {
+                continue;
+            }
+            if (scheduledDatetime != null && scheduledDatetime.equals(log.getScheduledDatetime())) {
+                return log;
+            }
+            if (newestPendingLog == null) {
+                newestPendingLog = log;
+            }
+        }
+        return newestPendingLog;
     }
 }

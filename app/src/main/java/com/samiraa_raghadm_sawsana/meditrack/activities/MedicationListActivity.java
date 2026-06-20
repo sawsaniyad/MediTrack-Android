@@ -109,6 +109,11 @@ public class MedicationListActivity extends BaseActivity {
         fab.setOnClickListener(v ->
                 startActivity(new Intent(this, AddEditMedicationActivity.class)));
 
+        findViewById(R.id.btnOpenHistory).setOnClickListener(v ->
+                startActivity(new Intent(this, HistoryActivity.class)));
+        findViewById(R.id.btnOpenSettings).setOnClickListener(v ->
+                startActivity(new Intent(this, SettingsActivity.class)));
+
         loadMedications();
     }
 

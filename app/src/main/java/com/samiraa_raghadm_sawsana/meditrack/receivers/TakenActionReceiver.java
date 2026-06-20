@@ -27,6 +27,7 @@ public class TakenActionReceiver extends BroadcastReceiver {
         String medicationName = intent.getStringExtra("MEDICATION_NAME");
         int scheduleId = intent.getIntExtra("SCHEDULE_ID", -1);
         int notificationId = intent.getIntExtra("NOTIFICATION_ID", -1);
+        String scheduledDatetime = intent.getStringExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME);
 
         if (medicationId == -1) {
             return;
@@ -38,34 +39,25 @@ public class TakenActionReceiver extends BroadcastReceiver {
         AppExecutors.getInstance().diskIO(() -> {
             MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
             List<IntakeLog> logs = dao.getLogsByMedication(medicationId);
-            IntakeLog pendingLog = null;
-
-            for (int i = logs.size() - 1; i >= 0; i--) {
-                IntakeLog log = logs.get(i);
-                if (!log.isTaken()) {
-                    pendingLog = log;
-                    break;
-                }
-            }
+            IntakeLog pendingLog = findPendingLog(logs, scheduledDatetime);
 
             if (pendingLog != null) {
                 dao.markAsTaken(pendingLog.getId(), actualTime);
-                return;
+            } else {
+                Medication medication = dao.getMedicationById(medicationId);
+                IntakeLog takenLog = new IntakeLog();
+                takenLog.setMedicationId(medicationId);
+                takenLog.setMedicationName(resolveMedicationName(medicationName, medication));
+                takenLog.setScheduledDatetime(scheduledDatetime != null ? scheduledDatetime : actualTime);
+                takenLog.setTaken(true);
+                takenLog.setActualDatetime(actualTime);
+                takenLog.setStatus(IntakeLog.STATUS_TAKEN);
+                dao.insertIntakeLog(takenLog);
             }
 
-            Medication medication = dao.getMedicationById(medicationId);
-            IntakeLog takenLog = new IntakeLog();
-            takenLog.setMedicationId(medicationId);
-            takenLog.setMedicationName(resolveMedicationName(medicationName, medication));
-            takenLog.setScheduledDatetime(actualTime);
-            takenLog.setTaken(true);
-            takenLog.setActualDatetime(actualTime);
-            takenLog.setStatus(IntakeLog.STATUS_TAKEN);
-            dao.insertIntakeLog(takenLog);
+            cancelMissedDoseCheck(context, medicationId, scheduleId);
+            cancelSnoozedReminder(context, medicationId, scheduleId);
         });
-
-        cancelMissedDoseCheck(context, medicationId, scheduleId);
-        cancelSnoozedReminder(context, medicationId, scheduleId);
 
         if (notificationId != -1) {
             NotificationManagerCompat.from(context).cancel(notificationId);
@@ -102,7 +94,6 @@ public class TakenActionReceiver extends BroadcastReceiver {
         Intent snoozeIntent = new Intent(context, AlarmReceiver.class);
         snoozeIntent.putExtra("MEDICATION_ID", medicationId);
         snoozeIntent.putExtra("SCHEDULE_ID", scheduleId);
-        snoozeIntent.putExtra(SnoozeActionReceiver.EXTRA_FROM_SNOOZE, true);
 
         PendingIntent snoozePI = PendingIntent.getBroadcast(context,
                 scheduleId + 20000,
@@ -126,5 +117,22 @@ public class TakenActionReceiver extends BroadcastReceiver {
             return medication.getName();
         }
         return null;
+    }
+
+    private IntakeLog findPendingLog(List<IntakeLog> logs, String scheduledDatetime) {
+        IntakeLog newestPendingLog = null;
+        for (IntakeLog log : logs) {
+            if (log.isTaken()) {
+                continue;
+            }
+            if (scheduledDatetime != null && scheduledDatetime.equals(log.getScheduledDatetime())) {
+                return log;
+            }
+            if (newestPendingLog == null) {
+                // MedicationDAO returns logs ordered by scheduled_datetime DESC.
+                newestPendingLog = log;
+            }
+        }
+        return newestPendingLog;
     }
 }
