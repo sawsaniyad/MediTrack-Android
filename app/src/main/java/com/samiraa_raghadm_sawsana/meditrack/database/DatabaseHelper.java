@@ -154,8 +154,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      */
     public void resetDatabase() {
         SQLiteDatabase db = getWritableDatabase();
-        db.execSQL("DELETE FROM " + TABLE_INTAKE_LOG);
-        db.execSQL("DELETE FROM " + TABLE_SCHEDULES);
-        db.execSQL("DELETE FROM " + TABLE_MEDICATIONS);
+        db.beginTransaction();
+        try {
+            db.execSQL("DELETE FROM " + TABLE_INTAKE_LOG);
+            db.execSQL("DELETE FROM " + TABLE_SCHEDULES);
+            db.execSQL("DELETE FROM " + TABLE_MEDICATIONS);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
     }
 }
