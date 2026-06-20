@@ -2,10 +2,9 @@ package com.samiraa_raghadm_sawsana.meditrack.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.BootReceiver;
@@ -17,7 +16,7 @@ import java.util.Locale;
 
 /**
  * Manual testing helpers — not linked from production UI.
- * Launch via: adb shell am start -n com.meditrack.app/.ui.DevTestActivity
+ * Launch via: adb shell am start -n com.samiraa_raghadm_sawsana.meditrack/.activities.DevTestActivity
  */
 public class DevTestActivity extends BaseActivity {
 

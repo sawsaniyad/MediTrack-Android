@@ -11,7 +11,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,7 +28,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PermissionManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
@@ -66,12 +66,8 @@ public class AddEditMedicationActivity extends BaseActivity {
     private String emergencyContactPhone = null;
 
     private ActivityResultLauncher<String> cameraPermissionLauncher;
-    private ActivityResultLauncher<String> smsPermissionLauncher;
     private ActivityResultLauncher<Intent> cameraLauncher;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
-    private ActivityResultLauncher<Intent> exactAlarmSettingsLauncher;
-    private AlertDialog exactAlarmDialog;
-    private boolean saveAfterExactAlarmSettings;
 
     private final CheckBox[] dayCheckboxes = new CheckBox[7];
 
@@ -134,29 +130,12 @@ public class AddEditMedicationActivity extends BaseActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        if (dao != null) {
-            AlarmScheduler.scheduleAllAlarms(getApplicationContext(), dao);
-        }
-    }
-
-    @Override
     public boolean onOptionsItemSelected(@NonNull android.view.MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             finish();
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (exactAlarmDialog != null && exactAlarmDialog.isShowing()) {
-            exactAlarmDialog.dismiss();
-        }
-        exactAlarmDialog = null;
-        super.onDestroy();
     }
 
     private void registerLaunchers() {
@@ -185,19 +164,6 @@ public class AddEditMedicationActivity extends BaseActivity {
                     }
                 });
 
-        smsPermissionLauncher = registerForActivityResult(
-                new ActivityResultContracts.RequestPermission(), granted -> {
-                    if (!granted && !shouldShowRequestPermissionRationale(Manifest.permission.SEND_SMS)) {
-                        new AlertDialog.Builder(this)
-                                .setTitle(R.string.perm_sms_title)
-                                .setMessage(R.string.perm_sms_denied)
-                                .setPositiveButton(R.string.open_settings,
-                                        (d, w) -> PermissionManager.openAppSettings(this))
-                                .setNegativeButton(R.string.cancel, null)
-                                .show();
-                    }
-                });
-
         contactPickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
@@ -207,53 +173,32 @@ public class AddEditMedicationActivity extends BaseActivity {
                         }
                     }
                 });
-
-        exactAlarmSettingsLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(), result -> {
-                    if (saveAfterExactAlarmSettings) {
-                        saveAfterExactAlarmSettings = false;
-                        AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S
-                                || am == null
-                                || am.canScheduleExactAlarms()) {
-                            saveMedication(true);
-                        }
-                    }
-                });
     }
 
-    private boolean ensureExactAlarmPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+    private static boolean canScheduleExact(AlarmManager am) {
+        if (Build.VERSION.SDK_INT < 31) return true;
+        try {
+            return (Boolean) AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
+        } catch (Exception e) {
             return true;
         }
+    }
 
-        AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-        if (am == null || am.canScheduleExactAlarms()) {
-            return true;
+    private void checkExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= 31) {
+            AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+            if (am != null && !canScheduleExact(am)) {
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.perm_exact_alarm_title)
+                        .setMessage(R.string.perm_exact_alarm_message)
+                        .setPositiveButton(R.string.perm_exact_alarm_open, (d, w) -> {
+                            Intent intent = new Intent("android.settings.REQUEST_SCHEDULE_EXACT_ALARM");
+                            startActivity(intent);
+                        })
+                        .setNegativeButton(R.string.perm_exact_alarm_skip, null)
+                        .show();
+            }
         }
-
-        if (isFinishing() || isDestroyed()) {
-            return false;
-        }
-
-        if (exactAlarmDialog != null && exactAlarmDialog.isShowing()) {
-            return false;
-        }
-
-        exactAlarmDialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.perm_exact_alarm_title)
-                .setMessage(R.string.perm_exact_alarm_message)
-                .setPositiveButton(R.string.perm_exact_alarm_open, (d, w) -> {
-                    saveAfterExactAlarmSettings = true;
-                    Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-                    exactAlarmSettingsLauncher.launch(intent);
-                })
-                .setNegativeButton(R.string.perm_exact_alarm_skip, (d, w) ->
-                        saveMedication(true))
-                .setOnDismissListener(d -> exactAlarmDialog = null)
-                .create();
-        exactAlarmDialog.show();
-        return false;
     }
 
     private void requestCameraPermission() {
@@ -274,7 +219,6 @@ public class AddEditMedicationActivity extends BaseActivity {
 
     private void openCameraPreview() {
         Intent intent = new Intent(this, CameraActivity.class);
-        intent.putExtra(CameraActivity.EXTRA_MEDICATION_ID, medicationId);
         cameraLauncher.launch(intent);
     }
 
@@ -363,28 +307,8 @@ public class AddEditMedicationActivity extends BaseActivity {
                 emergencyContactName = finalName;
                 emergencyContactPhone = finalPhone;
                 tvEmergencyContact.setText(finalName + " — " + finalPhone);
-                maybeRequestSmsPermission();
             });
         });
-    }
-
-    private void maybeRequestSmsPermission() {
-        if (TextUtils.isEmpty(emergencyContactPhone)
-                || PermissionManager.isGranted(this, Manifest.permission.SEND_SMS)) {
-            return;
-        }
-
-        if (shouldShowRequestPermissionRationale(Manifest.permission.SEND_SMS)) {
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.perm_sms_title)
-                    .setMessage(R.string.perm_sms_message)
-                    .setPositiveButton(R.string.perm_notif_allow,
-                            (d, w) -> smsPermissionLauncher.launch(Manifest.permission.SEND_SMS))
-                    .setNegativeButton(R.string.cancel, null)
-                    .show();
-        } else {
-            smsPermissionLauncher.launch(Manifest.permission.SEND_SMS);
-        }
     }
 
     private void loadMedicationForEdit() {
@@ -502,10 +426,6 @@ public class AddEditMedicationActivity extends BaseActivity {
     }
 
     private void saveMedication() {
-        saveMedication(false);
-    }
-
-    private void saveMedication(boolean skipExactAlarmCheck) {
         String name = etMedicationName.getText().toString().trim();
         if (TextUtils.isEmpty(name)) {
             showToast(getString(R.string.msg_validation_name));
@@ -518,9 +438,7 @@ public class AddEditMedicationActivity extends BaseActivity {
             return;
         }
 
-        if (!skipExactAlarmCheck && !ensureExactAlarmPermission()) {
-            return;
-        }
+        checkExactAlarmPermission();
 
         String daysOfWeek = collectDaysOfWeek();
         Medication medication = new Medication();

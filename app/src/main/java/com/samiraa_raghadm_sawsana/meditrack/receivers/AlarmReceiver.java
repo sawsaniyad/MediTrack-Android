@@ -10,15 +10,15 @@ import android.os.Build;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
+import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
-import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
-import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
-import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
-import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -32,7 +32,6 @@ public class AlarmReceiver extends BroadcastReceiver {
         String medicationName = intent.getStringExtra("MEDICATION_NAME");
         String dosage = intent.getStringExtra("DOSAGE");
         int scheduleId = intent.getIntExtra("SCHEDULE_ID", -1);
-        boolean fromSnooze = intent.getBooleanExtra(SnoozeActionReceiver.EXTRA_FROM_SNOOZE, false);
 
         if (medicationName == null) {
             medicationName = context.getString(R.string.default_medication_name);
@@ -45,59 +44,55 @@ public class AlarmReceiver extends BroadcastReceiver {
             return;
         }
 
-        final String finalMedicationName = medicationName;
+        final String finalMedName = medicationName;
         final String finalDosage = dosage;
 
-        if (!fromSnooze) {
-            AppExecutors.getInstance().diskIO(() -> insertPendingLog(
-                    context, medicationId, finalMedicationName));
-        }
+        // FIXED: moved to diskIO
+        AppExecutors.getInstance().diskIO(() -> {
+            MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
+            IntakeLog log = new IntakeLog();
+            log.setMedicationId(medicationId);
+            log.setScheduledDatetime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
+                    Locale.getDefault()).format(new Date()));
+            log.setTaken(false);
+            dao.insertIntakeLog(log);
+        });
 
-        NotificationHelper.showMedicationReminder(
-                context, medicationId, finalMedicationName, finalDosage, scheduleId);
+        NotificationHelper.showMedicationReminder(context,
+                medicationId, finalMedName, finalDosage, scheduleId);
 
         Intent localIntent = new Intent(context.getString(R.string.broadcast_medication_due));
         localIntent.putExtra(context.getString(R.string.extra_medication_id), medicationId);
-        localIntent.putExtra(context.getString(R.string.extra_medication_name), finalMedicationName);
+        localIntent.putExtra(context.getString(R.string.extra_medication_name), finalMedName);
         LocalBroadcastManager.getInstance(context).sendBroadcast(localIntent);
 
         scheduleMissedDoseCheck(context, medicationId, scheduleId);
 
-        if (!fromSnooze) {
-            AppExecutors.getInstance().diskIO(() -> scheduleNextDailyReminder(
-                    context, medicationId, scheduleId));
-        }
-    }
-
-    private void insertPendingLog(Context context, int medicationId, String medicationName) {
-        MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
-        IntakeLog log = new IntakeLog();
-        log.setMedicationId(medicationId);
-        log.setMedicationName(medicationName);
-        log.setScheduledDatetime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
-                Locale.getDefault()).format(new Date()));
-        log.setTaken(false);
-        log.setStatus(IntakeLog.STATUS_PENDING);
-        dao.insertIntakeLog(log);
-    }
-
-    private void scheduleNextDailyReminder(Context context, int medicationId, int scheduleId) {
-        MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
-        Schedule schedule = null;
-        for (Schedule item : dao.getAllSchedules()) {
-            if (item.getId() == scheduleId) {
-                schedule = item;
-                break;
+        // FIXED: moved to diskIO — reschedule for next day
+        AppExecutors.getInstance().diskIO(() -> {
+            MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
+            Schedule schedule = null;
+            for (Schedule s : dao.getAllSchedules()) {
+                if (s.getId() == scheduleId) {
+                    schedule = s;
+                    break;
+                }
             }
-        }
+            if (schedule != null) {
+                Medication med = dao.getMedicationById(medicationId);
+                if (med != null && med.isActive()) {
+                    AlarmScheduler.scheduleAlarm(context.getApplicationContext(), schedule, med);
+                }
+            }
+        });
+    }
 
-        if (schedule == null) {
-            return;
-        }
-
-        Medication medication = dao.getMedicationById(medicationId);
-        if (medication != null && medication.isActive()) {
-            AlarmScheduler.scheduleAlarm(context.getApplicationContext(), schedule, medication);
+    private static boolean canScheduleExact(android.app.AlarmManager am) {
+        if (Build.VERSION.SDK_INT < 31) return true;
+        try {
+            return (Boolean) android.app.AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
+        } catch (Exception e) {
+            return true;
         }
     }
 
@@ -114,20 +109,17 @@ public class AlarmReceiver extends BroadcastReceiver {
                 checkIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        AlarmManager alarmManager =
-                (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (am == null) {
             return;
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP, checkAt, checkPI);
+        if (Build.VERSION.SDK_INT >= 31) {
+            if (canScheduleExact(am)) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, checkAt, checkPI);
             }
         } else {
-            alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP, checkAt, checkPI);
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, checkAt, checkPI);
         }
     }
 }

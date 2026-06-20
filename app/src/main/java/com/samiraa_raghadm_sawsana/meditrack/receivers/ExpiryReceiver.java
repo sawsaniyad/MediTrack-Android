@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
@@ -37,8 +38,15 @@ public class ExpiryReceiver extends BroadcastReceiver {
                 .setAutoCancel(true);
 
         NotificationManagerCompat nm = NotificationManagerCompat.from(context);
-        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
-                == PackageManager.PERMISSION_GRANTED) {
+        boolean canNotify;
+        if (Build.VERSION.SDK_INT >= 33) {
+            canNotify = ActivityCompat.checkSelfPermission(context,
+                    "android.permission.POST_NOTIFICATIONS")
+                    == PackageManager.PERMISSION_GRANTED;
+        } else {
+            canNotify = true;
+        }
+        if (canNotify) {
             nm.notify(NotificationHelper.NOTIFICATION_ID_BASE + medName.hashCode(),
                     builder.build());
         }

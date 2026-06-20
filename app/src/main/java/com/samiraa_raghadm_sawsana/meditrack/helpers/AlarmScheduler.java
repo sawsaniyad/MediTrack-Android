@@ -6,11 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
-import androidx.core.app.NotificationManagerCompat;
-
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
-import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.AlarmReceiver;
@@ -34,6 +30,15 @@ import java.util.Locale;
 public final class AlarmScheduler {
 
     private AlarmScheduler() {
+    }
+
+    private static boolean canScheduleExact(AlarmManager am) {
+        if (Build.VERSION.SDK_INT < 31) return true;
+        try {
+            return (Boolean) AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     public static void scheduleAlarm(Context context, Schedule schedule, Medication medication) {
@@ -79,8 +84,8 @@ public final class AlarmScheduler {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         // setExactAndAllowWhileIdle ensures delivery in Doze
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (am.canScheduleExactAlarms()) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            if (canScheduleExact(am)) {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
             }
         } else {
@@ -105,25 +110,12 @@ public final class AlarmScheduler {
         if (am == null) {
             return;
         }
-
-        PendingIntent intakePi = PendingIntent.getBroadcast(context,
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        PendingIntent pi = PendingIntent.getBroadcast(context,
                 scheduleId,
-                new Intent(context, AlarmReceiver.class),
+                intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        PendingIntent snoozePi = PendingIntent.getBroadcast(context,
-                scheduleId + 20000,
-                new Intent(context, AlarmReceiver.class),
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        PendingIntent missedDosePi = PendingIntent.getBroadcast(context,
-                scheduleId + 30000,
-                new Intent(context, com.samiraa_raghadm_sawsana.meditrack.receivers.MissedDoseReceiver.class),
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-        am.cancel(intakePi);
-        am.cancel(snoozePi);
-        am.cancel(missedDosePi);
-        NotificationManagerCompat.from(context)
-                .cancel(NotificationHelper.NOTIFICATION_ID_BASE + scheduleId);
+        am.cancel(pi);
     }
 
     public static void cancelAlarmsForMedication(Context context, MedicationDAO dao, int medicationId) {
@@ -174,8 +166,8 @@ public final class AlarmScheduler {
                 return;
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (am.canScheduleExactAlarms()) {
+            if (Build.VERSION.SDK_INT >= 31) {
+                if (canScheduleExact(am)) {
                     am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
                             cal.getTimeInMillis(), pi);
                 }
@@ -186,18 +178,5 @@ public final class AlarmScheduler {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void cancelExpiryAlarm(Context context, int medicationId) {
-        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (am == null) {
-            return;
-        }
-
-        PendingIntent pi = PendingIntent.getBroadcast(context,
-                medicationId + 50000,
-                new Intent(context, ExpiryReceiver.class),
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        am.cancel(pi);
     }
 }

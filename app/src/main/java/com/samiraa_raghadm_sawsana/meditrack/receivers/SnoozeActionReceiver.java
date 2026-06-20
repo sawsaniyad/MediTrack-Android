@@ -9,11 +9,18 @@ import android.os.Build;
 
 import androidx.core.app.NotificationManagerCompat;
 
-import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 
 public class SnoozeActionReceiver extends BroadcastReceiver {
 
-    public static final String EXTRA_FROM_SNOOZE = "FROM_SNOOZE";
+    private static boolean canScheduleExact(AlarmManager am) {
+        if (android.os.Build.VERSION.SDK_INT < 31) return true;
+        try {
+            return (Boolean) AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
+        } catch (Exception e) {
+            return true;
+        }
+    }
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -31,8 +38,6 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
             NotificationManagerCompat.from(context).cancel(notificationId);
         }
 
-        cancelMissedDoseCheck(context, medicationId, scheduleId);
-
         int snoozeMinutes = PrefsManager.getReminderMinutes(context);
         long triggerAt = System.currentTimeMillis() + snoozeMinutes * 60 * 1000L;
 
@@ -41,7 +46,6 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
         snoozeFireIntent.putExtra("MEDICATION_NAME", medicationName);
         snoozeFireIntent.putExtra("DOSAGE", dosage);
         snoozeFireIntent.putExtra("SCHEDULE_ID", scheduleId);
-        snoozeFireIntent.putExtra(EXTRA_FROM_SNOOZE, true);
 
         PendingIntent pi = PendingIntent.getBroadcast(context,
                 scheduleId + 20000,
@@ -53,33 +57,12 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
             return;
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (am.canScheduleExactAlarms()) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            if (canScheduleExact(am)) {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
             }
         } else {
             am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
         }
-    }
-
-    private void cancelMissedDoseCheck(Context context, int medicationId, int scheduleId) {
-        if (scheduleId == -1) {
-            return;
-        }
-
-        Intent checkIntent = new Intent(context, MissedDoseReceiver.class);
-        checkIntent.putExtra("MEDICATION_ID", medicationId);
-        checkIntent.putExtra("SCHEDULE_ID", scheduleId);
-
-        PendingIntent checkPI = PendingIntent.getBroadcast(context,
-                scheduleId + 30000,
-                checkIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (am != null) {
-            am.cancel(checkPI);
-        }
-        checkPI.cancel();
     }
 }

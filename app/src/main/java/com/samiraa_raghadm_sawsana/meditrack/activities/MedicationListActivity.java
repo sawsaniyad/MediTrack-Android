@@ -1,6 +1,5 @@
 package com.samiraa_raghadm_sawsana.meditrack.activities;
 
-import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +7,7 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -25,7 +25,8 @@ import com.google.android.material.snackbar.Snackbar;
 import com.samiraa_raghadm_sawsana.meditrack.BuildConfig;
 import com.samiraa_raghadm_sawsana.meditrack.R;
 import com.samiraa_raghadm_sawsana.meditrack.adapters.MedicationAdapter;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PermissionManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
@@ -92,7 +93,6 @@ public class MedicationListActivity extends BaseActivity {
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        setupOverflowMenu(toolbar, null);
 
         recyclerView = findViewById(R.id.recyclerViewMedications);
         emptyStateContainer = findViewById(R.id.emptyStateContainer);
@@ -118,10 +118,6 @@ public class MedicationListActivity extends BaseActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 medicationDueReceiver,
                 new IntentFilter(getString(R.string.broadcast_medication_due)));
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
-                || PermissionManager.isGranted(this, Manifest.permission.POST_NOTIFICATIONS)) {
-            scheduleAlarms();
-        }
         loadMedications();
     }
 
@@ -132,18 +128,18 @@ public class MedicationListActivity extends BaseActivity {
     }
 
     private void requestNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (!PermissionManager.isGranted(this, Manifest.permission.POST_NOTIFICATIONS)) {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (!PermissionManager.isGranted(this, "android.permission.POST_NOTIFICATIONS")) {
+                if (shouldShowRequestPermissionRationale("android.permission.POST_NOTIFICATIONS")) {
                     new AlertDialog.Builder(this)
                             .setTitle(R.string.perm_notif_title)
                             .setMessage(R.string.perm_notif_message)
                             .setPositiveButton(R.string.perm_notif_allow, (d, w) ->
-                                    notifPermLauncher.launch(Manifest.permission.POST_NOTIFICATIONS))
+                                    notifPermLauncher.launch("android.permission.POST_NOTIFICATIONS"))
                             .setNegativeButton(R.string.perm_notif_later, null)
                             .show();
                 } else {
-                    notifPermLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                    notifPermLauncher.launch("android.permission.POST_NOTIFICATIONS");
                 }
             } else {
                 scheduleAlarms();
@@ -209,10 +205,54 @@ public class MedicationListActivity extends BaseActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_medication_list, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (handleOverflowMenuItem(item)) {
+        int id = item.getItemId();
+        if (id == R.id.action_about) {
+            showAboutDialog();
+            return true;
+        } else if (id == R.id.action_history) {
+            startActivity(new Intent(this, HistoryActivity.class));
+            return true;
+        } else if (id == R.id.action_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            return true;
+        } else if (id == R.id.action_exit) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.exit_dialog_title)
+                    .setMessage(R.string.exit_dialog_message)
+                    .setPositiveButton(R.string.btn_yes, (dialog, which) -> {
+                        finish();
+                        System.exit(0);
+                    })
+                    .setNegativeButton(R.string.btn_no, null)
+                    .show();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showAboutDialog() {
+        String aboutMessage =
+                "MediTrack — מדי-טראק\n" +
+                "מזהה: " + getPackageName() + "\n\n" +
+                "מערכת הפעלה: Android " + Build.VERSION.RELEASE +
+                " (API " + Build.VERSION.SDK_INT + ")\n\n" +
+                "פותח על ידי:\n" +
+                "סמירה אבו אלהוא — 324909803\n" +
+                "רגד מחיסן — 212541304\n" +
+                "סאוסן אבו שמעה — 213588270\n\n" +
+                "תאריך הגשה: 28.6.26";
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.about_dialog_title)
+                .setMessage(aboutMessage)
+                .setPositiveButton(R.string.about_close, null)
+                .show();
     }
 }

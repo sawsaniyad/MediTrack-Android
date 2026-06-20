@@ -1,4 +1,4 @@
-package com.samiraa_raghadm_sawsana.meditrack.models;
+package com.samiraa_raghadm_sawsana.meditrack.helpers;
 
 import android.os.Handler;
 import android.os.Looper;

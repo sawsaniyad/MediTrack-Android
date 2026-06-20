@@ -6,10 +6,6 @@
 -->
 <resources>
     <string name="app_name">MediTrack</string>
-    <string name="app_logo_description">MediTrack app logo</string>
-    <string name="splash_subtitle">Medication reminder and tracking app</string>
-    <string name="splash_student_ids">Samira Abu Al-Hawa - 324909803&#10;Raghad Mohiسن - 212541304&#10;Sawsan Abu Shama - 213588270</string>
-    <string name="splash_submission_date">Submission date: 28.6.2026</string>
     <string name="splash_tagline">MediTrack / מדי-טראק</string>
 
     <string name="nav_medications">MediTrack</string>
@@ -206,23 +202,22 @@
     <string name="label_clear_data">נקה כל הנתונים</string>
     <string name="label_clear_data_subtitle">מחיקת כל התרופות והיסטוריה</string>
 
-    <string name="settings_permissions_opened">App settings opened</string>
-    <string name="clear_data_title">Clear data</string>
-    <string name="clear_data_message">Delete all medications, schedules, history, and settings?</string>
-    <string name="clear_data_success">All app data was cleared</string>
-
     <!-- Camera overlay -->
     <string name="hint_camera_frame">מסגר את שם התרופה, המינון ותאריך התפוגה</string>
     <string name="label_camera_title">צלם אריזה</string>
 
     <!-- Clear filter button -->
     <string name="btn_clear_x">✕</string>
-    <string name="error_camera_generic">Unknown camera error</string>
-    <string name="error_camera_save">Failed to save photo: %1$s</string>
-    <string name="error_camera_unavailable">No available camera was found on this device</string>
-    <string name="error_camera_switch_unavailable">Only one camera is available on this device</string>
-    <string name="error_camera_flash_unavailable">Flash is not available for this camera</string>
-    <string name="perm_sms_title">SMS permission</string>
-    <string name="perm_sms_message">Allow SMS so missed-dose alerts can notify the emergency contact.</string>
-    <string name="perm_sms_denied">SMS permission was permanently denied. Open app settings to enable emergency alerts.</string>
+
+    <string name="splash_submitters">סמירה אבו אלהוא — 324909803\nרגד מחיסן — 212541304\nסאוסן אבו שמעה — 213588270</string>
+    <string name="splash_submission_date">תאריך הגשה: 28.6.26</string>
+
+    <!-- Exit dialog -->
+    <string name="exit_dialog_title">יציאה מהאפליקציה</string>
+    <string name="exit_dialog_message">האם לצאת מהאפליקציה?</string>
+    <string name="btn_yes">כן</string>
+    <string name="btn_no">לא</string>
+
+    <!-- About dialog -->
+    <string name="about_dialog_title">אודות האפליקציה</string>
 </resources>
