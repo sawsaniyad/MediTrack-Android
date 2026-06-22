@@ -19,7 +19,8 @@ public class BootReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         if (Intent.ACTION_BOOT_COMPLETED.equals(action)
                 || "android.intent.action.QUICKBOOT_POWERON".equals(action)) {
-            // FIXED: moved to diskIO — AlarmScheduler.scheduleAllAlarms uses diskIO internally
+            // FIXED: moved to diskIO — AlarmScheduler.scheduleAllAlarms uses diskIO
+            // internally
             AppExecutors.getInstance().diskIO(() -> {
                 MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
                 AlarmScheduler.scheduleAllAlarms(context.getApplicationContext(), dao);

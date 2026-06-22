@@ -29,11 +29,12 @@ public class MedicationDAO {
         Cursor cursor = null;
         try {
             cursor = db.query(DatabaseHelper.TABLE_MEDICATIONS, null,
-                    DatabaseHelper.COL_MED_IS_ACTIVE + " = ?", new String[]{"1"},
+                    DatabaseHelper.COL_MED_IS_ACTIVE + " = ?", new String[] { "1" },
                     null, null, DatabaseHelper.COL_MED_NAME + " ASC");
             return cursorToMedicationList(cursor);
         } finally {
-            if (cursor != null) cursor.close();
+            if (cursor != null)
+                cursor.close();
         }
     }
 
@@ -45,7 +46,8 @@ public class MedicationDAO {
                     null, null, null, null, DatabaseHelper.COL_MED_NAME + " ASC");
             return cursorToMedicationList(cursor);
         } finally {
-            if (cursor != null) cursor.close();
+            if (cursor != null)
+                cursor.close();
         }
     }
 
@@ -54,11 +56,12 @@ public class MedicationDAO {
         Cursor cursor = null;
         try {
             cursor = db.query(DatabaseHelper.TABLE_MEDICATIONS, null,
-                    DatabaseHelper.COL_MED_ID + " = ?", new String[]{String.valueOf(id)},
+                    DatabaseHelper.COL_MED_ID + " = ?", new String[] { String.valueOf(id) },
                     null, null, null);
             return cursor.moveToFirst() ? cursorToMedication(cursor) : null;
         } finally {
-            if (cursor != null) cursor.close();
+            if (cursor != null)
+                cursor.close();
         }
     }
 
@@ -71,12 +74,31 @@ public class MedicationDAO {
         dbHelper.getWritableDatabase().update(DatabaseHelper.TABLE_MEDICATIONS,
                 medicationToContentValues(medication),
                 DatabaseHelper.COL_MED_ID + " = ?",
-                new String[]{String.valueOf(medication.getId())});
+                new String[] { String.valueOf(medication.getId()) });
     }
 
     public void deleteMedication(int medicationId) {
-        dbHelper.getWritableDatabase().delete(DatabaseHelper.TABLE_MEDICATIONS,
-                DatabaseHelper.COL_MED_ID + " = ?", new String[]{String.valueOf(medicationId)});
+        // Soft delete: keep the row so intake history survives.
+        // Also disable its schedules so no future alarms fire for a "deleted" med.
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ContentValues medValues = new ContentValues();
+            medValues.put(DatabaseHelper.COL_MED_IS_ACTIVE, 0);
+            db.update(DatabaseHelper.TABLE_MEDICATIONS, medValues,
+                    DatabaseHelper.COL_MED_ID + " = ?",
+                    new String[] { String.valueOf(medicationId) });
+
+            ContentValues schValues = new ContentValues();
+            schValues.put(DatabaseHelper.COL_SCH_IS_ENABLED, 0);
+            db.update(DatabaseHelper.TABLE_SCHEDULES, schValues,
+                    DatabaseHelper.COL_SCH_MEDICATION_ID + " = ?",
+                    new String[] { String.valueOf(medicationId) });
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
     }
 
     // ================================================================
@@ -89,11 +111,12 @@ public class MedicationDAO {
         try {
             cursor = db.query(DatabaseHelper.TABLE_SCHEDULES, null,
                     DatabaseHelper.COL_SCH_MEDICATION_ID + " = ?",
-                    new String[]{String.valueOf(medicationId)},
+                    new String[] { String.valueOf(medicationId) },
                     null, null, DatabaseHelper.COL_SCH_INTAKE_TIME + " ASC");
             return cursorToScheduleList(cursor);
         } finally {
-            if (cursor != null) cursor.close();
+            if (cursor != null)
+                cursor.close();
         }
     }
 
@@ -105,7 +128,8 @@ public class MedicationDAO {
                     null, null, null, null, DatabaseHelper.COL_SCH_INTAKE_TIME + " ASC");
             return cursorToScheduleList(cursor);
         } finally {
-            if (cursor != null) cursor.close();
+            if (cursor != null)
+                cursor.close();
         }
     }
 
@@ -117,7 +141,7 @@ public class MedicationDAO {
     public void deleteSchedulesForMedication(int medicationId) {
         dbHelper.getWritableDatabase().delete(DatabaseHelper.TABLE_SCHEDULES,
                 DatabaseHelper.COL_SCH_MEDICATION_ID + " = ?",
-                new String[]{String.valueOf(medicationId)});
+                new String[] { String.valueOf(medicationId) });
     }
 
     // ================================================================
@@ -135,11 +159,12 @@ public class MedicationDAO {
         try {
             cursor = db.query(DatabaseHelper.TABLE_INTAKE_LOG, null,
                     "substr(" + DatabaseHelper.COL_LOG_SCHEDULED_DATETIME + ", 1, 10) BETWEEN ? AND ?",
-                    new String[]{startDate, endDate},
+                    new String[] { startDate, endDate },
                     null, null, DatabaseHelper.COL_LOG_SCHEDULED_DATETIME + " ASC");
             return cursorToIntakeLogList(cursor);
         } finally {
-            if (cursor != null) cursor.close();
+            if (cursor != null)
+                cursor.close();
         }
     }
 
@@ -149,11 +174,12 @@ public class MedicationDAO {
         try {
             cursor = db.query(DatabaseHelper.TABLE_INTAKE_LOG, null,
                     DatabaseHelper.COL_LOG_MEDICATION_ID + " = ?",
-                    new String[]{String.valueOf(medicationId)},
+                    new String[] { String.valueOf(medicationId) },
                     null, null, DatabaseHelper.COL_LOG_SCHEDULED_DATETIME + " ASC");
             return cursorToIntakeLogList(cursor);
         } finally {
-            if (cursor != null) cursor.close();
+            if (cursor != null)
+                cursor.close();
         }
     }
 
@@ -168,7 +194,7 @@ public class MedicationDAO {
         values.put(DatabaseHelper.COL_LOG_ACTUAL_DATETIME, actualDatetime);
         values.put(DatabaseHelper.COL_LOG_STATUS, "נלקח");
         dbHelper.getWritableDatabase().update(DatabaseHelper.TABLE_INTAKE_LOG, values,
-                DatabaseHelper.COL_LOG_ID + " = ?", new String[]{String.valueOf(logId)});
+                DatabaseHelper.COL_LOG_ID + " = ?", new String[] { String.valueOf(logId) });
     }
 
     // ================================================================
@@ -177,35 +203,35 @@ public class MedicationDAO {
 
     private ContentValues medicationToContentValues(Medication medication) {
         ContentValues values = new ContentValues();
-        values.put(DatabaseHelper.COL_MED_NAME,                    medication.getName());
-        values.put(DatabaseHelper.COL_MED_DOSAGE,                  medication.getDosage());
-        values.put(DatabaseHelper.COL_MED_INSTRUCTIONS,            medication.getInstructions());
-        values.put(DatabaseHelper.COL_MED_IMAGE_PATH,              medication.getImagePath());
-        values.put(DatabaseHelper.COL_MED_EXPIRY_DATE,             medication.getExpiryDate());
-        values.put(DatabaseHelper.COL_MED_EMERGENCY_CONTACT_NAME,  medication.getEmergencyContactName());
+        values.put(DatabaseHelper.COL_MED_NAME, medication.getName());
+        values.put(DatabaseHelper.COL_MED_DOSAGE, medication.getDosage());
+        values.put(DatabaseHelper.COL_MED_INSTRUCTIONS, medication.getInstructions());
+        values.put(DatabaseHelper.COL_MED_IMAGE_PATH, medication.getImagePath());
+        values.put(DatabaseHelper.COL_MED_EXPIRY_DATE, medication.getExpiryDate());
+        values.put(DatabaseHelper.COL_MED_EMERGENCY_CONTACT_NAME, medication.getEmergencyContactName());
         values.put(DatabaseHelper.COL_MED_EMERGENCY_CONTACT_PHONE, medication.getEmergencyContactPhone());
-        values.put(DatabaseHelper.COL_MED_IS_ACTIVE,               medication.isActive() ? 1 : 0);
+        values.put(DatabaseHelper.COL_MED_IS_ACTIVE, medication.isActive() ? 1 : 0);
         return values;
     }
 
     private ContentValues scheduleToContentValues(Schedule schedule) {
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.COL_SCH_MEDICATION_ID, schedule.getMedicationId());
-        values.put(DatabaseHelper.COL_SCH_INTAKE_TIME,   schedule.getIntakeTime());
-        values.put(DatabaseHelper.COL_SCH_DAYS_OF_WEEK,  schedule.getDaysOfWeek());
-        values.put(DatabaseHelper.COL_SCH_IS_ENABLED,    schedule.isEnabled() ? 1 : 0);
+        values.put(DatabaseHelper.COL_SCH_INTAKE_TIME, schedule.getIntakeTime());
+        values.put(DatabaseHelper.COL_SCH_DAYS_OF_WEEK, schedule.getDaysOfWeek());
+        values.put(DatabaseHelper.COL_SCH_IS_ENABLED, schedule.isEnabled() ? 1 : 0);
         return values;
     }
 
     private ContentValues intakeLogToContentValues(IntakeLog log) {
         ContentValues values = new ContentValues();
-        values.put(DatabaseHelper.COL_LOG_MEDICATION_ID,      log.getMedicationId());
-        values.put(DatabaseHelper.COL_LOG_MEDICATION_NAME,    log.getMedicationName());
+        values.put(DatabaseHelper.COL_LOG_MEDICATION_ID, log.getMedicationId());
+        values.put(DatabaseHelper.COL_LOG_MEDICATION_NAME, log.getMedicationName());
         values.put(DatabaseHelper.COL_LOG_SCHEDULED_DATETIME, log.getScheduledDatetime());
-        values.put(DatabaseHelper.COL_LOG_TAKEN,              log.isTaken() ? 1 : 0);
-        values.put(DatabaseHelper.COL_LOG_ACTUAL_DATETIME,    log.getActualDatetime());
-        values.put(DatabaseHelper.COL_LOG_WAS_DELAYED,        log.isWasDelayed() ? 1 : 0);
-        values.put(DatabaseHelper.COL_LOG_STATUS,             log.getStatus());
+        values.put(DatabaseHelper.COL_LOG_TAKEN, log.isTaken() ? 1 : 0);
+        values.put(DatabaseHelper.COL_LOG_ACTUAL_DATETIME, log.getActualDatetime());
+        values.put(DatabaseHelper.COL_LOG_WAS_DELAYED, log.isWasDelayed() ? 1 : 0);
+        values.put(DatabaseHelper.COL_LOG_STATUS, log.getStatus());
         return values;
     }
 
@@ -254,7 +280,8 @@ public class MedicationDAO {
         log.setId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_LOG_ID)));
         log.setMedicationId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_LOG_MEDICATION_ID)));
         log.setMedicationName(getStringOrNull(cursor, DatabaseHelper.COL_LOG_MEDICATION_NAME));
-        log.setScheduledDatetime(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_LOG_SCHEDULED_DATETIME)));
+        log.setScheduledDatetime(
+                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_LOG_SCHEDULED_DATETIME)));
         log.setTaken(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_LOG_TAKEN)) == 1);
         log.setActualDatetime(getStringOrNull(cursor, DatabaseHelper.COL_LOG_ACTUAL_DATETIME));
         log.setWasDelayed(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_LOG_WAS_DELAYED)) == 1);

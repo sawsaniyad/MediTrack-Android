@@ -105,8 +105,8 @@ public class HistoryActivity extends BaseActivity {
                     spinnerItems.add(new MedicationSpinnerItem(
                             medication.getId(), medication.getName()));
                 }
-                ArrayAdapter<MedicationSpinnerItem> spinnerAdapter =
-                        new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, spinnerItems);
+                ArrayAdapter<MedicationSpinnerItem> spinnerAdapter = new ArrayAdapter<>(this,
+                        android.R.layout.simple_spinner_item, spinnerItems);
                 spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinnerMedication.setAdapter(spinnerAdapter);
                 loadHistory(selectedDate, selectedMedId);

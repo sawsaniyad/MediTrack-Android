@@ -88,7 +88,8 @@ public class AlarmReceiver extends BroadcastReceiver {
     }
 
     private static boolean canScheduleExact(android.app.AlarmManager am) {
-        if (Build.VERSION.SDK_INT < 31) return true;
+        if (Build.VERSION.SDK_INT < 31)
+            return true;
         try {
             return (Boolean) android.app.AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
         } catch (Exception e) {
