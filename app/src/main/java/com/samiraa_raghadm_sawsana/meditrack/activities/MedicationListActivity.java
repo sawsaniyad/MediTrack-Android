@@ -241,7 +241,7 @@ public class MedicationListActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void showAboutDialog() {
+    protected void showAboutDialog() {
         String aboutMessage = "MediTrack — מדי-טראק\n" +
                 "מזהה: " + getPackageName() + "\n\n" +
                 "מערכת הפעלה: Android " + Build.VERSION.RELEASE +
