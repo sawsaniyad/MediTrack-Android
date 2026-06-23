@@ -2,6 +2,7 @@ package com.samiraa_raghadm_sawsana.meditrack.receivers;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.ContentValues;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,7 +10,6 @@ import android.content.Intent;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.database.IntakeLogDAO;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
@@ -44,7 +44,7 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
             MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
             IntakeLog pendingLog = findPendingLog(dao.getLogsByMedication(medicationId), scheduledDatetime);
             if (pendingLog != null) {
-                new IntakeLogDAO(context).markAsSnoozed(pendingLog.getId(), null);
+                markAsSnoozed(context, pendingLog.getId());
             }
         });
 
@@ -119,5 +119,17 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
             }
         }
         return newestPendingLog;
+    }
+
+    private void markAsSnoozed(Context context, int logId) {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseHelper.COL_LOG_WAS_DELAYED, 1);
+        values.put(DatabaseHelper.COL_LOG_STATUS, IntakeLog.STATUS_SNOOZED);
+        DatabaseHelper.getInstance(context)
+                .getWritableDatabase()
+                .update(DatabaseHelper.TABLE_INTAKE_LOG,
+                        values,
+                        DatabaseHelper.COL_LOG_ID + " = ?",
+                        new String[] { String.valueOf(logId) });
     }
 }

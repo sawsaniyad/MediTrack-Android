@@ -1,6 +1,7 @@
 package com.samiraa_raghadm_sawsana.meditrack.receivers;
 
 import android.Manifest;
+import android.content.ContentValues;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,7 +9,6 @@ import android.os.Build;
 import android.telephony.SmsManager;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.database.IntakeLogDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
@@ -43,7 +43,7 @@ public class MissedDoseReceiver extends BroadcastReceiver {
                 return;
             }
 
-            new IntakeLogDAO(context).markAsMissed(pendingLog.getId(), null);
+            markAsMissed(context, pendingLog.getId());
 
             String phone = med.getEmergencyContactPhone();
             String name = med.getEmergencyContactName();
@@ -88,5 +88,16 @@ public class MissedDoseReceiver extends BroadcastReceiver {
             }
         }
         return newestPendingLog;
+    }
+
+    private void markAsMissed(Context context, int logId) {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseHelper.COL_LOG_STATUS, IntakeLog.STATUS_MISSED);
+        DatabaseHelper.getInstance(context)
+                .getWritableDatabase()
+                .update(DatabaseHelper.TABLE_INTAKE_LOG,
+                        values,
+                        DatabaseHelper.COL_LOG_ID + " = ?",
+                        new String[] { String.valueOf(logId) });
     }
 }
