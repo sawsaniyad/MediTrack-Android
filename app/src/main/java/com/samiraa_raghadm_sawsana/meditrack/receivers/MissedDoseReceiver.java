@@ -101,3 +101,4 @@ public class MissedDoseReceiver extends BroadcastReceiver {
                         new String[] { String.valueOf(logId) });
     }
 }
+

@@ -1,14 +1,12 @@
 package com.samiraa_raghadm_sawsana.meditrack.adapters;
 
-import android.graphics.drawable.GradientDrawable;
+import android.graphics.Color;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
@@ -18,7 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryViewHolder> {
+public class HistoryAdapter extends BaseAdapter {
 
     private final List<IntakeLog> logs = new ArrayList<>();
     private final Map<Integer, String> medicationNames = new HashMap<>();
@@ -35,56 +33,55 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         notifyDataSetChanged();
     }
 
-    @NonNull
     @Override
-    public HistoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_history, parent, false);
-        return new HistoryViewHolder(view);
+    public int getCount() {
+        return logs.size();
     }
 
     @Override
-    public void onBindViewHolder(@NonNull HistoryViewHolder holder, int position) {
-        IntakeLog log = logs.get(position);
+    public IntakeLog getItem(int position) {
+        return logs.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return logs.get(position).getId();
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            convertView = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_history, parent, false);
+            holder = new ViewHolder(convertView);
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        IntakeLog log = getItem(position);
         String medName = medicationNames.get(log.getMedicationId());
-        if (medName == null) {
-            medName = holder.itemView.getContext().getString(
+        if (TextUtils.isEmpty(medName)) {
+            medName = log.getMedicationName();
+        }
+        if (TextUtils.isEmpty(medName)) {
+            medName = parent.getContext().getString(
                     R.string.history_med_fallback, log.getMedicationId());
         }
 
-        holder.tvScheduledTime.setText(holder.itemView.getContext().getString(
-                R.string.history_scheduled, log.getScheduledDatetime()));
         holder.tvHistoryMedName.setText(medName);
+        holder.tvScheduledTime.setText(parent.getContext().getString(
+                R.string.history_scheduled, log.getScheduledDatetime()));
 
         if (log.isTaken() && !TextUtils.isEmpty(log.getActualDatetime())) {
-            holder.tvActualTime.setText(holder.itemView.getContext().getString(
+            holder.tvActualTime.setText(parent.getContext().getString(
                     R.string.history_taken_at, log.getActualDatetime()));
         } else {
             holder.tvActualTime.setText(R.string.history_not_taken);
         }
 
-        int colorRes;
-        int statusLabelRes;
-        if (log.isTaken()) {
-            colorRes = R.color.status_taken;
-            statusLabelRes = R.string.status_taken;
-        } else if (isMissedLog(log)) {
-            colorRes = R.color.status_missed;
-            statusLabelRes = R.string.status_missed;
-        } else {
-            colorRes = R.color.status_pending;
-            statusLabelRes = R.string.status_pending;
-        }
-
-        holder.tvHistoryStatus.setText(statusLabelRes);
-        GradientDrawable badge = (GradientDrawable) holder.viewHistoryBadge.getBackground();
-        int color = holder.itemView.getContext().getResources()
-                .getColor(colorRes, holder.itemView.getContext().getTheme());
-        if (badge != null) {
-            badge.setColor(color);
-        } else {
-            holder.viewHistoryBadge.setBackgroundColor(color);
-        }
+        bindStatus(holder, log);
 
         if (log.isWasDelayed()) {
             holder.tvDelayInfo.setVisibility(View.VISIBLE);
@@ -92,18 +89,41 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         } else {
             holder.tvDelayInfo.setVisibility(View.GONE);
         }
+
+        return convertView;
     }
 
-    @Override
-    public int getItemCount() {
-        return logs.size();
+    private void bindStatus(ViewHolder holder, IntakeLog log) {
+        String status = log.getStatus();
+        if (IntakeLog.STATUS_TAKEN.equals(status) || log.isTaken()) {
+            holder.tvHistoryStatus.setText(R.string.status_taken);
+            holder.tvHistoryStatus.setBackgroundResource(R.drawable.bg_rounded_green);
+            holder.tvHistoryStatus.setTextColor(Color.parseColor("#2E7D32"));
+            holder.viewHistoryBadge.setBackgroundColor(Color.parseColor("#4CAF50"));
+            holder.tvActualTime.setTextColor(Color.parseColor("#4CAF50"));
+            return;
+        }
+        if (IntakeLog.STATUS_MISSED.equals(status)) {
+            holder.tvHistoryStatus.setText(R.string.status_missed);
+            holder.tvHistoryStatus.setBackgroundResource(R.drawable.bg_rounded_red);
+            holder.tvHistoryStatus.setTextColor(Color.parseColor("#C62828"));
+            holder.viewHistoryBadge.setBackgroundColor(Color.parseColor("#F44336"));
+            holder.tvActualTime.setTextColor(Color.parseColor("#F44336"));
+            return;
+        }
+
+        if (IntakeLog.STATUS_SNOOZED.equals(status)) {
+            holder.tvHistoryStatus.setText(R.string.snooze);
+        } else {
+            holder.tvHistoryStatus.setText(R.string.status_pending);
+        }
+        holder.tvHistoryStatus.setBackgroundResource(R.drawable.bg_rounded_amber);
+        holder.tvHistoryStatus.setTextColor(Color.parseColor("#EF6C00"));
+        holder.viewHistoryBadge.setBackgroundColor(Color.parseColor("#FF9800"));
+        holder.tvActualTime.setTextColor(Color.parseColor("#FF9800"));
     }
 
-    private boolean isMissedLog(IntakeLog log) {
-        return !log.isTaken();
-    }
-
-    static class HistoryViewHolder extends RecyclerView.ViewHolder {
+    private static final class ViewHolder {
         final TextView tvScheduledTime;
         final TextView tvHistoryMedName;
         final TextView tvActualTime;
@@ -111,8 +131,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         final TextView tvHistoryStatus;
         final TextView tvDelayInfo;
 
-        HistoryViewHolder(@NonNull View itemView) {
-            super(itemView);
+        ViewHolder(View itemView) {
             tvScheduledTime = itemView.findViewById(R.id.tvScheduledTime);
             tvHistoryMedName = itemView.findViewById(R.id.tvHistoryMedName);
             tvActualTime = itemView.findViewById(R.id.tvActualTime);

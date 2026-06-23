@@ -101,6 +101,43 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/viewStatusBadge" />
 
+        <LinearLayout
+            android:id="@+id/llQuickActions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvStatus">
+
+            <TextView
+                android:id="@+id/btnMarkTaken"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="#E8F5E9"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="V"
+                android:textColor="#2E7D32"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/btnMarkMissed"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_marginStart="8dp"
+                android:background="#FFEBEE"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="X"
+                android:textColor="#C62828"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>
