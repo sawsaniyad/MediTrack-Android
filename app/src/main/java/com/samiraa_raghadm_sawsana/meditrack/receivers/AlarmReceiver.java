@@ -5,19 +5,18 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
-import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 
 import java.text.SimpleDateFormat;
@@ -134,14 +133,19 @@ public class AlarmReceiver extends BroadcastReceiver {
             return;
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP, checkAt, checkPI);
-            }
-        } else {
+        if (canScheduleExact(alarmManager)) {
             alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP, checkAt, checkPI);
+        }
+    }
+
+    private boolean canScheduleExact(AlarmManager alarmManager) {
+        try {
+            return (Boolean) AlarmManager.class
+                    .getMethod("canScheduleExactAlarms")
+                    .invoke(alarmManager);
+        } catch (Exception ignored) {
+            return true;
         }
     }
 }

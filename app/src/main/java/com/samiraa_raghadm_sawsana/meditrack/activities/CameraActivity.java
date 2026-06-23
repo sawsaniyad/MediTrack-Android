@@ -84,6 +84,7 @@ public class CameraActivity extends BaseActivity {
     private boolean useFrontCamera;
     private boolean isFlashEnabled;
     private boolean isCapturingImage;
+    private boolean isClosingCamera;
     private int sensorOrientation;
     private int medicationId;
 
@@ -112,6 +113,10 @@ public class CameraActivity extends BaseActivity {
     private final CameraDevice.StateCallback cameraStateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice camera) {
+            if (isClosingCamera || !camera.getId().equals(activeCameraId)) {
+                camera.close();
+                return;
+            }
             cameraDevice = camera;
             startPreviewSession();
         }
@@ -119,15 +124,19 @@ public class CameraActivity extends BaseActivity {
         @Override
         public void onDisconnected(@NonNull CameraDevice camera) {
             camera.close();
-            cameraDevice = null;
+            if (cameraDevice == camera) {
+                cameraDevice = null;
+            }
         }
 
         @Override
         public void onError(@NonNull CameraDevice camera, int error) {
             camera.close();
-            cameraDevice = null;
+            if (cameraDevice == camera) {
+                cameraDevice = null;
+            }
             runOnUiThread(() -> showToast(getString(R.string.error_camera_open,
-                    getString(R.string.error_camera_generic))));
+                    getString(R.string.error_camera_not_ready))));
         }
     };
 
@@ -232,7 +241,7 @@ public class CameraActivity extends BaseActivity {
             }
             activeCameraId = backCameraId != null ? backCameraId : frontCameraId;
             if (activeCameraId == null) {
-                showToast(getString(R.string.error_camera_unavailable));
+                showToast(getString(R.string.error_camera_not_ready));
                 finish();
                 return;
             }
@@ -250,7 +259,7 @@ public class CameraActivity extends BaseActivity {
             return;
         }
         if (activeCameraId == null) {
-            showToast(getString(R.string.error_camera_unavailable));
+            showToast(getString(R.string.error_camera_not_ready));
             finish();
             return;
         }
@@ -277,6 +286,7 @@ public class CameraActivity extends BaseActivity {
     private void openCamera(String cameraId) {
         try {
             closeCameraResources();
+            isClosingCamera = false;
 
             CameraCharacteristics characteristics =
                     cameraManager.getCameraCharacteristics(cameraId);
@@ -285,7 +295,7 @@ public class CameraActivity extends BaseActivity {
             StreamConfigurationMap configMap =
                     characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             if (configMap == null) {
-                showToast(getString(R.string.error_camera_unavailable));
+                showToast(getString(R.string.error_camera_not_ready));
                 finish();
                 return;
             }
@@ -346,6 +356,10 @@ public class CameraActivity extends BaseActivity {
                     new CameraCaptureSession.StateCallback() {
                         @Override
                         public void onConfigured(@NonNull CameraCaptureSession session) {
+                            if (cameraDevice == null || session.getDevice() != cameraDevice) {
+                                session.close();
+                                return;
+                            }
                             captureSession = session;
                             try {
                                 session.setRepeatingRequest(previewRequestBuilder.build(), null, null);
@@ -411,7 +425,7 @@ public class CameraActivity extends BaseActivity {
     }
 
     private void saveCapturedImage(Image image) {
-        if (cameraExecutor == null) {
+        if (cameraExecutor == null || cameraExecutor.isShutdown()) {
             image.close();
             return;
         }
@@ -451,6 +465,9 @@ public class CameraActivity extends BaseActivity {
                 File finalSavedFile = savedFile;
                 Bitmap finalThumbnail = thumbnail;
                 runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
                     isCapturingImage = false;
                     showLastCapture(finalThumbnail);
                     Intent resultIntent = new Intent();
@@ -465,8 +482,11 @@ public class CameraActivity extends BaseActivity {
                     savedFile.delete();
                 }
                 runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
                     isCapturingImage = false;
-                    showToast(getString(R.string.error_camera_save, e.getMessage()));
+                    showToast(getString(R.string.error_camera, e.getMessage()));
                 });
             } finally {
                 image.close();
@@ -513,7 +533,7 @@ public class CameraActivity extends BaseActivity {
 
     private void switchCamera() {
         if (backCameraId == null || frontCameraId == null) {
-            showToast(getString(R.string.error_camera_switch_unavailable));
+            showToast(getString(R.string.error_camera_not_ready));
             return;
         }
         useFrontCamera = !useFrontCamera;
@@ -523,7 +543,7 @@ public class CameraActivity extends BaseActivity {
 
     private void toggleFlash() {
         if (!hasFlashUnit(activeCameraId)) {
-            showToast(getString(R.string.error_camera_flash_unavailable));
+            showToast(getString(R.string.error_camera_not_ready));
             return;
         }
         isFlashEnabled = !isFlashEnabled;
@@ -640,6 +660,7 @@ public class CameraActivity extends BaseActivity {
     }
 
     private void closeCameraResources() {
+        isClosingCamera = true;
         if (captureSession != null) {
             captureSession.close();
             captureSession = null;
@@ -649,6 +670,7 @@ public class CameraActivity extends BaseActivity {
             cameraDevice = null;
         }
         if (imageReader != null) {
+            imageReader.setOnImageAvailableListener(null, null);
             imageReader.close();
             imageReader = null;
         }

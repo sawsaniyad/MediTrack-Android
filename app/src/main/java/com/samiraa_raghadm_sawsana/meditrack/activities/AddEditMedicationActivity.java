@@ -219,6 +219,9 @@ public class AddEditMedicationActivity extends BaseActivity {
 
     private void openCameraPreview() {
         Intent intent = new Intent(this, CameraActivity.class);
+        if (editMode) {
+            intent.putExtra(CameraActivity.EXTRA_MEDICATION_ID, medicationId);
+        }
         cameraLauncher.launch(intent);
     }
 
@@ -293,6 +296,9 @@ public class AddEditMedicationActivity extends BaseActivity {
                                 ContactsContract.CommonDataKinds.Phone.NUMBER));
                     }
                 }
+            } catch (SecurityException e) {
+                AppExecutors.getInstance().mainThread(
+                        () -> showToast(getString(R.string.perm_contacts_denied)));
             } finally {
                 if (nameCursor != null) {
                     nameCursor.close();

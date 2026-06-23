@@ -5,15 +5,15 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 
 import androidx.core.app.NotificationManagerCompat;
 
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
+import com.samiraa_raghadm_sawsana.meditrack.database.IntakeLogDAO;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
-import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
 
 import java.util.List;
 
@@ -44,9 +44,7 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
             MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
             IntakeLog pendingLog = findPendingLog(dao.getLogsByMedication(medicationId), scheduledDatetime);
             if (pendingLog != null) {
-                pendingLog.setWasDelayed(true);
-                pendingLog.setStatus(IntakeLog.STATUS_SNOOZED);
-                dao.updateIntakeLog(pendingLog);
+                new IntakeLogDAO(context).markAsSnoozed(pendingLog.getId(), null);
             }
         });
 
@@ -71,12 +69,18 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
             return;
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (am.canScheduleExactAlarms()) {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
-            }
-        } else {
+        if (canScheduleExact(am)) {
             am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
+        }
+    }
+
+    private boolean canScheduleExact(AlarmManager alarmManager) {
+        try {
+            return (Boolean) AlarmManager.class
+                    .getMethod("canScheduleExactAlarms")
+                    .invoke(alarmManager);
+        } catch (Exception ignored) {
+            return true;
         }
     }
 

@@ -8,6 +8,7 @@ import android.os.Build;
 import android.telephony.SmsManager;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
+import com.samiraa_raghadm_sawsana.meditrack.database.IntakeLogDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
@@ -42,8 +43,7 @@ public class MissedDoseReceiver extends BroadcastReceiver {
                 return;
             }
 
-            pendingLog.setStatus(IntakeLog.STATUS_MISSED);
-            dao.updateIntakeLog(pendingLog);
+            new IntakeLogDAO(context).markAsMissed(pendingLog.getId(), null);
 
             String phone = med.getEmergencyContactPhone();
             String name = med.getEmergencyContactName();
