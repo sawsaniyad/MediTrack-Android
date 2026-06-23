@@ -176,7 +176,8 @@ public class AddEditMedicationActivity extends BaseActivity {
     }
 
     private static boolean canScheduleExact(AlarmManager am) {
-        if (Build.VERSION.SDK_INT < 31) return true;
+        if (Build.VERSION.SDK_INT < 31)
+            return true;
         try {
             return (Boolean) AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
         } catch (Exception e) {

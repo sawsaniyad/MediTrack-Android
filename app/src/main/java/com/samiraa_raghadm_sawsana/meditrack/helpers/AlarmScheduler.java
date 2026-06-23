@@ -21,7 +21,7 @@ import java.util.Locale;
 
 /**
  * PendingIntent requestCode ranges:
- * 1–999:       intake alarms (schedule IDs)
+ * 1–999: intake alarms (schedule IDs)
  * 10001–10999: snooze action (scheduleId + 10000)
  * 20001–20999: snooze re-alarm (scheduleId + 20000)
  * 30001–30999: missed-dose check (scheduleId + 30000)
@@ -33,7 +33,8 @@ public final class AlarmScheduler {
     }
 
     private static boolean canScheduleExact(AlarmManager am) {
-        if (Build.VERSION.SDK_INT < 31) return true;
+        if (Build.VERSION.SDK_INT < 31)
+            return true;
         try {
             return (Boolean) AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
         } catch (Exception e) {

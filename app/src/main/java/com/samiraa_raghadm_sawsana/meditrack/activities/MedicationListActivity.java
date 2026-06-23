@@ -106,8 +106,7 @@ public class MedicationListActivity extends BaseActivity {
         recyclerView.setAdapter(adapter);
 
         FloatingActionButton fab = findViewById(R.id.fabAddMedication);
-        fab.setOnClickListener(v ->
-                startActivity(new Intent(this, AddEditMedicationActivity.class)));
+        fab.setOnClickListener(v -> startActivity(new Intent(this, AddEditMedicationActivity.class)));
 
         findViewById(R.id.btnOpenHistory).setOnClickListener(v ->
                 startActivity(new Intent(this, HistoryActivity.class)));
@@ -139,8 +138,8 @@ public class MedicationListActivity extends BaseActivity {
                     new AlertDialog.Builder(this)
                             .setTitle(R.string.perm_notif_title)
                             .setMessage(R.string.perm_notif_message)
-                            .setPositiveButton(R.string.perm_notif_allow, (d, w) ->
-                                    notifPermLauncher.launch("android.permission.POST_NOTIFICATIONS"))
+                            .setPositiveButton(R.string.perm_notif_allow,
+                                    (d, w) -> notifPermLauncher.launch("android.permission.POST_NOTIFICATIONS"))
                             .setNegativeButton(R.string.perm_notif_later, null)
                             .show();
                 } else {
@@ -187,8 +186,8 @@ public class MedicationListActivity extends BaseActivity {
 
     private void showMedicationDueSnackbar(String medName, int medicationId) {
         Snackbar.make(recyclerView,
-                        getString(R.string.msg_medication_due, medName),
-                        Snackbar.LENGTH_LONG)
+                getString(R.string.msg_medication_due, medName),
+                Snackbar.LENGTH_LONG)
                 .setAction(R.string.snackbar_action_taken, v -> markMedicationTaken(medicationId))
                 .show();
     }
@@ -243,8 +242,7 @@ public class MedicationListActivity extends BaseActivity {
     }
 
     private void showAboutDialog() {
-        String aboutMessage =
-                "MediTrack — מדי-טראק\n" +
+        String aboutMessage = "MediTrack — מדי-טראק\n" +
                 "מזהה: " + getPackageName() + "\n\n" +
                 "מערכת הפעלה: Android " + Build.VERSION.RELEASE +
                 " (API " + Build.VERSION.SDK_INT + ")\n\n" +
