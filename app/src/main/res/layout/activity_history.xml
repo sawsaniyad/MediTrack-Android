@@ -83,6 +83,13 @@
 
                 </LinearLayout>
 
+                <Button
+                    android:id="@+id/btnClearHistory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Clear History" />
+
                 <Spinner
                     android:id="@+id/spinnerMedication"
                     android:layout_width="match_parent"

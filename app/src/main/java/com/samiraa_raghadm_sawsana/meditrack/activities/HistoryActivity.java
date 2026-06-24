@@ -1,5 +1,6 @@
 package com.samiraa_raghadm_sawsana.meditrack.activities;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -66,9 +67,11 @@ public class HistoryActivity extends BaseActivity {
 
         Button btnFilterDate = findViewById(R.id.btnFilterDate);
         Button btnClearFilter = findViewById(R.id.btnClearFilter);
+        Button btnClearHistory = findViewById(R.id.btnClearHistory);
 
         btnFilterDate.setOnClickListener(v -> showDatePicker());
         btnClearFilter.setOnClickListener(v -> clearFilters());
+        btnClearHistory.setOnClickListener(v -> confirmClearHistory());
 
         spinnerMedication.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -131,6 +134,24 @@ public class HistoryActivity extends BaseActivity {
         tvSelectedDate.setText(R.string.filter_all);
         spinnerMedication.setSelection(0);
         loadHistory(null, -1);
+    }
+
+    private void confirmClearHistory() {
+        new AlertDialog.Builder(this)
+                .setTitle("Clear History")
+                .setMessage("Delete all history records?")
+                .setPositiveButton("Clear", (dialog, which) -> clearHistory())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void clearHistory() {
+        AppExecutors.getInstance().diskIO(() -> {
+            DatabaseHelper.getInstance(this)
+                    .getWritableDatabase()
+                    .delete(DatabaseHelper.TABLE_INTAKE_LOG, null, null);
+            AppExecutors.getInstance().mainThread(this::clearFilters);
+        });
     }
 
     private void loadHistory(String dateFilter, int medicationIdFilter) {
