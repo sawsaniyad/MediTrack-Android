@@ -138,10 +138,10 @@ public class HistoryActivity extends BaseActivity {
 
     private void confirmClearHistory() {
         new AlertDialog.Builder(this)
-                .setTitle("Clear History")
-                .setMessage("Delete all history records?")
-                .setPositiveButton("Clear", (dialog, which) -> clearHistory())
-                .setNegativeButton("Cancel", null)
+                .setTitle("נקה היסטוריה")
+                .setMessage("האם למחוק את כל רשומות ההיסטוריה?")
+                .setPositiveButton("נקה", (dialog, which) -> clearHistory())
+                .setNegativeButton("ביטול", null)
                 .show();
     }
 
