@@ -107,6 +107,13 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         return medications.size();
     }
 
+    public Medication getMedicationAt(int position) {
+        if (position < 0 || position >= medications.size()) {
+            return null;
+        }
+        return medications.get(position);
+    }
+
     private List<Schedule> getRelevantSchedules(int medicationId) {
         List<Schedule> schedules = schedulesByMedication != null
                 ? schedulesByMedication.get(medicationId) : null;
@@ -227,13 +234,6 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
     private StatusInfo resolveStatus(View itemView,
                                      List<IntakeLog> medicationLogs,
                                      List<Schedule> schedules) {
-        for (IntakeLog log : medicationLogs) {
-            if (log.isTaken()) {
-                return new StatusInfo(itemView.getContext().getString(R.string.status_taken),
-                        colorFromRes(itemView, R.color.status_taken));
-            }
-        }
-
         if (schedules.isEmpty()) {
             return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
                     colorFromRes(itemView, R.color.status_pending));
@@ -249,26 +249,70 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                     colorFromRes(itemView, R.color.status_pending));
         }
 
-        for (IntakeLog log : medicationLogs) {
-            if (IntakeLog.STATUS_MISSED.equals(log.getStatus())) {
-                return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
-                        colorFromRes(itemView, R.color.status_missed));
-            }
-        }
+        LocalDateTime now = LocalDateTime.now();
+        ScheduleStatusSlot activeOrLatestPastSlot = null;
+        ScheduleStatusSlot nextUpcomingSlot = null;
 
         for (Schedule schedule : schedules) {
             try {
                 LocalTime intakeTime = LocalTime.parse(schedule.getIntakeTime(), TIME_FORMATTER);
-                if (!intakeTime.isAfter(LocalTime.now())) {
-                    return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
-                            colorFromRes(itemView, R.color.status_missed));
+                LocalDateTime scheduledStart = selectedDate.atTime(intakeTime);
+                ScheduleStatusSlot slot = new ScheduleStatusSlot(
+                        scheduledStart,
+                        findLogForScheduledDatetime(
+                                medicationLogs, scheduledStart.format(DATE_TIME_FORMATTER)));
+
+                if (scheduledStart.isAfter(now)) {
+                    if (nextUpcomingSlot == null
+                            || scheduledStart.isBefore(nextUpcomingSlot.start)) {
+                        nextUpcomingSlot = slot;
+                    }
+                    continue;
+                }
+
+                if (activeOrLatestPastSlot == null
+                        || scheduledStart.isAfter(activeOrLatestPastSlot.start)) {
+                    activeOrLatestPastSlot = slot;
                 }
             } catch (Exception ignored) {
             }
         }
 
+        if (activeOrLatestPastSlot != null && activeOrLatestPastSlot.isWithinActionWindow(now)
+                && !activeOrLatestPastSlot.isResolved()) {
+            return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
+                    colorFromRes(itemView, R.color.status_pending));
+        }
+
+        if (nextUpcomingSlot != null) {
+            return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
+                    colorFromRes(itemView, R.color.status_pending));
+        }
+
+        if (activeOrLatestPastSlot != null) {
+            if (activeOrLatestPastSlot.isTaken()) {
+                return new StatusInfo(itemView.getContext().getString(R.string.status_taken),
+                        colorFromRes(itemView, R.color.status_taken));
+            }
+            if (activeOrLatestPastSlot.isMissed() || activeOrLatestPastSlot.isWindowExpired(now)) {
+                return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
+                        colorFromRes(itemView, R.color.status_missed));
+            }
+        }
+
         return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
                 colorFromRes(itemView, R.color.status_pending));
+    }
+
+    private IntakeLog findLogForScheduledDatetime(List<IntakeLog> medicationLogs,
+                                                  String scheduledDatetime) {
+        for (int i = medicationLogs.size() - 1; i >= 0; i--) {
+            IntakeLog log = medicationLogs.get(i);
+            if (scheduledDatetime.equals(log.getScheduledDatetime())) {
+                return log;
+            }
+        }
+        return null;
     }
 
     private List<IntakeLog> getLogsForMedication(int medicationId) {
@@ -373,6 +417,36 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         ActionWindow(LocalDateTime start, String scheduledDatetime) {
             this.start = start;
             this.scheduledDatetime = scheduledDatetime;
+        }
+    }
+
+    private static class ScheduleStatusSlot {
+        final LocalDateTime start;
+        final IntakeLog log;
+
+        ScheduleStatusSlot(LocalDateTime start, IntakeLog log) {
+            this.start = start;
+            this.log = log;
+        }
+
+        boolean isWithinActionWindow(LocalDateTime now) {
+            return !now.isBefore(start) && now.isBefore(start.plusMinutes(10));
+        }
+
+        boolean isWindowExpired(LocalDateTime now) {
+            return !start.plusMinutes(10).isAfter(now);
+        }
+
+        boolean isResolved() {
+            return isTaken() || isMissed();
+        }
+
+        boolean isTaken() {
+            return log != null && log.isTaken();
+        }
+
+        boolean isMissed() {
+            return log != null && IntakeLog.STATUS_MISSED.equals(log.getStatus());
         }
     }
 }

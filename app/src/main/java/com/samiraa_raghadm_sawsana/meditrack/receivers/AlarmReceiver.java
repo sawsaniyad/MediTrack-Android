@@ -14,7 +14,6 @@ import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
-import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
@@ -26,6 +25,7 @@ import java.util.Locale;
 public class AlarmReceiver extends BroadcastReceiver {
 
     public static final String EXTRA_SCHEDULED_DATETIME = "SCHEDULED_DATETIME";
+    private static final int MISSED_DOSE_DELAY_MINUTES = 10;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -114,8 +114,8 @@ public class AlarmReceiver extends BroadcastReceiver {
                                          int medicationId,
                                          int scheduleId,
                                          String scheduledDatetime) {
-        int checkDelay = PrefsManager.getReminderMinutes(context) * 2;
-        long checkAt = System.currentTimeMillis() + checkDelay * 60 * 1000L;
+        long checkAt = System.currentTimeMillis()
+                + MISSED_DOSE_DELAY_MINUTES * 60 * 1000L;
 
         Intent checkIntent = new Intent(context, MissedDoseReceiver.class);
         checkIntent.putExtra("MEDICATION_ID", medicationId);

@@ -5,7 +5,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,7 +21,10 @@ import android.widget.TextView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -40,6 +46,7 @@ import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -66,9 +73,6 @@ public class MedicationListActivity extends BaseActivity {
     private RecyclerView recyclerView;
     private View emptyStateContainer;
     private View viewProgressFill;
-    private TextView tvChipYesterday;
-    private TextView tvChipToday;
-    private TextView tvChipTomorrow;
     private TextView tvProgressCount;
     private TextView tvCountTaken;
     private TextView tvCountPending;
@@ -76,7 +80,6 @@ public class MedicationListActivity extends BaseActivity {
     private MedicationAdapter adapter;
     private MedicationDAO dao;
     private ActivityResultLauncher<String> notifPermLauncher;
-    private int selectedDayOffset = 0;
 
     private final BroadcastReceiver medicationDueReceiver = new BroadcastReceiver() {
         @Override
@@ -122,9 +125,6 @@ public class MedicationListActivity extends BaseActivity {
         recyclerView = findViewById(R.id.recyclerViewMedications);
         emptyStateContainer = findViewById(R.id.emptyStateContainer);
         viewProgressFill = findViewById(R.id.viewProgressFill);
-        tvChipYesterday = findViewById(R.id.tvChipYesterday);
-        tvChipToday = findViewById(R.id.tvChipToday);
-        tvChipTomorrow = findViewById(R.id.tvChipTomorrow);
         tvProgressCount = findViewById(R.id.tvProgressCount);
         tvCountTaken = findViewById(R.id.tvCountTaken);
         tvCountPending = findViewById(R.id.tvCountPending);
@@ -150,6 +150,7 @@ public class MedicationListActivity extends BaseActivity {
             }
         });
         recyclerView.setAdapter(adapter);
+        attachSwipeToDelete();
 
         FloatingActionButton fab = findViewById(R.id.fabAddMedication);
         fab.setOnClickListener(v -> startActivity(new Intent(this, AddEditMedicationActivity.class)));
@@ -158,11 +159,6 @@ public class MedicationListActivity extends BaseActivity {
                 startActivity(new Intent(this, HistoryActivity.class)));
         findViewById(R.id.btnOpenSettings).setOnClickListener(v ->
                 startActivity(new Intent(this, SettingsActivity.class)));
-
-        tvChipYesterday.setOnClickListener(v -> setSelectedDayOffset(-1));
-        tvChipToday.setOnClickListener(v -> setSelectedDayOffset(0));
-        tvChipTomorrow.setOnClickListener(v -> setSelectedDayOffset(1));
-        updateChipState();
 
         requestNotificationPermission();
         loadMedications();
@@ -220,28 +216,8 @@ public class MedicationListActivity extends BaseActivity {
         AlarmScheduler.scheduleAllAlarms(getApplicationContext(), dao);
     }
 
-    private void setSelectedDayOffset(int dayOffset) {
-        if (selectedDayOffset == dayOffset) {
-            return;
-        }
-        selectedDayOffset = dayOffset;
-        updateChipState();
-        loadMedications();
-    }
-
-    private void updateChipState() {
-        bindChipState(tvChipYesterday, selectedDayOffset == -1);
-        bindChipState(tvChipToday, selectedDayOffset == 0);
-        bindChipState(tvChipTomorrow, selectedDayOffset == 1);
-    }
-
-    private void bindChipState(TextView chip, boolean selected) {
-        chip.setBackgroundResource(selected ? R.drawable.bg_chip_selected : R.drawable.bg_chip_unselected);
-        chip.setTextColor(Color.parseColor(selected ? "#1976D2" : "#BBDEFB"));
-    }
-
     private void loadMedications() {
-        LocalDate selectedDate = LocalDate.now().plusDays(selectedDayOffset);
+        LocalDate selectedDate = LocalDate.now();
         String selectedDateText = selectedDate.toString();
 
         AppExecutors.getInstance().diskIO(() -> {
@@ -297,20 +273,18 @@ public class MedicationListActivity extends BaseActivity {
     }
 
     private IntakeLog findMatchingLog(List<IntakeLog> logs, int medicationId, String intakeTime) {
-        IntakeLog fallback = null;
         for (int i = logs.size() - 1; i >= 0; i--) {
             IntakeLog log = logs.get(i);
             if (log.getMedicationId() != medicationId) {
                 continue;
             }
-            fallback = log;
             String scheduledDatetime = log.getScheduledDatetime();
             if (scheduledDatetime != null && scheduledDatetime.length() >= 16
                     && intakeTime.equals(scheduledDatetime.substring(11, 16))) {
                 return log;
             }
         }
-        return fallback;
+        return null;
     }
 
     private IntakeLog findLogByScheduledDatetime(List<IntakeLog> logs, String scheduledDatetime) {
@@ -349,7 +323,9 @@ public class MedicationListActivity extends BaseActivity {
 
         try {
             LocalTime intakeTime = LocalTime.parse(schedule.getIntakeTime(), TIME_FORMATTER);
-            return !intakeTime.isAfter(LocalTime.now());
+            LocalDateTime scheduledStart = selectedDate.atTime(intakeTime);
+            LocalDateTime actionWindowEnd = scheduledStart.plusMinutes(10);
+            return !actionWindowEnd.isAfter(LocalDateTime.now());
         } catch (Exception ignored) {
             return false;
         }
@@ -399,6 +375,106 @@ public class MedicationListActivity extends BaseActivity {
                 Snackbar.LENGTH_LONG)
                 .setAction(R.string.snackbar_action_taken, v -> markMedicationTaken(medicationId))
                 .show();
+    }
+
+    private void attachSwipeToDelete() {
+        final Drawable deleteIcon = ContextCompat.getDrawable(this, R.drawable.ic_delete);
+        final int deleteRed = ContextCompat.getColor(this, R.color.delete_red);
+        final String deleteLabel = getString(R.string.delete);
+
+        final Paint backgroundPaint = new Paint();
+        backgroundPaint.setColor(deleteRed);
+
+        final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint.setColor(Color.WHITE);
+        textPaint.setTextAlign(Paint.Align.RIGHT);
+        textPaint.setTextSize(spToPx(15f));
+
+        final int padding = (int) dpToPx(20f);
+
+        ItemTouchHelper.SimpleCallback callback = new ItemTouchHelper.SimpleCallback(
+                0, ItemTouchHelper.LEFT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getBindingAdapterPosition();
+                Medication medication = adapter.getMedicationAt(position);
+                if (medication == null) {
+                    return;
+                }
+                confirmDeleteFromSwipe(medication, position);
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
+                                    @NonNull RecyclerView.ViewHolder viewHolder,
+                                    float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                View itemView = viewHolder.itemView;
+
+                // Only draw the delete background while swiping left (dX < 0).
+                if (dX < 0) {
+                    c.drawRect(itemView.getRight() + dX, itemView.getTop(),
+                            itemView.getRight(), itemView.getBottom(), backgroundPaint);
+
+                    if (deleteIcon != null) {
+                        int iconHeight = deleteIcon.getIntrinsicHeight();
+                        int iconWidth = deleteIcon.getIntrinsicWidth();
+                        int iconTop = itemView.getTop()
+                                + (itemView.getHeight() - iconHeight) / 2;
+                        int iconRight = itemView.getRight() - padding;
+                        int iconLeft = iconRight - iconWidth;
+                        deleteIcon.setBounds(iconLeft, iconTop,
+                                iconRight, iconTop + iconHeight);
+                        deleteIcon.draw(c);
+
+                        float textY = itemView.getTop() + itemView.getHeight() / 2f
+                                - (textPaint.descent() + textPaint.ascent()) / 2f;
+                        c.drawText(deleteLabel, iconLeft - dpToPx(12f), textY, textPaint);
+                    }
+                }
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState,
+                        isCurrentlyActive);
+            }
+        };
+        new ItemTouchHelper(callback).attachToRecyclerView(recyclerView);
+    }
+
+    private float dpToPx(float dp) {
+        return dp * getResources().getDisplayMetrics().density;
+    }
+
+    private float spToPx(float sp) {
+        return sp * getResources().getDisplayMetrics().scaledDensity;
+    }
+
+    private void confirmDeleteFromSwipe(Medication medication, int position) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.delete_medication_title)
+                .setMessage(getString(R.string.delete_medication_message, medication.getName()))
+                .setPositiveButton(R.string.delete_confirm, (dialog, which) -> deleteMedication(medication))
+                // Restore the swiped-away row if the user backs out.
+                .setNegativeButton(R.string.cancel, (dialog, which) -> adapter.notifyItemChanged(position))
+                .setOnCancelListener(dialog -> adapter.notifyItemChanged(position))
+                .show();
+    }
+
+    private void deleteMedication(Medication medication) {
+        AppExecutors.getInstance().diskIO(() -> {
+            AlarmScheduler.cancelAlarmsForMedication(
+                    getApplicationContext(), dao, medication.getId());
+            dao.deleteMedication(medication.getId());
+            AppExecutors.getInstance().mainThread(() -> {
+                showToast(getString(R.string.msg_deleted_success));
+                loadMedications();
+            });
+        });
     }
 
     private void markMedicationTaken(int medicationId) {

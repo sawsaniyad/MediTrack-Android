@@ -160,11 +160,6 @@
     <string name="feat_history">יומן נטילות</string>
     <string name="feat_contacts">איש קשר חירום</string>
 
-    <!-- Date chips -->
-    <string name="chip_yesterday">אתמול</string>
-    <string name="chip_today">היום</string>
-    <string name="chip_tomorrow">מחר</string>
-
     <!-- Add/Edit medication toolbar title -->
     <string name="title_add_medication">הוסף תרופה</string>
 
