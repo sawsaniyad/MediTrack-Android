@@ -160,11 +160,6 @@
     <string name="feat_history">יומן נטילות</string>
     <string name="feat_contacts">איש קשר חירום</string>
 
-    <!-- Date chips -->
-    <string name="chip_yesterday">אתמול</string>
-    <string name="chip_today">היום</string>
-    <string name="chip_tomorrow">מחר</string>
-
     <!-- Add/Edit medication toolbar title -->
     <string name="title_add_medication">הוסף תרופה</string>
 
@@ -208,6 +203,9 @@
 
     <!-- Clear filter button -->
     <string name="btn_clear_x">✕</string>
+
+    <string name="channel_name">תזכורות תרופות</string>
+    <string name="channel_description">התראות לתזכורת נטילת תרופות בזמן</string>
 
     <string name="splash_submitters">סמירה אבו אלהוא — 324909803\nרגד מחיסן — 212541304\nסאוסן אבו שמעה — 213588270</string>
     <string name="splash_submission_date">תאריך הגשה: 28.6.26</string>

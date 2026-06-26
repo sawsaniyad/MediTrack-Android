@@ -12,6 +12,8 @@ app/build/
 
 # Gradle wrapper cache
 .gradle/
+.gradle-local/
+.gradle-user-home/
 
 # OS files
 .DS_Store
@@ -20,3 +22,4 @@ Thumbs.db
 # Sensitive
 local.properties
 google-services.json
+

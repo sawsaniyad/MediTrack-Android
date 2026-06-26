@@ -17,6 +17,8 @@ public class ExpiryReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        NotificationHelper.createNotificationChannel(context);
+
         String medName = intent.getStringExtra("MEDICATION_NAME");
         String expiryDate = intent.getStringExtra("EXPIRY_DATE");
 

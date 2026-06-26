@@ -6,9 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
-import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.AlarmReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.ExpiryReceiver;
 
@@ -21,11 +21,11 @@ import java.util.Locale;
 
 /**
  * PendingIntent requestCode ranges:
- * 1–999: intake alarms (schedule IDs)
- * 10001–10999: snooze action (scheduleId + 10000)
- * 20001–20999: snooze re-alarm (scheduleId + 20000)
- * 30001–30999: missed-dose check (scheduleId + 30000)
- * 50001–50999: expiry alarms (medicationId + 50000)
+ * 1-999: intake alarms (schedule IDs)
+ * 10001-10999: snooze action (scheduleId + 10000)
+ * 20001-20999: snooze re-alarm (scheduleId + 20000)
+ * 30001-30999: missed-dose check (scheduleId + 30000)
+ * 50001-50999: expiry alarms (medicationId + 50000)
  */
 public final class AlarmScheduler {
 
@@ -33,12 +33,35 @@ public final class AlarmScheduler {
     }
 
     private static boolean canScheduleExact(AlarmManager am) {
-        if (Build.VERSION.SDK_INT < 31)
+        if (Build.VERSION.SDK_INT < 31) {
             return true;
+        }
         try {
             return (Boolean) AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
         } catch (Exception e) {
             return true;
+        }
+    }
+
+    private static void scheduleAllowWhileIdle(AlarmManager alarmManager,
+                                               long triggerAtMillis,
+                                               PendingIntent pendingIntent) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            if (canScheduleExact(alarmManager)) {
+                alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+            } else {
+                alarmManager.setAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+            }
+            return;
+        }
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+        } else {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
         }
     }
 
@@ -84,14 +107,7 @@ public final class AlarmScheduler {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        // setExactAndAllowWhileIdle ensures delivery in Doze
-        if (Build.VERSION.SDK_INT >= 31) {
-            if (canScheduleExact(am)) {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
-            }
-        } else {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
-        }
+        scheduleAllowWhileIdle(am, cal.getTimeInMillis(), pi);
     }
 
     public static void scheduleAllAlarms(Context context, MedicationDAO dao) {
@@ -167,15 +183,7 @@ public final class AlarmScheduler {
                 return;
             }
 
-            if (Build.VERSION.SDK_INT >= 31) {
-                if (canScheduleExact(am)) {
-                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
-                            cal.getTimeInMillis(), pi);
-                }
-            } else {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
-                        cal.getTimeInMillis(), pi);
-            }
+            scheduleAllowWhileIdle(am, cal.getTimeInMillis(), pi);
         } catch (ParseException e) {
             e.printStackTrace();
         }

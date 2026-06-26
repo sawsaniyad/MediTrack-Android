@@ -3,11 +3,11 @@ plugins {
 }
 android {
     namespace 'com.samiraa_raghadm_sawsana.meditrack'
-    compileSdk 30
+    compileSdk 36
     defaultConfig {
         applicationId "com.samiraa_raghadm_sawsana.meditrack"
         minSdk 26
-        targetSdk 30
+        targetSdk 36
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -22,11 +22,10 @@ android {
         buildConfig true
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
 }
-
+}
 dependencies {
     implementation libs.appcompat
     implementation libs.material
@@ -34,6 +33,10 @@ dependencies {
     implementation libs.constraintlayout
     implementation libs.core
     implementation libs.recyclerview
+    implementation libs.camera.core
+    implementation libs.camera.camera2
+    implementation libs.camera.lifecycle
+    implementation libs.camera.view
     implementation libs.localbroadcastmanager
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit

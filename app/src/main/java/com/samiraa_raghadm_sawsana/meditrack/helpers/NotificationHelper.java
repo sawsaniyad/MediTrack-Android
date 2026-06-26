@@ -15,10 +15,9 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.activities.MedicationListActivity;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.SnoozeActionReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.TakenActionReceiver;
-import com.samiraa_raghadm_sawsana.meditrack.activities.MedicationListActivity;
 
 public final class NotificationHelper {
 
@@ -56,7 +55,10 @@ public final class NotificationHelper {
                                               int medicationId,
                                               String medicationName,
                                               String dosage,
-                                              int scheduleId) {
+                                              int scheduleId,
+                                              String scheduledDatetime) {
+        createNotificationChannel(context);
+
         if (medicationName == null) {
             medicationName = context.getString(R.string.default_medication_name);
         }
@@ -66,8 +68,10 @@ public final class NotificationHelper {
 
         Intent takenIntent = new Intent(context, TakenActionReceiver.class);
         takenIntent.putExtra("MEDICATION_ID", medicationId);
+        takenIntent.putExtra("MEDICATION_NAME", medicationName);
         takenIntent.putExtra("SCHEDULE_ID", scheduleId);
         takenIntent.putExtra("NOTIFICATION_ID", NOTIFICATION_ID_BASE + scheduleId);
+        takenIntent.putExtra("SCHEDULED_DATETIME", scheduledDatetime);
         PendingIntent takenPI = PendingIntent.getBroadcast(context,
                 scheduleId,
                 takenIntent,
@@ -79,6 +83,7 @@ public final class NotificationHelper {
         snoozeIntent.putExtra("MEDICATION_NAME", medicationName);
         snoozeIntent.putExtra("DOSAGE", dosage);
         snoozeIntent.putExtra("NOTIFICATION_ID", NOTIFICATION_ID_BASE + scheduleId);
+        snoozeIntent.putExtra("SCHEDULED_DATETIME", scheduledDatetime);
         PendingIntent snoozePI = PendingIntent.getBroadcast(context,
                 scheduleId + 10000,
                 snoozeIntent,
@@ -86,19 +91,28 @@ public final class NotificationHelper {
 
         Intent mainIntent = new Intent(context, MedicationListActivity.class);
         mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent mainPI = PendingIntent.getActivity(context, 0, mainIntent,
+        PendingIntent mainPI = PendingIntent.getActivity(context,
+                scheduleId + 40000,
+                mainIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         boolean vibrate = PrefsManager.isVibrateEnabled(context);
         boolean sound = PrefsManager.isSoundEnabled(context);
+        String reminderText = context.getString(
+                R.string.notif_reminder_text, medicationName, dosage);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle(context.getString(R.string.notif_reminder_title, medicationName))
-                .setContentText(context.getString(R.string.notif_reminder_text, medicationName, dosage))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentText(reminderText)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(reminderText))
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_REMINDER)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setContentIntent(mainPI)
                 .setAutoCancel(false)
+                .setOngoing(true)
+                .setOnlyAlertOnce(false)
                 .addAction(android.R.drawable.checkbox_on_background,
                         context.getString(R.string.notif_taken_action), takenPI)
                 .addAction(android.R.drawable.ic_menu_recent_history,
@@ -126,6 +140,8 @@ public final class NotificationHelper {
     }
 
     public static void showMissedDoseAlert(Context context, String medicationName) {
+        createNotificationChannel(context);
+
         if (medicationName == null) {
             medicationName = context.getString(R.string.default_medication_name);
         }

@@ -4,8 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAFAFA"
-    android:layoutDirection="rtl">
+    android:layoutDirection="rtl"
+    android:background="#FAFAFA">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -28,7 +28,6 @@
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!-- Filter card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -45,7 +44,6 @@
                 android:orientation="vertical"
                 android:padding="10dp">
 
-                <!-- Date filter row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -85,7 +83,13 @@
 
                 </LinearLayout>
 
-                <!-- Medication spinner -->
+                <Button
+                    android:id="@+id/btnClearHistory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="נקה היסטוריה" />
+
                 <Spinner
                     android:id="@+id/spinnerMedication"
                     android:layout_width="match_parent"
@@ -97,16 +101,16 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- History list -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewHistory"
+        <ListView
+            android:id="@+id/listViewHistory"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:clipToPadding="false"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="0dp"
             android:paddingBottom="16dp" />
 
-        <!-- Empty state -->
         <TextView
             android:id="@+id/tvHistoryEmpty"
             android:layout_width="match_parent"

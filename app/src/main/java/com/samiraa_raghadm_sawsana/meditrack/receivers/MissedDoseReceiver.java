@@ -1,6 +1,7 @@
 package com.samiraa_raghadm_sawsana.meditrack.receivers;
 
 import android.Manifest;
+import android.content.ContentValues;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -23,26 +24,17 @@ public class MissedDoseReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         int medicationId = intent.getIntExtra("MEDICATION_ID", -1);
+        String scheduledDatetime = intent.getStringExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME);
         if (medicationId == -1) {
             return;
         }
 
-        // FIXED: moved to diskIO
         AppExecutors.getInstance().diskIO(() -> {
             MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));
             List<IntakeLog> logs = dao.getLogsByMedication(medicationId);
-            boolean stillUntaken = false;
-            for (int i = logs.size() - 1; i >= 0; i--) {
-                IntakeLog log = logs.get(i);
-                if (!log.isTaken()) {
-                    stillUntaken = true;
-                    break;
-                } else {
-                    break;
-                }
-            }
+            IntakeLog pendingLog = findPendingLog(logs, scheduledDatetime);
 
-            if (!stillUntaken) {
+            if (pendingLog == null) {
                 return;
             }
 
@@ -50,6 +42,8 @@ public class MissedDoseReceiver extends BroadcastReceiver {
             if (med == null) {
                 return;
             }
+
+            markAsMissed(context, pendingLog.getId());
 
             String phone = med.getEmergencyContactPhone();
             String name = med.getEmergencyContactName();
@@ -79,4 +73,32 @@ public class MissedDoseReceiver extends BroadcastReceiver {
             }
         });
     }
+
+    private IntakeLog findPendingLog(List<IntakeLog> logs, String scheduledDatetime) {
+        IntakeLog newestPendingLog = null;
+        for (IntakeLog log : logs) {
+            if (log.isTaken()) {
+                continue;
+            }
+            if (scheduledDatetime != null && scheduledDatetime.equals(log.getScheduledDatetime())) {
+                return log;
+            }
+            if (newestPendingLog == null) {
+                newestPendingLog = log;
+            }
+        }
+        return newestPendingLog;
+    }
+
+    private void markAsMissed(Context context, int logId) {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseHelper.COL_LOG_STATUS, IntakeLog.STATUS_MISSED);
+        DatabaseHelper.getInstance(context)
+                .getWritableDatabase()
+                .update(DatabaseHelper.TABLE_INTAKE_LOG,
+                        values,
+                        DatabaseHelper.COL_LOG_ID + " = ?",
+                        new String[] { String.valueOf(logId) });
+    }
 }
+
