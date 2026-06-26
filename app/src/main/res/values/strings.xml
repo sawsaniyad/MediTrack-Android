@@ -192,10 +192,14 @@
     <string name="label_section_reminders">תזמון תזכורות</string>
 
     <!-- Settings info rows -->
+    <string name="label_permissions">הרשאות</string>
     <string name="label_permissions_subtitle">מצלמה, אנשי קשר, התראות</string>
     <string name="label_app_version">MediTrack v1.0</string>
     <string name="label_clear_data">נקה כל הנתונים</string>
     <string name="label_clear_data_subtitle">מחיקת כל התרופות והיסטוריה</string>
+    <string name="clear_data_title">ניקוי כל הנתונים</string>
+    <string name="clear_data_message">האם למחוק את כל התרופות, לוחות הזמנים וההיסטוריה? לא ניתן לבטל פעולה זו.</string>
+    <string name="clear_data_success">כל הנתונים נמחקו</string>
 
     <!-- Camera overlay -->
     <string name="hint_camera_frame">מסגר את שם התרופה, המינון ותאריך התפוגה</string>

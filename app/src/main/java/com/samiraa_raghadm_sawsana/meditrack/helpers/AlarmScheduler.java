@@ -11,6 +11,7 @@ import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.AlarmReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.ExpiryReceiver;
+import com.samiraa_raghadm_sawsana.meditrack.receivers.MissedDoseReceiver;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -140,8 +141,52 @@ public final class AlarmScheduler {
             List<Schedule> schedules = dao.getSchedulesForMedication(medicationId);
             for (Schedule schedule : schedules) {
                 cancelAlarm(context.getApplicationContext(), schedule.getId());
+                cancelMissedDoseCheck(context.getApplicationContext(), schedule.getId());
+                cancelSnoozedReminder(context.getApplicationContext(), schedule.getId());
             }
+            cancelExpiryAlarm(context.getApplicationContext(), medicationId);
         });
+    }
+
+    public static void cancelAllAlarms(Context context, MedicationDAO dao) {
+        List<Schedule> schedules = dao.getAllSchedules();
+        for (Schedule schedule : schedules) {
+            cancelAlarm(context, schedule.getId());
+            cancelMissedDoseCheck(context, schedule.getId());
+            cancelSnoozedReminder(context, schedule.getId());
+        }
+
+        List<Medication> medications = dao.getAllMedications();
+        for (Medication medication : medications) {
+            cancelExpiryAlarm(context, medication.getId());
+        }
+    }
+
+    private static void cancelMissedDoseCheck(Context context, int scheduleId) {
+        cancelBroadcast(context, MissedDoseReceiver.class, scheduleId + 30000);
+    }
+
+    private static void cancelSnoozedReminder(Context context, int scheduleId) {
+        cancelBroadcast(context, AlarmReceiver.class, scheduleId + 20000);
+    }
+
+    private static void cancelExpiryAlarm(Context context, int medicationId) {
+        cancelBroadcast(context, ExpiryReceiver.class, medicationId + 50000);
+    }
+
+    private static void cancelBroadcast(Context context,
+                                        Class<?> receiverClass,
+                                        int requestCode) {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, receiverClass);
+        PendingIntent pi = PendingIntent.getBroadcast(context,
+                requestCode,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        if (am != null) {
+            am.cancel(pi);
+        }
+        pi.cancel();
     }
 
     public static void scheduleExpiryAlarm(Context context, Medication medication) {
