@@ -119,11 +119,12 @@ public class AddEditMedicationActivity extends BaseActivity {
 
         if (!editMode) {
             addTimeRow("08:00");
-            dayCheckboxes[0].setChecked(true);
-            dayCheckboxes[1].setChecked(true);
-            dayCheckboxes[2].setChecked(true);
-            dayCheckboxes[3].setChecked(true);
-            dayCheckboxes[4].setChecked(true);
+            dayCheckboxes[0].setChecked(true); // Mon
+            dayCheckboxes[1].setChecked(true); // Tue
+            dayCheckboxes[2].setChecked(true); // Wed
+            dayCheckboxes[3].setChecked(true); // Thu
+            dayCheckboxes[4].setChecked(true); // Fri
+            dayCheckboxes[5].setChecked(true); // Sat
         } else {
             loadMedicationForEdit();
         }

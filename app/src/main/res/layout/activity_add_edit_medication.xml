@@ -160,69 +160,75 @@
                         android:textColor="#757575"
                         android:textSize="12sp" />
 
-                    <GridLayout
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:columnCount="7"
-                        android:useDefaultMargins="true">
+                        android:orientation="horizontal">
 
                         <CheckBox
                             android:id="@+id/cbSun"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:buttonTint="#1976D2"
                             android:text="@string/day_sun"
-                            android:textSize="11sp" />
+                            android:textSize="10sp" />
 
                         <CheckBox
                             android:id="@+id/cbMon"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:buttonTint="#1976D2"
                             android:text="@string/day_mon"
-                            android:textSize="11sp" />
+                            android:textSize="10sp" />
 
                         <CheckBox
                             android:id="@+id/cbTue"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:buttonTint="#1976D2"
                             android:text="@string/day_tue"
-                            android:textSize="11sp" />
+                            android:textSize="10sp" />
 
                         <CheckBox
                             android:id="@+id/cbWed"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:buttonTint="#1976D2"
                             android:text="@string/day_wed"
-                            android:textSize="11sp" />
+                            android:textSize="10sp" />
 
                         <CheckBox
                             android:id="@+id/cbThu"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:buttonTint="#1976D2"
                             android:text="@string/day_thu"
-                            android:textSize="11sp" />
+                            android:textSize="10sp" />
 
                         <CheckBox
                             android:id="@+id/cbFri"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:buttonTint="#1976D2"
                             android:text="@string/day_fri"
-                            android:textSize="11sp" />
+                            android:textSize="10sp" />
 
                         <CheckBox
                             android:id="@+id/cbSat"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:buttonTint="#1976D2"
                             android:text="@string/day_sat"
-                            android:textSize="11sp" />
+                            android:textSize="10sp" />
 
-                    </GridLayout>
+                    </LinearLayout>
 
                 </LinearLayout>
 

@@ -10,7 +10,7 @@ public final class PrefsManager {
     public static final String KEY_VIBRATE = "vibrate_enabled";
     public static final String KEY_SOUND = "sound_enabled";
 
-    private static final int DEFAULT_REMIND_MIN = 15;
+    private static final int DEFAULT_REMIND_MIN = 0;
 
     private PrefsManager() {
     }

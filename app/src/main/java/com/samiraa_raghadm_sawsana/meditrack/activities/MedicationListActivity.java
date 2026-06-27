@@ -213,7 +213,8 @@ public class MedicationListActivity extends BaseActivity {
     }
 
     private void scheduleAlarms() {
-        AlarmScheduler.scheduleAllAlarms(getApplicationContext(), dao);
+        AppExecutors.getInstance().diskIO(() ->
+                AlarmScheduler.scheduleAllAlarms(getApplicationContext(), dao));
     }
 
     private void loadMedications() {

@@ -97,11 +97,20 @@ public final class AlarmScheduler {
             cal.add(Calendar.DAY_OF_YEAR, 1);
         }
 
+        // Compute the actual intake time (alarm fires remindMinutes before it).
+        // Pass it in the intent so AlarmReceiver can record the correct planned
+        // datetime in IntakeLog regardless of alarm delivery jitter.
+        Calendar scheduledCal = (Calendar) cal.clone();
+        scheduledCal.add(Calendar.MINUTE, remindMinutes);
+        String scheduledDatetime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+                .format(scheduledCal.getTime());
+
         Intent intent = new Intent(context, AlarmReceiver.class);
         intent.putExtra("MEDICATION_ID", medication.getId());
         intent.putExtra("MEDICATION_NAME", medication.getName());
         intent.putExtra("DOSAGE", medication.getDosage() != null ? medication.getDosage() : "");
         intent.putExtra("SCHEDULE_ID", schedule.getId());
+        intent.putExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME, scheduledDatetime);
 
         PendingIntent pi = PendingIntent.getBroadcast(context,
                 schedule.getId(),
@@ -111,16 +120,15 @@ public final class AlarmScheduler {
         scheduleAllowWhileIdle(am, cal.getTimeInMillis(), pi);
     }
 
+    // Must be called on a background thread — performs DB reads.
     public static void scheduleAllAlarms(Context context, MedicationDAO dao) {
-        AppExecutors.getInstance().diskIO(() -> {
-            List<Schedule> schedules = dao.getAllSchedules();
-            for (Schedule schedule : schedules) {
-                Medication med = dao.getMedicationById(schedule.getMedicationId());
-                if (med != null && med.isActive()) {
-                    scheduleAlarm(context.getApplicationContext(), schedule, med);
-                }
+        List<Schedule> schedules = dao.getAllSchedules();
+        for (Schedule schedule : schedules) {
+            Medication med = dao.getMedicationById(schedule.getMedicationId());
+            if (med != null && med.isActive()) {
+                scheduleAlarm(context.getApplicationContext(), schedule, med);
             }
-        });
+        }
     }
 
     public static void cancelAlarm(Context context, int scheduleId) {
@@ -136,16 +144,15 @@ public final class AlarmScheduler {
         am.cancel(pi);
     }
 
+    // Must be called on a background thread — performs DB reads.
     public static void cancelAlarmsForMedication(Context context, MedicationDAO dao, int medicationId) {
-        AppExecutors.getInstance().diskIO(() -> {
-            List<Schedule> schedules = dao.getSchedulesForMedication(medicationId);
-            for (Schedule schedule : schedules) {
-                cancelAlarm(context.getApplicationContext(), schedule.getId());
-                cancelMissedDoseCheck(context.getApplicationContext(), schedule.getId());
-                cancelSnoozedReminder(context.getApplicationContext(), schedule.getId());
-            }
-            cancelExpiryAlarm(context.getApplicationContext(), medicationId);
-        });
+        List<Schedule> schedules = dao.getSchedulesForMedication(medicationId);
+        for (Schedule schedule : schedules) {
+            cancelAlarm(context.getApplicationContext(), schedule.getId());
+            cancelMissedDoseCheck(context.getApplicationContext(), schedule.getId());
+            cancelSnoozedReminder(context.getApplicationContext(), schedule.getId());
+        }
+        cancelExpiryAlarm(context.getApplicationContext(), medicationId);
     }
 
     public static void cancelAllAlarms(Context context, MedicationDAO dao) {
@@ -196,7 +203,7 @@ public final class AlarmScheduler {
             return;
         }
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
             Date expiry = sdf.parse(medication.getExpiryDate());
             if (expiry == null) {
                 return;
