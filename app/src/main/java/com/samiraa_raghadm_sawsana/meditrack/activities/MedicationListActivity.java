@@ -32,7 +32,7 @@ import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
-import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
 
@@ -48,7 +48,7 @@ public class MedicationListActivity extends BaseActivity {
     private RecyclerView recyclerView;
     private View emptyStateContainer;
     private MedicationAdapter adapter;
-    private MedicationDao dao;
+    private MedicationDAO dao;
     private ActivityResultLauncher<String> notifPermLauncher;
 
     private final BroadcastReceiver medicationDueReceiver = new BroadcastReceiver() {
@@ -77,7 +77,7 @@ public class MedicationListActivity extends BaseActivity {
                     .build());
         }
 
-        dao = new MedicationDao(DatabaseHelper.getInstance(this));
+        dao = new MedicationDAO(DatabaseHelper.getInstance(this));
 
         NotificationHelper.createNotificationChannel(this);
 

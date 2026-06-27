@@ -10,7 +10,7 @@ import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
-import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDao;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.AlarmReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.ExpiryReceiver;
 
@@ -85,26 +85,32 @@ public final class AlarmScheduler {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        // setExactAndAllowWhileIdle ensures delivery in Doze
-        if (Build.VERSION.SDK_INT >= 31) {
-            if (canScheduleExact(am)) {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
+        scheduleExact(am, cal.getTimeInMillis(), pi);
+    }
+
+    // Must be called on a background thread — performs DB reads.
+    public static void scheduleAllAlarms(Context context, MedicationDAO dao) {
+        List<Schedule> schedules = dao.getAllSchedules();
+        for (Schedule schedule : schedules) {
+            Medication med = dao.getMedicationById(schedule.getMedicationId());
+            if (med != null && med.isActive()) {
+                scheduleAlarm(context.getApplicationContext(), schedule, med);
             }
-        } else {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
         }
     }
 
-    public static void scheduleAllAlarms(Context context, MedicationDao dao) {
-        AppExecutors.getInstance().diskIO(() -> {
-            List<Schedule> schedules = dao.getAllSchedules();
-            for (Schedule schedule : schedules) {
-                Medication med = dao.getMedicationById(schedule.getMedicationId());
-                if (med != null && med.isActive()) {
-                    scheduleAlarm(context.getApplicationContext(), schedule, med);
-                }
+    private static void scheduleExact(AlarmManager am, long triggerAtMillis, PendingIntent pi) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            if (canScheduleExact(am)) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi);
+            } else {
+                // Exact-alarm permission not granted on API 31-32: fall back to inexact
+                // wakeup so the alarm still fires (slightly delayed but not silently dropped).
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi);
             }
-        });
+        } else {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi);
+        }
     }
 
     public static void cancelAlarm(Context context, int scheduleId) {
@@ -120,13 +126,12 @@ public final class AlarmScheduler {
         am.cancel(pi);
     }
 
-    public static void cancelAlarmsForMedication(Context context, MedicationDao dao, int medicationId) {
-        AppExecutors.getInstance().diskIO(() -> {
-            List<Schedule> schedules = dao.getSchedulesForMedication(medicationId);
-            for (Schedule schedule : schedules) {
-                cancelAlarm(context.getApplicationContext(), schedule.getId());
-            }
-        });
+    // Must be called on a background thread — performs DB reads.
+    public static void cancelAlarmsForMedication(Context context, MedicationDAO dao, int medicationId) {
+        List<Schedule> schedules = dao.getSchedulesForMedication(medicationId);
+        for (Schedule schedule : schedules) {
+            cancelAlarm(context.getApplicationContext(), schedule.getId());
+        }
     }
 
     public static void scheduleExpiryAlarm(Context context, Medication medication) {
@@ -168,15 +173,7 @@ public final class AlarmScheduler {
                 return;
             }
 
-            if (Build.VERSION.SDK_INT >= 31) {
-                if (canScheduleExact(am)) {
-                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
-                            cal.getTimeInMillis(), pi);
-                }
-            } else {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
-                        cal.getTimeInMillis(), pi);
-            }
+            scheduleExact(am, cal.getTimeInMillis(), pi);
         } catch (ParseException e) {
             e.printStackTrace();
         }

@@ -2,8 +2,6 @@ package com.samiraa_raghadm_sawsana.meditrack.adapters;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -103,40 +101,35 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
     }
 
     private void bindImage(MedicationViewHolder holder, String imagePath) {
-        recycleOldBitmap(holder.ivMedicationImage);
+        // Set placeholder and record which path this holder is bound to BEFORE
+        // the async load starts. The stale-check below uses this tag to drop
+        // results that arrive after the holder has been rebound to a new item.
+        holder.ivMedicationImage.setImageResource(R.drawable.ic_medication_placeholder);
+        holder.boundImagePath = imagePath;
 
-        if (imagePath != null && !imagePath.isEmpty()) {
-            AppExecutors.getInstance().diskIO(() -> {
-                Bitmap bmp = BitmapFactory.decodeFile(imagePath);
-                if (bmp != null) {
-                    Bitmap thumb = Bitmap.createScaledBitmap(bmp, 80, 80, true);
-                    if (thumb != bmp) {
-                        bmp.recycle();
-                    }
-                    AppExecutors.getInstance().mainThread(() ->
-                            holder.ivMedicationImage.setImageBitmap(thumb));
-                } else {
-                    AppExecutors.getInstance().mainThread(() ->
-                            holder.ivMedicationImage.setImageResource(
-                                    R.drawable.ic_medication_placeholder));
+        if (imagePath == null || imagePath.isEmpty()) {
+            return;
+        }
+
+        AppExecutors.getInstance().diskIO(() -> {
+            Bitmap bmp = BitmapFactory.decodeFile(imagePath);
+            if (bmp == null) {
+                return;
+            }
+            Bitmap thumb = Bitmap.createScaledBitmap(bmp, 80, 80, true);
+            // Free the full-size source only when a separate scaled copy was made.
+            // Never recycle a bitmap that is still (or will be) held by an ImageView —
+            // hardware-accelerated rendering may read it asynchronously after recycle().
+            if (thumb != bmp) {
+                bmp.recycle();
+            }
+            AppExecutors.getInstance().mainThread(() -> {
+                // Drop stale result if the holder was rebound to a different item.
+                if (imagePath.equals(holder.boundImagePath)) {
+                    holder.ivMedicationImage.setImageBitmap(thumb);
                 }
             });
-        } else {
-            holder.ivMedicationImage.setImageResource(R.drawable.ic_medication_placeholder);
-        }
-    }
-
-    private void recycleOldBitmap(ImageView imageView) {
-        try {
-            Drawable drawable = imageView.getDrawable();
-            if (drawable instanceof BitmapDrawable) {
-                Bitmap old = ((BitmapDrawable) drawable).getBitmap();
-                if (old != null && !old.isRecycled()) {
-                    old.recycle();
-                }
-            }
-        } catch (ClassCastException ignored) {
-        }
+        });
     }
 
     private void bindStatus(View itemView, MedicationViewHolder holder, int medicationId,
@@ -255,6 +248,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         final TextView tvNextTime;
         final View viewStatusBadge;
         final TextView tvStatus;
+        String boundImagePath;
 
         MedicationViewHolder(@NonNull View itemView) {
             super(itemView);
