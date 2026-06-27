@@ -54,7 +54,7 @@ public class CameraActivity extends BaseActivity {
     private ImageCapture imageCapture;
     private Camera camera;
 
-    private boolean useFrontCamera;
+    private boolean useFrontCamera = true;
     private boolean isFlashEnabled;
     private boolean isCapturingImage;
     private int medicationId;
@@ -85,7 +85,9 @@ public class CameraActivity extends BaseActivity {
 
     @Override
     protected void onPause() {
-        if (cameraProvider != null) {
+        // Don't tear down the camera while a photo is still being captured —
+        // unbinding mid-capture aborts the picture (esp. on the slow emulator).
+        if (cameraProvider != null && !isCapturingImage) {
             cameraProvider.unbindAll();
             camera = null;
             imageCapture = null;
@@ -96,7 +98,7 @@ public class CameraActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         if (cameraExecutor != null) {
-            cameraExecutor.shutdownNow();
+            cameraExecutor.shutdown(); // let the in-flight save finish, don't kill it
             cameraExecutor = null;
         }
         super.onDestroy();
@@ -271,41 +273,42 @@ public class CameraActivity extends BaseActivity {
     }
 
     private void persistCapturedImage(File savedFile) {
-        try {
-            if (medicationId > 0) {
+        // Send the photo path back FIRST — nothing risky can sink it now.
+        final String imagePath = savedFile.getAbsolutePath();
+
+        // DB update (edit mode only) — wrapped so a DB error can't lose the photo.
+        if (medicationId > 0) {
+            try {
                 MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(this));
                 Medication medication = dao.getMedicationById(medicationId);
                 if (medication != null) {
-                    medication.setImagePath(savedFile.getAbsolutePath());
+                    medication.setImagePath(imagePath);
                     dao.updateMedication(medication);
                 }
+            } catch (Exception e) {
+                // Non-fatal: the path still goes back; AddEdit will save it on Save.
             }
-
-            Bitmap thumbnail = decodeCaptureThumbnail(savedFile);
-            runOnUiThread(() -> {
-                if (isFinishing() || isDestroyed()) {
-                    return;
-                }
-                isCapturingImage = false;
-                showLastCapture(thumbnail);
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra(EXTRA_IMAGE_PATH, savedFile.getAbsolutePath());
-                setResult(RESULT_OK, resultIntent);
-                finish();
-            });
-        } catch (Exception e) {
-            if (savedFile.exists()) {
-                //noinspection ResultOfMethodCallIgnored
-                savedFile.delete();
-            }
-            runOnUiThread(() -> {
-                if (isFinishing() || isDestroyed()) {
-                    return;
-                }
-                isCapturingImage = false;
-                showToast(getString(R.string.error_camera, e.getMessage()));
-            });
         }
+
+        // Thumbnail is optional — if it fails, we DON'T delete the photo.
+        Bitmap thumbnail = null;
+        try {
+            thumbnail = decodeCaptureThumbnail(savedFile);
+        } catch (Exception ignored) {
+        }
+
+        final Bitmap finalThumb = thumbnail;
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) {
+                return;
+            }
+            isCapturingImage = false;
+            showLastCapture(finalThumb);
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra(EXTRA_IMAGE_PATH, imagePath);
+            setResult(RESULT_OK, resultIntent);
+            finish();
+        });
     }
 
     private void showLastCapture(Bitmap bitmap) {
