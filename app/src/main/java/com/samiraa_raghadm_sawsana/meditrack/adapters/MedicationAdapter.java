@@ -2,21 +2,21 @@ package com.samiraa_raghadm_sawsana.meditrack.adapters;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
@@ -26,46 +26,49 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.MedicationViewHolder> {
 
-    public interface OnMedicationClickListener {
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    public interface OnMedicationActionListener {
         void onMedicationClick(Medication medication);
+
+        void onMarkTaken(Medication medication, String scheduledDatetime);
+
+        void onMarkMissed(Medication medication, String scheduledDatetime);
     }
 
     private final List<Medication> medications = new ArrayList<>();
-    private final Map<Integer, IntakeLog> todayLogsByMedicationId = new HashMap<>();
-    private final Map<Integer, List<Schedule>> schedulesByMedication = new HashMap<>();
-    private final OnMedicationClickListener listener;
+    private final List<IntakeLog> selectedDateLogs = new ArrayList<>();
+    private final OnMedicationActionListener listener;
+    private Map<Integer, List<Schedule>> schedulesByMedication;
+    private LocalDate selectedDate = LocalDate.now();
 
-    public MedicationAdapter(OnMedicationClickListener listener) {
+    public MedicationAdapter(OnMedicationActionListener listener) {
         this.listener = listener;
     }
 
     public void updateList(List<Medication> newList,
-                           List<IntakeLog> todayLogs,
+                           List<IntakeLog> dayLogs,
                            Map<Integer, List<Schedule>> schedulesMap,
-                           Map<Integer, IntakeLog> todayLogsMap) {
+                           LocalDate selectedDate) {
         medications.clear();
         if (newList != null) {
             medications.addAll(newList);
         }
-        todayLogsByMedicationId.clear();
-        if (todayLogsMap != null) {
-            todayLogsByMedicationId.putAll(todayLogsMap);
-        } else if (todayLogs != null) {
-            for (IntakeLog log : todayLogs) {
-                todayLogsByMedicationId.put(log.getMedicationId(), log);
-            }
+
+        selectedDateLogs.clear();
+        if (dayLogs != null) {
+            selectedDateLogs.addAll(dayLogs);
         }
-        schedulesByMedication.clear();
-        if (schedulesMap != null) {
-            schedulesByMedication.putAll(schedulesMap);
-        }
+
+        schedulesByMedication = schedulesMap;
+        this.selectedDate = selectedDate != null ? selectedDate : LocalDate.now();
         notifyDataSetChanged();
     }
 
@@ -84,11 +87,19 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         holder.tvDosage.setText(
                 TextUtils.isEmpty(medication.getDosage()) ? "" : medication.getDosage());
 
-        List<Schedule> schedules = schedulesByMedication.get(medication.getId());
-        holder.tvNextTime.setText(buildNextTimeLabel(holder.itemView, schedules));
+        List<Schedule> relevantSchedules = getRelevantSchedules(medication.getId());
+        List<IntakeLog> medicationLogs = getLogsForMedication(medication.getId());
+
+        if (relevantSchedules == null || relevantSchedules.isEmpty()) {
+            holder.llNextTime.setVisibility(View.GONE);
+        } else {
+            holder.llNextTime.setVisibility(View.VISIBLE);
+            holder.tvNextTime.setText(buildNextTimeLabel(holder.itemView, relevantSchedules));
+        }
 
         bindImage(holder, medication.getImagePath());
-        bindStatus(holder.itemView, holder, medication.getId(), schedules);
+        bindStatus(holder.itemView, medication.getId(), holder, medicationLogs, relevantSchedules);
+        bindQuickActions(holder, medication, medicationLogs, relevantSchedules);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -102,46 +113,61 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         return medications.size();
     }
 
+    public Medication getMedicationAt(int position) {
+        if (position < 0 || position >= medications.size()) {
+            return null;
+        }
+        return medications.get(position);
+    }
+
+    private List<Schedule> getRelevantSchedules(int medicationId) {
+        List<Schedule> schedules = schedulesByMedication != null
+                ? schedulesByMedication.get(medicationId) : null;
+        List<Schedule> relevantSchedules = new ArrayList<>();
+        if (schedules == null) {
+            return relevantSchedules;
+        }
+        int dayValue = selectedDate.getDayOfWeek().getValue();
+        for (Schedule schedule : schedules) {
+            if (schedule.isEnabled() && isDayIncluded(schedule.getDaysOfWeek(), dayValue)) {
+                relevantSchedules.add(schedule);
+            }
+        }
+        return relevantSchedules;
+    }
+
     private void bindImage(MedicationViewHolder holder, String imagePath) {
-        recycleOldBitmap(holder.ivMedicationImage);
+        holder.boundImagePath = imagePath;
+        holder.ivMedicationImage.setImageResource(R.drawable.ic_medication_placeholder);
 
         if (imagePath != null && !imagePath.isEmpty()) {
             AppExecutors.getInstance().diskIO(() -> {
                 Bitmap bmp = BitmapFactory.decodeFile(imagePath);
                 if (bmp != null) {
                     Bitmap thumb = Bitmap.createScaledBitmap(bmp, 80, 80, true);
-                    if (thumb != bmp) {
-                        bmp.recycle();
-                    }
-                    AppExecutors.getInstance().mainThread(() ->
-                            holder.ivMedicationImage.setImageBitmap(thumb));
+                    AppExecutors.getInstance().mainThread(() -> {
+                        if (imagePath.equals(holder.boundImagePath)) {
+                            holder.ivMedicationImage.setImageBitmap(thumb);
+                        }
+                    });
                 } else {
-                    AppExecutors.getInstance().mainThread(() ->
+                    AppExecutors.getInstance().mainThread(() -> {
+                        if (imagePath.equals(holder.boundImagePath)) {
                             holder.ivMedicationImage.setImageResource(
-                                    R.drawable.ic_medication_placeholder));
+                                    R.drawable.ic_medication_placeholder);
+                        }
+                    });
                 }
             });
-        } else {
-            holder.ivMedicationImage.setImageResource(R.drawable.ic_medication_placeholder);
         }
     }
 
-    private void recycleOldBitmap(ImageView imageView) {
-        try {
-            Drawable drawable = imageView.getDrawable();
-            if (drawable instanceof BitmapDrawable) {
-                Bitmap old = ((BitmapDrawable) drawable).getBitmap();
-                if (old != null && !old.isRecycled()) {
-                    old.recycle();
-                }
-            }
-        } catch (ClassCastException ignored) {
-        }
-    }
-
-    private void bindStatus(View itemView, MedicationViewHolder holder, int medicationId,
+    private void bindStatus(View itemView,
+                            int medicationId,
+                            MedicationViewHolder holder,
+                            List<IntakeLog> medicationLogs,
                             List<Schedule> schedules) {
-        StatusInfo status = resolveStatus(itemView, medicationId, schedules);
+        StatusInfo status = resolveStatus(itemView, medicationId, medicationLogs, schedules);
         holder.tvStatus.setText(status.label);
         GradientDrawable badge = (GradientDrawable) holder.viewStatusBadge.getBackground();
         if (badge != null) {
@@ -151,81 +177,284 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         }
     }
 
-    private StatusInfo resolveStatus(View itemView, int medicationId, List<Schedule> schedules) {
-        IntakeLog todayLog = todayLogsByMedicationId.get(medicationId);
-        if (todayLog != null && todayLog.isTaken()) {
-            return new StatusInfo(itemView.getContext().getString(R.string.status_taken),
-                    colorFromRes(itemView, R.color.status_taken));
+    private void bindQuickActions(MedicationViewHolder holder,
+                                  Medication medication,
+                                  List<IntakeLog> medicationLogs,
+                                  List<Schedule> schedules) {
+        ActionWindow actionWindow = findActionWindow(
+                holder.itemView,
+                medication.getId(),
+                schedules,
+                medicationLogs);
+        boolean showActions = actionWindow != null && listener != null;
+        holder.llQuickActions.setVisibility(showActions ? View.VISIBLE : View.GONE);
+
+        holder.btnMarkTaken.setOnClickListener(null);
+        holder.btnMarkMissed.setOnClickListener(null);
+
+        if (!showActions) {
+            return;
         }
-        if (isMissed(itemView, schedules, todayLog)) {
-            return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
-                    colorFromRes(itemView, R.color.status_missed));
-        }
-        return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
-                colorFromRes(itemView, R.color.status_pending));
+
+        holder.btnMarkTaken.setOnClickListener(v ->
+                listener.onMarkTaken(medication, actionWindow.scheduledDatetime));
+        holder.btnMarkMissed.setOnClickListener(v ->
+                listener.onMarkMissed(medication, actionWindow.scheduledDatetime));
     }
 
-    private boolean isMissed(View itemView, List<Schedule> schedules, IntakeLog todayLog) {
-        if (todayLog != null && !todayLog.isTaken()) {
-            return isScheduledTimePassed(todayLog.getScheduledDatetime());
+    private ActionWindow findActionWindow(View itemView,
+                                          int medicationId,
+                                          List<Schedule> schedules,
+                                          List<IntakeLog> medicationLogs) {
+        if (!selectedDate.equals(LocalDate.now())) {
+            return null;
         }
-        int todayDow = LocalDate.now().getDayOfWeek().getValue();
-        LocalTime now = LocalTime.now();
-        if (schedules == null) {
-            return false;
+
+        ActionWindow logDrivenWindow = findActionWindowFromLogs(
+                itemView, medicationId, medicationLogs);
+        if (logDrivenWindow != null) {
+            return logDrivenWindow;
         }
+
+        if (schedules.isEmpty()) {
+            return null;
+        }
+
+        ActionWindow bestWindow = null;
         for (Schedule schedule : schedules) {
-            if (!isDayIncluded(schedule.getDaysOfWeek(), todayDow)) {
+            try {
+                LocalTime intakeTime = LocalTime.parse(schedule.getIntakeTime(), TIME_FORMATTER);
+                LocalDateTime start = selectedDate.atTime(intakeTime);
+                String scheduledDatetime = start.format(DATE_TIME_FORMATTER);
+                if (!PrefsManager.isDoseActionWindowActive(
+                        itemView.getContext(), medicationId, scheduledDatetime)) {
+                    continue;
+                }
+                if (hasResolvedLog(medicationLogs, scheduledDatetime)) {
+                    continue;
+                }
+                if (bestWindow == null || start.isAfter(bestWindow.start)) {
+                    bestWindow = new ActionWindow(start, scheduledDatetime);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return bestWindow;
+    }
+
+    private ActionWindow findActionWindowFromLogs(View itemView,
+                                                  int medicationId,
+                                                  List<IntakeLog> medicationLogs) {
+        ActionWindow bestWindow = null;
+        for (IntakeLog log : medicationLogs) {
+            String scheduledDatetime = log.getScheduledDatetime();
+            if (scheduledDatetime == null || scheduledDatetime.trim().isEmpty()) {
+                continue;
+            }
+            if (!PrefsManager.isDoseActionWindowActive(
+                    itemView.getContext(), medicationId, scheduledDatetime)) {
+                continue;
+            }
+            if (log.isTaken() || IntakeLog.STATUS_MISSED.equals(log.getStatus())) {
                 continue;
             }
             try {
-                LocalTime intakeTime = LocalTime.parse(schedule.getIntakeTime(),
-                        DateTimeFormatter.ofPattern("HH:mm"));
-                if (intakeTime.isBefore(now)) {
-                    return true;
+                LocalDateTime start = LocalDateTime.parse(
+                        scheduledDatetime, DATE_TIME_FORMATTER);
+                if (bestWindow == null || start.isAfter(bestWindow.start)) {
+                    bestWindow = new ActionWindow(start, scheduledDatetime);
                 }
             } catch (Exception ignored) {
+            }
+        }
+        return bestWindow;
+    }
+
+    private boolean hasResolvedLog(List<IntakeLog> medicationLogs, String scheduledDatetime) {
+        for (IntakeLog log : medicationLogs) {
+            if (!scheduledDatetime.equals(log.getScheduledDatetime())) {
+                continue;
+            }
+            if (log.isTaken() || IntakeLog.STATUS_MISSED.equals(log.getStatus())) {
+                return true;
             }
         }
         return false;
     }
 
-    private boolean isScheduledTimePassed(String scheduledDatetime) {
-        try {
-            LocalDateTime dateTime = LocalDateTime.parse(scheduledDatetime);
-            return dateTime.isBefore(LocalDateTime.now());
-        } catch (Exception e) {
-            return false;
+    private StatusInfo resolveStatus(View itemView,
+                                     int medicationId,
+                                     List<IntakeLog> medicationLogs,
+                                     List<Schedule> schedules) {
+        if (schedules.isEmpty()) {
+            return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
+                    colorFromRes(itemView, R.color.status_pending));
         }
+
+        if (selectedDate.isBefore(LocalDate.now())) {
+            return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
+                    colorFromRes(itemView, R.color.status_missed));
+        }
+
+        if (selectedDate.isAfter(LocalDate.now())) {
+            return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
+                    colorFromRes(itemView, R.color.status_pending));
+        }
+
+        if (findActionWindow(itemView, medicationId, schedules, medicationLogs) != null) {
+            return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
+                    colorFromRes(itemView, R.color.status_pending));
+        }
+
+        if (hasExpiredUnresolvedReminder(itemView, medicationId, medicationLogs)) {
+            return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
+                    colorFromRes(itemView, R.color.status_missed));
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        int remindMinutes = PrefsManager.getReminderMinutes(itemView.getContext());
+        ScheduleStatusSlot activeOrLatestPastSlot = null;
+        ScheduleStatusSlot nextUpcomingSlot = null;
+        ScheduleStatusSlot resolvedReminderSlot = null;
+
+        for (Schedule schedule : schedules) {
+            try {
+                LocalTime intakeTime = LocalTime.parse(schedule.getIntakeTime(), TIME_FORMATTER);
+                LocalDateTime scheduledStart = selectedDate.atTime(intakeTime);
+                ScheduleStatusSlot slot = new ScheduleStatusSlot(
+                        scheduledStart,
+                        findLogForScheduledDatetime(
+                                medicationLogs, scheduledStart.format(DATE_TIME_FORMATTER)));
+
+                if (scheduledStart.isAfter(now)) {
+                    LocalDateTime reminderStart = scheduledStart.minusMinutes(remindMinutes);
+                    if (!now.isBefore(reminderStart) && slot.isResolved()) {
+                        if (resolvedReminderSlot == null
+                                || scheduledStart.isAfter(resolvedReminderSlot.start)) {
+                            resolvedReminderSlot = slot;
+                        }
+                        continue;
+                    }
+                    if (nextUpcomingSlot == null
+                            || scheduledStart.isBefore(nextUpcomingSlot.start)) {
+                        nextUpcomingSlot = slot;
+                    }
+                    continue;
+                }
+
+                if (activeOrLatestPastSlot == null
+                        || scheduledStart.isAfter(activeOrLatestPastSlot.start)) {
+                    activeOrLatestPastSlot = slot;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (resolvedReminderSlot != null) {
+            if (resolvedReminderSlot.isTaken()) {
+                return new StatusInfo(itemView.getContext().getString(R.string.status_taken),
+                        colorFromRes(itemView, R.color.status_taken));
+            }
+            if (resolvedReminderSlot.isMissed()) {
+                return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
+                        colorFromRes(itemView, R.color.status_missed));
+            }
+        }
+
+        if (activeOrLatestPastSlot != null && activeOrLatestPastSlot.isWithinActionWindow(now)
+                && !activeOrLatestPastSlot.isResolved()) {
+            return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
+                    colorFromRes(itemView, R.color.status_pending));
+        }
+
+        if (nextUpcomingSlot != null) {
+            return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
+                    colorFromRes(itemView, R.color.status_pending));
+        }
+
+        if (activeOrLatestPastSlot != null) {
+            if (activeOrLatestPastSlot.isTaken()) {
+                return new StatusInfo(itemView.getContext().getString(R.string.status_taken),
+                        colorFromRes(itemView, R.color.status_taken));
+            }
+            if (activeOrLatestPastSlot.isMissed() || activeOrLatestPastSlot.isWindowExpired(now)) {
+                return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
+                        colorFromRes(itemView, R.color.status_missed));
+            }
+        }
+
+        return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
+                colorFromRes(itemView, R.color.status_pending));
+    }
+
+    private boolean hasExpiredUnresolvedReminder(View itemView,
+                                                 int medicationId,
+                                                 List<IntakeLog> medicationLogs) {
+        for (IntakeLog log : medicationLogs) {
+            String scheduledDatetime = log.getScheduledDatetime();
+            if (scheduledDatetime == null || scheduledDatetime.trim().isEmpty()) {
+                continue;
+            }
+            if (log.isTaken() || IntakeLog.STATUS_MISSED.equals(log.getStatus())) {
+                continue;
+            }
+            long expiresAt = PrefsManager.getDoseActionWindowExpiry(
+                    itemView.getContext(), medicationId, scheduledDatetime);
+            if (expiresAt >= 0L && expiresAt <= System.currentTimeMillis()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private IntakeLog findLogForScheduledDatetime(List<IntakeLog> medicationLogs,
+                                                  String scheduledDatetime) {
+        for (int i = medicationLogs.size() - 1; i >= 0; i--) {
+            IntakeLog log = medicationLogs.get(i);
+            if (scheduledDatetime.equals(log.getScheduledDatetime())) {
+                return log;
+            }
+        }
+        return null;
+    }
+
+    private List<IntakeLog> getLogsForMedication(int medicationId) {
+        List<IntakeLog> logs = new ArrayList<>();
+        for (IntakeLog log : selectedDateLogs) {
+            if (log.getMedicationId() == medicationId) {
+                logs.add(log);
+            }
+        }
+        return logs;
     }
 
     private String buildNextTimeLabel(View itemView, List<Schedule> schedules) {
         if (schedules == null || schedules.isEmpty()) {
             return itemView.getContext().getString(R.string.next_time_none);
         }
-        int todayDow = LocalDate.now().getDayOfWeek().getValue();
-        LocalTime now = LocalTime.now();
-        String next = null;
-        for (Schedule schedule : schedules) {
-            if (!isDayIncluded(schedule.getDaysOfWeek(), todayDow)) {
-                continue;
-            }
-            String time = schedule.getIntakeTime();
-            try {
-                LocalTime intakeTime = LocalTime.parse(time, DateTimeFormatter.ofPattern("HH:mm"));
-                if (!intakeTime.isBefore(now)) {
-                    if (next == null || time.compareTo(next) < 0) {
-                        next = time;
+
+        String nextTime = null;
+        if (selectedDate.equals(LocalDate.now())) {
+            LocalTime now = LocalTime.now();
+            for (Schedule schedule : schedules) {
+                try {
+                    LocalTime intakeTime = LocalTime.parse(schedule.getIntakeTime(), TIME_FORMATTER);
+                    if (!intakeTime.isBefore(now)) {
+                        String time = schedule.getIntakeTime();
+                        if (nextTime == null || time.compareTo(nextTime) < 0) {
+                            nextTime = time;
+                        }
                     }
+                } catch (Exception ignored) {
                 }
-            } catch (Exception ignored) {
+            }
+            if (nextTime != null) {
+                return itemView.getContext().getString(R.string.next_time_upcoming, nextTime);
             }
         }
-        if (next == null) {
-            return itemView.getContext().getString(R.string.next_time_today,
-                    schedules.get(0).getIntakeTime());
-        }
-        return itemView.getContext().getString(R.string.next_time_upcoming, next);
+
+        nextTime = schedules.get(0).getIntakeTime();
+        return itemView.getContext().getString(R.string.next_time_today, nextTime);
     }
 
     private boolean isDayIncluded(String daysOfWeek, int dayValue) {
@@ -253,8 +482,13 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         final TextView tvMedicationName;
         final TextView tvDosage;
         final TextView tvNextTime;
+        final LinearLayout llNextTime;
         final View viewStatusBadge;
         final TextView tvStatus;
+        final LinearLayout llQuickActions;
+        final TextView btnMarkTaken;
+        final TextView btnMarkMissed;
+        String boundImagePath;
 
         MedicationViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -262,8 +496,12 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             tvMedicationName = itemView.findViewById(R.id.tvMedicationName);
             tvDosage = itemView.findViewById(R.id.tvDosage);
             tvNextTime = itemView.findViewById(R.id.tvNextTime);
+            llNextTime = itemView.findViewById(R.id.llNextTime);
             viewStatusBadge = itemView.findViewById(R.id.viewStatusBadge);
             tvStatus = itemView.findViewById(R.id.tvStatus);
+            llQuickActions = itemView.findViewById(R.id.llQuickActions);
+            btnMarkTaken = itemView.findViewById(R.id.btnMarkTaken);
+            btnMarkMissed = itemView.findViewById(R.id.btnMarkMissed);
         }
     }
 
@@ -274,6 +512,46 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         StatusInfo(String label, int color) {
             this.label = label;
             this.color = color;
+        }
+    }
+
+    private static class ActionWindow {
+        final LocalDateTime start;
+        final String scheduledDatetime;
+
+        ActionWindow(LocalDateTime start, String scheduledDatetime) {
+            this.start = start;
+            this.scheduledDatetime = scheduledDatetime;
+        }
+    }
+
+    private static class ScheduleStatusSlot {
+        final LocalDateTime start;
+        final IntakeLog log;
+
+        ScheduleStatusSlot(LocalDateTime start, IntakeLog log) {
+            this.start = start;
+            this.log = log;
+        }
+
+        boolean isWithinActionWindow(LocalDateTime now) {
+            return !now.isBefore(start) && now.isBefore(start.plusMinutes(10));
+        }
+
+        boolean isWindowExpired(LocalDateTime now) {
+            return !start.plusMinutes(10).isAfter(now);
+        }
+
+        boolean isResolved() {
+            return isTaken() || isMissed();
+        }
+
+        boolean isTaken() {
+            return log != null && log.isTaken();
+        }
+
+        boolean isMissed() {
+            return log != null && IntakeLog.STATUS_MISSED.equals(log.getStatus());
         }
     }
 }

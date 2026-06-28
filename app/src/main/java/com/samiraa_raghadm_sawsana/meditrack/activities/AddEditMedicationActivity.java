@@ -11,7 +11,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,7 +28,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PermissionManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
@@ -57,7 +57,7 @@ public class AddEditMedicationActivity extends BaseActivity {
     private EditText etExpiryDate;
     private Button btnDelete;
 
-    private MedicationDao dao;
+    private MedicationDAO dao;
     private int medicationId;
     private boolean editMode;
     private String medicationNameForDelete = "";
@@ -76,7 +76,7 @@ public class AddEditMedicationActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_edit_medication);
 
-        dao = new MedicationDao(DatabaseHelper.getInstance(this));
+        dao = new MedicationDAO(DatabaseHelper.getInstance(this));
         medicationId = getIntent().getIntExtra(EXTRA_MEDICATION_ID, 0);
         editMode = medicationId > 0;
 
@@ -124,6 +124,8 @@ public class AddEditMedicationActivity extends BaseActivity {
             dayCheckboxes[2].setChecked(true);
             dayCheckboxes[3].setChecked(true);
             dayCheckboxes[4].setChecked(true);
+            dayCheckboxes[5].setChecked(true);
+            dayCheckboxes[6].setChecked(true);
         } else {
             loadMedicationForEdit();
         }
@@ -175,15 +177,25 @@ public class AddEditMedicationActivity extends BaseActivity {
                 });
     }
 
+    private static boolean canScheduleExact(AlarmManager am) {
+        if (Build.VERSION.SDK_INT < 31)
+            return true;
+        try {
+            return (Boolean) AlarmManager.class.getMethod("canScheduleExactAlarms").invoke(am);
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
     private void checkExactAlarmPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= 31) {
             AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-            if (am != null && !am.canScheduleExactAlarms()) {
+            if (am != null && !canScheduleExact(am)) {
                 new AlertDialog.Builder(this)
                         .setTitle(R.string.perm_exact_alarm_title)
                         .setMessage(R.string.perm_exact_alarm_message)
                         .setPositiveButton(R.string.perm_exact_alarm_open, (d, w) -> {
-                            Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                            Intent intent = new Intent("android.settings.REQUEST_SCHEDULE_EXACT_ALARM");
                             startActivity(intent);
                         })
                         .setNegativeButton(R.string.perm_exact_alarm_skip, null)
@@ -210,6 +222,9 @@ public class AddEditMedicationActivity extends BaseActivity {
 
     private void openCameraPreview() {
         Intent intent = new Intent(this, CameraActivity.class);
+        if (editMode) {
+            intent.putExtra(CameraActivity.EXTRA_MEDICATION_ID, medicationId);
+        }
         cameraLauncher.launch(intent);
     }
 
@@ -284,6 +299,9 @@ public class AddEditMedicationActivity extends BaseActivity {
                                 ContactsContract.CommonDataKinds.Phone.NUMBER));
                     }
                 }
+            } catch (SecurityException e) {
+                AppExecutors.getInstance().mainThread(
+                        () -> showToast(getString(R.string.perm_contacts_denied)));
             } finally {
                 if (nameCursor != null) {
                     nameCursor.close();

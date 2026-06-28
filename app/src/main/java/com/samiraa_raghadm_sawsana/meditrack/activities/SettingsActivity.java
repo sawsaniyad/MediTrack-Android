@@ -7,11 +7,18 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.samiraa_raghadm_sawsana.meditrack.R;
-import com.samiraa_raghadm_sawsana.meditrack.models.PrefsManager;
+import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
+import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PermissionManager;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 
 public class SettingsActivity extends BaseActivity {
 
@@ -39,6 +46,11 @@ public class SettingsActivity extends BaseActivity {
         tvReminderMinutesValue = findViewById(R.id.tvReminderMinutesValue);
         switchVibrate = findViewById(R.id.switchVibrate);
         switchSound = findViewById(R.id.switchSound);
+
+        findViewById(R.id.rowPermissions).setOnClickListener(v ->
+                PermissionManager.openAppSettings(this));
+        findViewById(R.id.rowAbout).setOnClickListener(v -> showAboutDialog());
+        findViewById(R.id.rowClearData).setOnClickListener(v -> confirmClearAllData());
 
         int minutes = PrefsManager.getReminderMinutes(this);
         seekBarReminderMinutes.setProgress(minutes);
@@ -86,5 +98,31 @@ public class SettingsActivity extends BaseActivity {
 
     private void updateMinutesLabel(int minutes) {
         tvReminderMinutesValue.setText(getString(R.string.settings_minutes_format, minutes));
+    }
+
+    private void confirmClearAllData() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.clear_data_title)
+                .setMessage(R.string.clear_data_message)
+                .setPositiveButton(R.string.label_clear_data, (dialog, which) -> clearAllData())
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void clearAllData() {
+        showLoading();
+        AppExecutors.getInstance().diskIO(() -> {
+            DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+            MedicationDAO dao = new MedicationDAO(dbHelper);
+            AlarmScheduler.cancelAllAlarms(getApplicationContext(), dao);
+            dbHelper.resetDatabase();
+
+            AppExecutors.getInstance().mainThread(() -> {
+                hideLoading();
+                NotificationManagerCompat.from(this).cancelAll();
+                showToast(getString(R.string.clear_data_success));
+                finish();
+            });
+        });
     }
 }

@@ -8,28 +8,17 @@
     <string name="app_name">MediTrack</string>
     <string name="splash_tagline">MediTrack / מדי-טראק</string>
 
-    <string name="nav_medications">MediTrack</string>
     <string name="nav_history">יומן נטילות</string>
     <string name="nav_settings">הגדרות</string>
 
-    <string name="btn_add">הוסף תרופה</string>
     <string name="btn_save">שמור</string>
     <string name="btn_delete">מחק תרופה</string>
-    <string name="btn_cancel">ביטול</string>
-    <string name="btn_confirm">אישור</string>
     <string name="btn_take_photo">צלם אריזה</string>
     <string name="btn_pick_contact">בחר איש קשר לחירום</string>
     <string name="btn_add_time">הוסף שעה</string>
-    <string name="btn_remove_time">הסר</string>
     <string name="btn_filter_date">בחר תאריך</string>
-    <string name="btn_clear_filter">נקה סינון</string>
     <string name="filter_all">הכל</string>
 
-    <string name="label_medication_name">שם תרופה</string>
-    <string name="medication_name">תמונת תרופה</string>
-    <string name="label_dosage">מינון</string>
-    <string name="label_instructions">הוראות / הערות</string>
-    <string name="label_intake_times">שעות נטילה</string>
     <string name="label_intake_days">ימי נטילה</string>
     <string name="label_expiry_date">תאריך תפוגה</string>
     <string name="label_emergency_contact">איש קשר לחירום</string>
@@ -57,19 +46,10 @@
     <string name="menu_about">About</string>
     <string name="menu_settings">Settings</string>
     <string name="menu_exit">Exit</string>
-    <string name="menu_history">History</string>
 
     <string name="about_title">MediTrack</string>
     <string name="about_message">פותח על ידי:\nסמירה אבו אלהוא — 324909803\nרגד מחיסן — 212541304\nסאוסן אבו שמעה — 213588270</string>
     <string name="about_close">סגור</string>
-
-    <string name="days_mon">ב׳</string>
-    <string name="days_tue">ג׳</string>
-    <string name="days_wed">ד׳</string>
-    <string name="days_thu">ה׳</string>
-    <string name="days_fri">ו׳</string>
-    <string name="days_sat">ש׳</string>
-    <string name="days_sun">א׳</string>
 
     <string name="no_emergency_contact">לא נבחר איש קשר לחירום</string>
     <string name="notification_channel_name">תזכורות תרופות</string>
@@ -104,10 +84,7 @@
     <string name="delete_medication_message">האם אתה בטוח שברצונך למחוק את %1$s?</string>
     <string name="delete_confirm">מחק</string>
 
-    <string name="settings_reminder_minutes">דקות תזכורת מראש</string>
     <string name="settings_minutes_format">%1$d דקות</string>
-    <string name="settings_vibrate">רטט בתזכורות</string>
-    <string name="settings_sound">צליל בתזכורות</string>
 
     <string name="history_scheduled">מתוכנן: %1$s</string>
     <string name="history_taken_at">נלקח: %1$s</string>
@@ -125,15 +102,8 @@
 
     <string name="add_medication">הוסף תרופה</string>
     <string name="edit_medication">ערוך תרופה</string>
-    <string name="save">שמור</string>
     <string name="cancel">ביטול</string>
     <string name="delete">מחק</string>
-    <string name="settings">הגדרות</string>
-    <string name="history">היסטוריה</string>
-    <string name="about">אודות</string>
-    <string name="exit">יציאה</string>
-    <string name="no_medications">@string/msg_empty_medications</string>
-    <string name="taken">נלקח ✓</string>
     <string name="snooze">דחה</string>
 
     <string name="broadcast_medication_due">com.meditrack.app.MEDICATION_DUE</string>
@@ -159,11 +129,6 @@
     <string name="feat_camera">צילום אריזה</string>
     <string name="feat_history">יומן נטילות</string>
     <string name="feat_contacts">איש קשר חירום</string>
-
-    <!-- Date chips -->
-    <string name="chip_yesterday">אתמול</string>
-    <string name="chip_today">היום</string>
-    <string name="chip_tomorrow">מחר</string>
 
     <!-- Add/Edit medication toolbar title -->
     <string name="title_add_medication">הוסף תרופה</string>
@@ -197,15 +162,21 @@
     <string name="label_section_reminders">תזמון תזכורות</string>
 
     <!-- Settings info rows -->
+    <string name="label_permissions">הרשאות</string>
     <string name="label_permissions_subtitle">מצלמה, אנשי קשר, התראות</string>
     <string name="label_app_version">MediTrack v1.0</string>
     <string name="label_clear_data">נקה כל הנתונים</string>
     <string name="label_clear_data_subtitle">מחיקת כל התרופות והיסטוריה</string>
-
-    <!-- Camera overlay -->
-    <string name="hint_camera_frame">מסגר את שם התרופה, המינון ותאריך התפוגה</string>
-    <string name="label_camera_title">צלם אריזה</string>
+    <string name="clear_data_title">ניקוי כל הנתונים</string>
+    <string name="clear_data_message">האם למחוק את כל התרופות, לוחות הזמנים וההיסטוריה? לא ניתן לבטל פעולה זו.</string>
+    <string name="clear_data_success">כל הנתונים נמחקו</string>
 
     <!-- Clear filter button -->
     <string name="btn_clear_x">✕</string>
+
+    <string name="splash_submitters">סמירה אבו אלהוא — 324909803\nרגד מחיסן — 212541304\nסאוסן אבו שמעה — 213588270</string>
+    <string name="splash_submission_date">תאריך הגשה: 28.6.26</string>
+
+    <!-- About dialog -->
+    <string name="about_dialog_title">אודות האפליקציה</string>
 </resources>
