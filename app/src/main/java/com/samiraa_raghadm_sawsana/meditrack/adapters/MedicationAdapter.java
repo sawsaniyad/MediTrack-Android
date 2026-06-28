@@ -393,6 +393,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                                                  int medicationId,
                                                  List<IntakeLog> medicationLogs) {
         LocalDateTime now = LocalDateTime.now();
+        int windowMinutes = PrefsManager.getActionWindowMinutes(itemView.getContext());
         for (IntakeLog log : medicationLogs) {
             String scheduledDatetime = log.getScheduledDatetime();
             if (scheduledDatetime == null || scheduledDatetime.trim().isEmpty()) {
@@ -401,13 +402,14 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             if (log.isTaken() || IntakeLog.STATUS_MISSED.equals(log.getStatus())) {
                 continue;
             }
-            // A dose whose scheduled time hasn't arrived yet cannot be missed.
+            // Only flag as missed if scheduled time + full action window has passed.
             try {
                 LocalDateTime scheduled = LocalDateTime.parse(scheduledDatetime, DATE_TIME_FORMATTER);
-                if (scheduled.isAfter(now)) {
+                if (!scheduled.plusMinutes(windowMinutes).isBefore(now)) {
                     continue;
                 }
             } catch (Exception ignored) {
+                continue;
             }
             long expiresAt = PrefsManager.getDoseActionWindowExpiry(
                     itemView.getContext(), medicationId, scheduledDatetime);
