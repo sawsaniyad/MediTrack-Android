@@ -45,9 +45,6 @@ import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.AlarmReceiver;
-import com.samiraa_raghadm_sawsana.meditrack.receivers.MissedDoseReceiver;
-
-import android.app.AlarmManager;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -511,50 +508,13 @@ public class MedicationListActivity extends BaseActivity {
     }
 
     private void snoozeFromCard(Medication medication, String scheduledDatetime, int scheduleId) {
-        if (scheduleId != -1) {
-            NotificationHelper.cancelReminderNotification(this, scheduleId);
-        }
-        cancelMissedDoseAlarm(scheduleId);
-        PrefsManager.clearDoseActionWindow(this, medication.getId(), scheduledDatetime);
-
-        AppExecutors.getInstance().diskIO(() -> {
-            List<IntakeLog> logs = dao.getLogsByMedication(medication.getId());
-            IntakeLog target = findLogByScheduledDatetime(logs, scheduledDatetime);
-            if (target != null) {
-                markLogAsSnoozed(target.getId());
-            }
-            AppExecutors.getInstance().mainThread(() -> {
-                loadMedications();
-                Intent intent = new Intent(this, SnoozePickerActivity.class);
-                intent.putExtra("MEDICATION_ID", medication.getId());
-                intent.putExtra("MEDICATION_NAME", medication.getName());
-                intent.putExtra("DOSAGE", medication.getDosage() != null ? medication.getDosage() : "");
-                intent.putExtra("SCHEDULE_ID", scheduleId);
-                intent.putExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME, scheduledDatetime);
-                startActivity(intent);
-            });
-        });
-    }
-
-    private void cancelMissedDoseAlarm(int scheduleId) {
-        if (scheduleId == -1) return;
-        AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-        android.app.PendingIntent pi = android.app.PendingIntent.getBroadcast(this,
-                scheduleId + 30000,
-                new Intent(this, MissedDoseReceiver.class),
-                android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE);
-        if (am != null) am.cancel(pi);
-        pi.cancel();
-    }
-
-    private void markLogAsSnoozed(int logId) {
-        ContentValues values = new ContentValues();
-        values.put(DatabaseHelper.COL_LOG_WAS_DELAYED, 1);
-        values.put(DatabaseHelper.COL_LOG_STATUS, IntakeLog.STATUS_SNOOZED);
-        DatabaseHelper.getInstance(this).getWritableDatabase()
-                .update(DatabaseHelper.TABLE_INTAKE_LOG, values,
-                        DatabaseHelper.COL_LOG_ID + " = ?",
-                        new String[]{String.valueOf(logId)});
+        Intent intent = new Intent(this, SnoozePickerActivity.class);
+        intent.putExtra("MEDICATION_ID", medication.getId());
+        intent.putExtra("MEDICATION_NAME", medication.getName());
+        intent.putExtra("DOSAGE", medication.getDosage() != null ? medication.getDosage() : "");
+        intent.putExtra("SCHEDULE_ID", scheduleId);
+        intent.putExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME, scheduledDatetime);
+        startActivity(intent);
     }
 
     private void confirmDeleteFromSwipe(Medication medication, int position) {
