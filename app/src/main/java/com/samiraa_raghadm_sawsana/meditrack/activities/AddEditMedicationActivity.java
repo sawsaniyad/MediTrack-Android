@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -110,6 +111,12 @@ public class AddEditMedicationActivity extends BaseActivity {
         etExpiryDate = findViewById(R.id.etExpiryDate);
         tilExpiryDate = findViewById(R.id.tilExpiryDate);
         btnDelete = findViewById(R.id.btnDelete);
+
+        // inputType="number" adds DigitsKeyListener to the Editable's filter chain, which
+        // silently strips '/' from any programmatic replace() call in the TextWatcher.
+        // Replacing the filter chain with only LengthFilter lets '/' through while the
+        // numeric keyboard (from inputType) keeps restricting what the user can type.
+        etExpiryDate.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(10) });
 
         etExpiryDate.addTextChangedListener(new TextWatcher() {
             private boolean formatting = false;
