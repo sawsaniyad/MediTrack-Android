@@ -68,7 +68,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         NotificationHelper.showMedicationReminder(
                 context, medicationId, finalMedicationName, finalDosage, scheduleId,
-                finalScheduledDatetime);
+                finalScheduledDatetime, MISSED_DOSE_DELAY_MINUTES);
 
         Intent localIntent = new Intent(context.getString(R.string.broadcast_medication_due));
         localIntent.putExtra(context.getString(R.string.extra_medication_id), medicationId);

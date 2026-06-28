@@ -56,7 +56,8 @@ public final class NotificationHelper {
                                               String medicationName,
                                               String dosage,
                                               int scheduleId,
-                                              String scheduledDatetime) {
+                                              String scheduledDatetime,
+                                              int windowMinutes) {
         createNotificationChannel(context);
 
         if (medicationName == null) {
@@ -99,7 +100,7 @@ public final class NotificationHelper {
         boolean vibrate = PrefsManager.isVibrateEnabled(context);
         boolean sound = PrefsManager.isSoundEnabled(context);
         String reminderText = context.getString(
-                R.string.notif_reminder_text, medicationName, dosage);
+                R.string.notif_reminder_text, medicationName, dosage, windowMinutes);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
