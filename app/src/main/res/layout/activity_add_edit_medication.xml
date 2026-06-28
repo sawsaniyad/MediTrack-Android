@@ -71,8 +71,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="@string/hint_medication_name"
-                            android:inputType="textPersonName"
-                            android:textDirection="rtl"
+                            android:inputType="textCapWords"
+                            android:textDirection="firstStrong"
                             android:gravity="end" />
 
                     </com.google.android.material.textfield.TextInputLayout>
