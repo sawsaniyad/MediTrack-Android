@@ -21,7 +21,6 @@ import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
-import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.MedicationSpinnerItem;
 
 import java.util.ArrayList;
@@ -179,11 +178,7 @@ public class HistoryActivity extends BaseActivity {
     }
 
     private List<IntakeLog> getAllHistoryLogs() {
-        List<IntakeLog> allLogs = new ArrayList<>();
-        for (Medication medication : dao.getAllMedications()) {
-            allLogs.addAll(dao.getLogsByMedication(medication.getId()));
-        }
-        return allLogs;
+        return dao.getAllLogs();
     }
 
     private List<IntakeLog> filterByDate(List<IntakeLog> logs, String dateFilter) {
