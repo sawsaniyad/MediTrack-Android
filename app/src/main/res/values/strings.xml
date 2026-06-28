@@ -156,6 +156,10 @@
     <string name="snooze_picker_title">בחר משך דחייה</string>
     <string name="snooze_picker_cancel">ביטול</string>
     <string name="snooze_option_minutes">%d דקות</string>
+    <string name="snooze_option_custom">הזן ידנית…</string>
+    <string name="snooze_custom_title">משך דחייה בדקות</string>
+    <string name="snooze_custom_confirm">אשר</string>
+    <string name="snooze_custom_error">יש להזין ערך בין 1 ל-120</string>
     <string name="label_vibrate">רטט בתזכורות</string>
     <string name="label_sound">צליל בתזכורות</string>
     <string name="label_reminder_minutes_default">15 דקות</string>

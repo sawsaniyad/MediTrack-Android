@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.NumberPicker;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,53 +16,92 @@ import com.samiraa_raghadm_sawsana.meditrack.receivers.SnoozeActionReceiver;
 
 public class SnoozePickerActivity extends AppCompatActivity {
 
-    private static final int[] OPTIONS_MINUTES = {5, 10, 15, 30, 60};
+    private static final int[] PRESET_MINUTES = {5, 10, 15, 30, 60};
+    private static final int CUSTOM_MIN = 1;
+    private static final int CUSTOM_MAX = 120;
+
+    private int medicationId;
+    private String medicationName;
+    private String dosage;
+    private int scheduleId;
+    private String scheduledDatetime;
+    private int defaultMinutes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         Intent src = getIntent();
-        int medicationId = src.getIntExtra("MEDICATION_ID", -1);
-        String medicationName = src.getStringExtra("MEDICATION_NAME");
-        String dosage = src.getStringExtra("DOSAGE");
-        int scheduleId = src.getIntExtra("SCHEDULE_ID", -1);
-        String scheduledDatetime = src.getStringExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME);
+        medicationId   = src.getIntExtra("MEDICATION_ID", -1);
+        medicationName = src.getStringExtra("MEDICATION_NAME");
+        dosage         = src.getStringExtra("DOSAGE");
+        scheduleId     = src.getIntExtra("SCHEDULE_ID", -1);
+        scheduledDatetime = src.getStringExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME);
+        defaultMinutes = PrefsManager.getSnoozeDurationMinutes(this);
 
         if (medicationId == -1) {
             finish();
             return;
         }
 
-        String[] labels = new String[OPTIONS_MINUTES.length];
-        for (int i = 0; i < OPTIONS_MINUTES.length; i++) {
-            labels[i] = getString(R.string.snooze_option_minutes, OPTIONS_MINUTES[i]);
-        }
+        showPickerDialog();
+    }
 
-        int defaultMinutes = PrefsManager.getSnoozeDurationMinutes(this);
+    private void showPickerDialog() {
+        // Build labels: presets + custom entry
+        String[] labels = new String[PRESET_MINUTES.length + 1];
+        for (int i = 0; i < PRESET_MINUTES.length; i++) {
+            labels[i] = getString(R.string.snooze_option_minutes, PRESET_MINUTES[i]);
+        }
+        labels[PRESET_MINUTES.length] = getString(R.string.snooze_option_custom);
 
         new AlertDialog.Builder(this)
                 .setTitle(R.string.snooze_picker_title)
                 .setItems(labels, (dialog, which) -> {
-                    scheduleReAlarm(medicationId, medicationName, dosage,
-                            scheduleId, scheduledDatetime, OPTIONS_MINUTES[which]);
-                    finish();
+                    if (which < PRESET_MINUTES.length) {
+                        scheduleReAlarm(PRESET_MINUTES[which]);
+                        finish();
+                    } else {
+                        showCustomPicker();
+                    }
                 })
                 .setNegativeButton(R.string.snooze_picker_cancel, (dialog, which) -> {
-                    scheduleReAlarm(medicationId, medicationName, dosage,
-                            scheduleId, scheduledDatetime, defaultMinutes);
+                    scheduleReAlarm(defaultMinutes);
                     finish();
                 })
                 .setOnCancelListener(dialog -> {
-                    scheduleReAlarm(medicationId, medicationName, dosage,
-                            scheduleId, scheduledDatetime, defaultMinutes);
+                    scheduleReAlarm(defaultMinutes);
                     finish();
                 })
                 .show();
     }
 
-    private void scheduleReAlarm(int medicationId, String medicationName, String dosage,
-                                  int scheduleId, String scheduledDatetime, int snoozeMinutes) {
+    private void showCustomPicker() {
+        NumberPicker picker = new NumberPicker(this);
+        picker.setMinValue(CUSTOM_MIN);
+        picker.setMaxValue(CUSTOM_MAX);
+        picker.setValue(defaultMinutes);
+        picker.setWrapSelectorWheel(false);
+
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        picker.setPadding(pad, pad, pad, pad);
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.snooze_custom_title)
+                .setView(picker)
+                .setPositiveButton(R.string.snooze_custom_confirm, (dialog, which) -> {
+                    scheduleReAlarm(picker.getValue());
+                    finish();
+                })
+                .setNegativeButton(R.string.snooze_picker_cancel, (dialog, which) -> {
+                    // Go back to the preset list
+                    showPickerDialog();
+                })
+                .setOnCancelListener(dialog -> showPickerDialog())
+                .show();
+    }
+
+    private void scheduleReAlarm(int snoozeMinutes) {
         long triggerAt = System.currentTimeMillis() + (long) snoozeMinutes * 60 * 1000L;
 
         Intent reAlarmIntent = new Intent(this, AlarmReceiver.class);
