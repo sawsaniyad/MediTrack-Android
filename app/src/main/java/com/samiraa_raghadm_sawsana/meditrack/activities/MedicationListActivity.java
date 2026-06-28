@@ -349,6 +349,9 @@ public class MedicationListActivity extends BaseActivity {
             if (IntakeLog.STATUS_MISSED.equals(status)) {
                 return true;
             }
+            if (IntakeLog.STATUS_SNOOZED.equals(status)) {
+                return false;
+            }
             if (selectedDate.isBefore(LocalDate.now())) {
                 return true;
             }

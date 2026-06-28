@@ -379,6 +379,10 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                 return new StatusInfo(itemView.getContext().getString(R.string.status_taken),
                         colorFromRes(itemView, R.color.status_taken));
             }
+            if (activeOrLatestPastSlot.isSnoozed()) {
+                return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
+                        colorFromRes(itemView, R.color.status_pending));
+            }
             if (activeOrLatestPastSlot.isMissed() || activeOrLatestPastSlot.isWindowExpired(now, windowMinutes)) {
                 return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
                         colorFromRes(itemView, R.color.status_missed));
@@ -399,7 +403,9 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             if (scheduledDatetime == null || scheduledDatetime.trim().isEmpty()) {
                 continue;
             }
-            if (log.isTaken() || IntakeLog.STATUS_MISSED.equals(log.getStatus())) {
+            if (log.isTaken()
+                    || IntakeLog.STATUS_MISSED.equals(log.getStatus())
+                    || IntakeLog.STATUS_SNOOZED.equals(log.getStatus())) {
                 continue;
             }
             // Only flag as missed if scheduled time + full action window has passed.
@@ -580,6 +586,10 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
 
         boolean isMissed() {
             return log != null && IntakeLog.STATUS_MISSED.equals(log.getStatus());
+        }
+
+        boolean isSnoozed() {
+            return log != null && IntakeLog.STATUS_SNOOZED.equals(log.getStatus());
         }
     }
 }
