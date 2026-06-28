@@ -16,6 +16,7 @@ import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.PermissionManager;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 
 import java.util.List;
 
@@ -37,6 +38,8 @@ public class MissedDoseReceiver extends BroadcastReceiver {
             if (pendingLog == null) {
                 return;
             }
+
+            PrefsManager.clearDoseActionWindow(context, medicationId, scheduledDatetime);
 
             Medication med = dao.getMedicationById(medicationId);
             if (med == null) {

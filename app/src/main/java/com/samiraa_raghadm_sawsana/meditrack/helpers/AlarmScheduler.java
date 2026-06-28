@@ -97,11 +97,21 @@ public final class AlarmScheduler {
             cal.add(Calendar.DAY_OF_YEAR, 1);
         }
 
+        // Canonical scheduled datetime = the exact dose time (seconds = 00) of the
+        // day the alarm will fire for. Every component (the medication card window,
+        // the mark-taken/missed actions, and MissedDoseReceiver) keys off this exact
+        // string, so it MUST match selectedDate.atTime(intakeTime) in the adapter.
+        Calendar doseCal = (Calendar) cal.clone();
+        doseCal.add(Calendar.MINUTE, remindMinutes); // undo the reminder offset -> dose time
+        String scheduledDatetime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                .format(doseCal.getTime());
+
         Intent intent = new Intent(context, AlarmReceiver.class);
         intent.putExtra("MEDICATION_ID", medication.getId());
         intent.putExtra("MEDICATION_NAME", medication.getName());
         intent.putExtra("DOSAGE", medication.getDosage() != null ? medication.getDosage() : "");
         intent.putExtra("SCHEDULE_ID", schedule.getId());
+        intent.putExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME, scheduledDatetime);
 
         PendingIntent pi = PendingIntent.getBroadcast(context,
                 schedule.getId(),

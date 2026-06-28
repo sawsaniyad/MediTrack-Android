@@ -39,6 +39,7 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
         }
 
         cancelMissedDoseCheck(context, medicationId, scheduleId);
+        PrefsManager.clearDoseActionWindow(context, medicationId, scheduledDatetime);
 
         AppExecutors.getInstance().diskIO(() -> {
             MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(context));

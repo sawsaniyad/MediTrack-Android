@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.samiraa_raghadm_sawsana.meditrack.R;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
@@ -89,10 +90,15 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         List<Schedule> relevantSchedules = getRelevantSchedules(medication.getId());
         List<IntakeLog> medicationLogs = getLogsForMedication(medication.getId());
 
-        holder.tvNextTime.setText(buildNextTimeLabel(holder.itemView, relevantSchedules));
+        if (relevantSchedules == null || relevantSchedules.isEmpty()) {
+            holder.llNextTime.setVisibility(View.GONE);
+        } else {
+            holder.llNextTime.setVisibility(View.VISIBLE);
+            holder.tvNextTime.setText(buildNextTimeLabel(holder.itemView, relevantSchedules));
+        }
 
         bindImage(holder, medication.getImagePath());
-        bindStatus(holder.itemView, holder, medicationLogs, relevantSchedules);
+        bindStatus(holder.itemView, medication.getId(), holder, medicationLogs, relevantSchedules);
         bindQuickActions(holder, medication, medicationLogs, relevantSchedules);
 
         holder.itemView.setOnClickListener(v -> {
@@ -157,10 +163,11 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
     }
 
     private void bindStatus(View itemView,
+                            int medicationId,
                             MedicationViewHolder holder,
                             List<IntakeLog> medicationLogs,
                             List<Schedule> schedules) {
-        StatusInfo status = resolveStatus(itemView, medicationLogs, schedules);
+        StatusInfo status = resolveStatus(itemView, medicationId, medicationLogs, schedules);
         holder.tvStatus.setText(status.label);
         GradientDrawable badge = (GradientDrawable) holder.viewStatusBadge.getBackground();
         if (badge != null) {
@@ -174,7 +181,11 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                                   Medication medication,
                                   List<IntakeLog> medicationLogs,
                                   List<Schedule> schedules) {
-        ActionWindow actionWindow = findActionWindow(schedules, medicationLogs);
+        ActionWindow actionWindow = findActionWindow(
+                holder.itemView,
+                medication.getId(),
+                schedules,
+                medicationLogs);
         boolean showActions = actionWindow != null && listener != null;
         holder.llQuickActions.setVisibility(showActions ? View.VISIBLE : View.GONE);
 
@@ -191,25 +202,65 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                 listener.onMarkMissed(medication, actionWindow.scheduledDatetime));
     }
 
-    private ActionWindow findActionWindow(List<Schedule> schedules, List<IntakeLog> medicationLogs) {
-        if (!selectedDate.equals(LocalDate.now()) || schedules.isEmpty()) {
+    private ActionWindow findActionWindow(View itemView,
+                                          int medicationId,
+                                          List<Schedule> schedules,
+                                          List<IntakeLog> medicationLogs) {
+        if (!selectedDate.equals(LocalDate.now())) {
             return null;
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        ActionWindow logDrivenWindow = findActionWindowFromLogs(
+                itemView, medicationId, medicationLogs);
+        if (logDrivenWindow != null) {
+            return logDrivenWindow;
+        }
+
+        if (schedules.isEmpty()) {
+            return null;
+        }
+
         ActionWindow bestWindow = null;
         for (Schedule schedule : schedules) {
             try {
                 LocalTime intakeTime = LocalTime.parse(schedule.getIntakeTime(), TIME_FORMATTER);
                 LocalDateTime start = selectedDate.atTime(intakeTime);
-                LocalDateTime end = start.plusMinutes(10);
-                if (now.isBefore(start) || now.isAfter(end)) {
+                String scheduledDatetime = start.format(DATE_TIME_FORMATTER);
+                if (!PrefsManager.isDoseActionWindowActive(
+                        itemView.getContext(), medicationId, scheduledDatetime)) {
                     continue;
                 }
-                String scheduledDatetime = start.format(DATE_TIME_FORMATTER);
                 if (hasResolvedLog(medicationLogs, scheduledDatetime)) {
                     continue;
                 }
+                if (bestWindow == null || start.isAfter(bestWindow.start)) {
+                    bestWindow = new ActionWindow(start, scheduledDatetime);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return bestWindow;
+    }
+
+    private ActionWindow findActionWindowFromLogs(View itemView,
+                                                  int medicationId,
+                                                  List<IntakeLog> medicationLogs) {
+        ActionWindow bestWindow = null;
+        for (IntakeLog log : medicationLogs) {
+            String scheduledDatetime = log.getScheduledDatetime();
+            if (scheduledDatetime == null || scheduledDatetime.trim().isEmpty()) {
+                continue;
+            }
+            if (!PrefsManager.isDoseActionWindowActive(
+                    itemView.getContext(), medicationId, scheduledDatetime)) {
+                continue;
+            }
+            if (log.isTaken() || IntakeLog.STATUS_MISSED.equals(log.getStatus())) {
+                continue;
+            }
+            try {
+                LocalDateTime start = LocalDateTime.parse(
+                        scheduledDatetime, DATE_TIME_FORMATTER);
                 if (bestWindow == null || start.isAfter(bestWindow.start)) {
                     bestWindow = new ActionWindow(start, scheduledDatetime);
                 }
@@ -232,6 +283,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
     }
 
     private StatusInfo resolveStatus(View itemView,
+                                     int medicationId,
                                      List<IntakeLog> medicationLogs,
                                      List<Schedule> schedules) {
         if (schedules.isEmpty()) {
@@ -249,9 +301,21 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                     colorFromRes(itemView, R.color.status_pending));
         }
 
+        if (findActionWindow(itemView, medicationId, schedules, medicationLogs) != null) {
+            return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
+                    colorFromRes(itemView, R.color.status_pending));
+        }
+
+        if (hasExpiredUnresolvedReminder(itemView, medicationId, medicationLogs)) {
+            return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
+                    colorFromRes(itemView, R.color.status_missed));
+        }
+
         LocalDateTime now = LocalDateTime.now();
+        int remindMinutes = PrefsManager.getReminderMinutes(itemView.getContext());
         ScheduleStatusSlot activeOrLatestPastSlot = null;
         ScheduleStatusSlot nextUpcomingSlot = null;
+        ScheduleStatusSlot resolvedReminderSlot = null;
 
         for (Schedule schedule : schedules) {
             try {
@@ -263,6 +327,14 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                                 medicationLogs, scheduledStart.format(DATE_TIME_FORMATTER)));
 
                 if (scheduledStart.isAfter(now)) {
+                    LocalDateTime reminderStart = scheduledStart.minusMinutes(remindMinutes);
+                    if (!now.isBefore(reminderStart) && slot.isResolved()) {
+                        if (resolvedReminderSlot == null
+                                || scheduledStart.isAfter(resolvedReminderSlot.start)) {
+                            resolvedReminderSlot = slot;
+                        }
+                        continue;
+                    }
                     if (nextUpcomingSlot == null
                             || scheduledStart.isBefore(nextUpcomingSlot.start)) {
                         nextUpcomingSlot = slot;
@@ -275,6 +347,17 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                     activeOrLatestPastSlot = slot;
                 }
             } catch (Exception ignored) {
+            }
+        }
+
+        if (resolvedReminderSlot != null) {
+            if (resolvedReminderSlot.isTaken()) {
+                return new StatusInfo(itemView.getContext().getString(R.string.status_taken),
+                        colorFromRes(itemView, R.color.status_taken));
+            }
+            if (resolvedReminderSlot.isMissed()) {
+                return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
+                        colorFromRes(itemView, R.color.status_missed));
             }
         }
 
@@ -302,6 +385,26 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
 
         return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
                 colorFromRes(itemView, R.color.status_pending));
+    }
+
+    private boolean hasExpiredUnresolvedReminder(View itemView,
+                                                 int medicationId,
+                                                 List<IntakeLog> medicationLogs) {
+        for (IntakeLog log : medicationLogs) {
+            String scheduledDatetime = log.getScheduledDatetime();
+            if (scheduledDatetime == null || scheduledDatetime.trim().isEmpty()) {
+                continue;
+            }
+            if (log.isTaken() || IntakeLog.STATUS_MISSED.equals(log.getStatus())) {
+                continue;
+            }
+            long expiresAt = PrefsManager.getDoseActionWindowExpiry(
+                    itemView.getContext(), medicationId, scheduledDatetime);
+            if (expiresAt >= 0L && expiresAt <= System.currentTimeMillis()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private IntakeLog findLogForScheduledDatetime(List<IntakeLog> medicationLogs,
@@ -379,6 +482,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         final TextView tvMedicationName;
         final TextView tvDosage;
         final TextView tvNextTime;
+        final LinearLayout llNextTime;
         final View viewStatusBadge;
         final TextView tvStatus;
         final LinearLayout llQuickActions;
@@ -392,6 +496,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             tvMedicationName = itemView.findViewById(R.id.tvMedicationName);
             tvDosage = itemView.findViewById(R.id.tvDosage);
             tvNextTime = itemView.findViewById(R.id.tvNextTime);
+            llNextTime = itemView.findViewById(R.id.llNextTime);
             viewStatusBadge = itemView.findViewById(R.id.viewStatusBadge);
             tvStatus = itemView.findViewById(R.id.tvStatus);
             llQuickActions = itemView.findViewById(R.id.llQuickActions);
