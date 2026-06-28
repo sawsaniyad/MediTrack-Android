@@ -11,7 +11,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -37,6 +39,7 @@ import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 
 import java.io.File;
+import java.time.LocalDate;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -60,6 +63,7 @@ public class AddEditMedicationActivity extends BaseActivity {
     private ImageView ivMedicationPhoto;
     private TextView tvEmergencyContact;
     private EditText etExpiryDate;
+    private com.google.android.material.textfield.TextInputLayout tilExpiryDate;
     private Button btnDelete;
 
     private MedicationDAO dao;
@@ -104,7 +108,16 @@ public class AddEditMedicationActivity extends BaseActivity {
         ivMedicationPhoto = findViewById(R.id.ivMedicationPhoto);
         tvEmergencyContact = findViewById(R.id.tvEmergencyContact);
         etExpiryDate = findViewById(R.id.etExpiryDate);
+        tilExpiryDate = findViewById(R.id.tilExpiryDate);
         btnDelete = findViewById(R.id.btnDelete);
+
+        etExpiryDate.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+            @Override public void onTextChanged(CharSequence s, int st, int b, int c) {
+                tilExpiryDate.setError(null);
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
 
         dayCheckboxes[0] = findViewById(R.id.cbMon);
         dayCheckboxes[1] = findViewById(R.id.cbTue);
@@ -450,6 +463,22 @@ public class AddEditMedicationActivity extends BaseActivity {
         if (times.isEmpty()) {
             showToast(getString(R.string.msg_validation_time));
             return;
+        }
+
+        String expiryInput = etExpiryDate.getText().toString().trim();
+        if (!TextUtils.isEmpty(expiryInput)) {
+            try {
+                LocalDate expiryDate = LocalDate.parse(expiryInput);
+                if (expiryDate.isBefore(LocalDate.now())) {
+                    tilExpiryDate.setError(getString(R.string.msg_expiry_date_past));
+                    etExpiryDate.requestFocus();
+                    return;
+                }
+            } catch (Exception e) {
+                tilExpiryDate.setError(getString(R.string.msg_expiry_date_invalid));
+                etExpiryDate.requestFocus();
+                return;
+            }
         }
 
         checkExactAlarmPermission();

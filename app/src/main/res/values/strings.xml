@@ -42,6 +42,8 @@
     <string name="msg_deleted_success">תרופה נמחקה</string>
     <string name="msg_validation_name">נא להזין שם תרופה</string>
     <string name="msg_validation_time">נא להוסיף לפחות שעת נטילה</string>
+    <string name="msg_expiry_date_past">תאריך התפוגה חייב להיות מהיום ואילך</string>
+    <string name="msg_expiry_date_invalid">פורמט תאריך שגוי — יש להשתמש בתבנית YYYY-MM-DD</string>
     <string name="msg_medication_not_found">תרופה לא נמצאה</string>
     <string name="msg_notifications_disabled">התראות מושבתות — תזכורות לא יוצגו</string>
     <string name="msg_medication_due">הגיע הזמן לקחת: %1$s</string>
