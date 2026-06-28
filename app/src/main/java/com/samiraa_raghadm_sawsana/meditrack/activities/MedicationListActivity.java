@@ -565,7 +565,9 @@ public class MedicationListActivity extends BaseActivity {
             List<IntakeLog> logs = dao.getLogsByMedication(medicationId);
             IntakeLog targetLog = findLatestOpenLog(logs);
             if (targetLog != null) {
-                dao.markAsTaken(targetLog.getId(), actualTime);
+                boolean wasDelayed = IntakeLog.STATUS_MISSED.equals(targetLog.getStatus())
+                        || targetLog.isWasDelayed();
+                dao.markAsTaken(targetLog.getId(), actualTime, wasDelayed);
                 PrefsManager.clearDoseActionWindow(
                         this, medicationId, targetLog.getScheduledDatetime());
             } else {
@@ -582,7 +584,9 @@ public class MedicationListActivity extends BaseActivity {
             List<IntakeLog> logs = dao.getLogsByMedication(medication.getId());
             IntakeLog targetLog = findLogByScheduledDatetime(logs, scheduledDatetime);
             if (targetLog != null) {
-                dao.markAsTaken(targetLog.getId(), actualTime);
+                boolean wasDelayed = IntakeLog.STATUS_MISSED.equals(targetLog.getStatus())
+                        || targetLog.isWasDelayed();
+                dao.markAsTaken(targetLog.getId(), actualTime, wasDelayed);
             } else {
                 IntakeLog log = new IntakeLog();
                 log.setMedicationId(medication.getId());

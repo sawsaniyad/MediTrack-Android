@@ -44,7 +44,11 @@ public class TakenActionReceiver extends BroadcastReceiver {
             IntakeLog pendingLog = findPendingLog(logs, scheduledDatetime);
 
             if (pendingLog != null) {
-                dao.markAsTaken(pendingLog.getId(), actualTime);
+                // Mark as delayed if MissedDoseReceiver already ran (repeated reminders)
+                // or if the dose was previously snoozed.
+                boolean wasDelayed = IntakeLog.STATUS_MISSED.equals(pendingLog.getStatus())
+                        || pendingLog.isWasDelayed();
+                dao.markAsTaken(pendingLog.getId(), actualTime, wasDelayed);
             } else {
                 Medication medication = dao.getMedicationById(medicationId);
                 IntakeLog takenLog = new IntakeLog();

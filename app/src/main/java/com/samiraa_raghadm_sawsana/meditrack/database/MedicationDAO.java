@@ -220,11 +220,14 @@ public class MedicationDAO {
                 DatabaseHelper.TABLE_INTAKE_LOG, null, intakeLogToContentValues(log));
     }
 
-    public void markAsTaken(int logId, String actualDatetime) {
+    public void markAsTaken(int logId, String actualDatetime, boolean wasDelayed) {
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.COL_LOG_TAKEN, 1);
         values.put(DatabaseHelper.COL_LOG_ACTUAL_DATETIME, actualDatetime);
-        values.put(DatabaseHelper.COL_LOG_STATUS, "נלקח");
+        values.put(DatabaseHelper.COL_LOG_STATUS, IntakeLog.STATUS_TAKEN);
+        if (wasDelayed) {
+            values.put(DatabaseHelper.COL_LOG_WAS_DELAYED, 1);
+        }
         dbHelper.getWritableDatabase().update(DatabaseHelper.TABLE_INTAKE_LOG, values,
                 DatabaseHelper.COL_LOG_ID + " = ?", new String[] { String.valueOf(logId) });
     }
