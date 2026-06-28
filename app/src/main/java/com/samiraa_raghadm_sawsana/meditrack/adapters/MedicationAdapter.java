@@ -40,6 +40,8 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         void onMarkTaken(Medication medication, String scheduledDatetime);
 
         void onMarkMissed(Medication medication, String scheduledDatetime);
+
+        void onDeleteMedication(Medication medication);
     }
 
     private final List<Medication> medications = new ArrayList<>();
@@ -94,6 +96,12 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         bindImage(holder, medication.getImagePath());
         bindStatus(holder.itemView, holder, medicationLogs, relevantSchedules);
         bindQuickActions(holder, medication, medicationLogs, relevantSchedules);
+
+        holder.btnDelete.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onDeleteMedication(medication);
+            }
+        });
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -384,6 +392,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         final LinearLayout llQuickActions;
         final TextView btnMarkTaken;
         final TextView btnMarkMissed;
+        final ImageView btnDelete;
         String boundImagePath;
 
         MedicationViewHolder(@NonNull View itemView) {
@@ -397,6 +406,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             llQuickActions = itemView.findViewById(R.id.llQuickActions);
             btnMarkTaken = itemView.findViewById(R.id.btnMarkTaken);
             btnMarkMissed = itemView.findViewById(R.id.btnMarkMissed);
+            btnDelete = itemView.findViewById(R.id.btnDeleteMedication);
         }
     }
 

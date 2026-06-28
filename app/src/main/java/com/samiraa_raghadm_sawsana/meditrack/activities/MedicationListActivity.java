@@ -148,6 +148,11 @@ public class MedicationListActivity extends BaseActivity {
             public void onMarkMissed(Medication medication, String scheduledDatetime) {
                 markMedicationMissedFromCard(medication, scheduledDatetime);
             }
+
+            @Override
+            public void onDeleteMedication(Medication medication) {
+                confirmDeleteFromButton(medication);
+            }
         });
         recyclerView.setAdapter(adapter);
         attachSwipeToDelete();
@@ -460,6 +465,15 @@ public class MedicationListActivity extends BaseActivity {
 
     private float spToPx(float sp) {
         return sp * getResources().getDisplayMetrics().scaledDensity;
+    }
+
+    private void confirmDeleteFromButton(Medication medication) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.delete_medication_title)
+                .setMessage(getString(R.string.delete_medication_message, medication.getName()))
+                .setPositiveButton(R.string.delete_confirm, (dialog, which) -> deleteMedication(medication))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     private void confirmDeleteFromSwipe(Medication medication, int position) {
