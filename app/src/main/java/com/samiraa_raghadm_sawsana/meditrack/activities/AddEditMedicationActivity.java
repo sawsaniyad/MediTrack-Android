@@ -111,12 +111,6 @@ public class AddEditMedicationActivity extends BaseActivity {
         tilExpiryDate = findViewById(R.id.tilExpiryDate);
         btnDelete = findViewById(R.id.btnDelete);
 
-        // inputType="number" adds DigitsKeyListener to the Editable's filter chain, which
-        // silently strips '/' from any programmatic replace() call in the TextWatcher.
-        // Replacing the filter chain with only LengthFilter lets '/' through while the
-        // numeric keyboard (from inputType) keeps restricting what the user can type.
-        etExpiryDate.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(10) });
-
         etExpiryDate.addTextChangedListener(new TextWatcher() {
             private boolean formatting = false;
 
@@ -131,18 +125,23 @@ public class AddEditMedicationActivity extends BaseActivity {
                 if (formatting) return;
                 formatting = true;
 
-                // Strip all non-digit characters, keep only raw digits.
                 String digits = s.toString().replaceAll("[^0-9]", "");
                 if (digits.length() > 8) digits = digits.substring(0, 8);
 
-                // Rebuild as DD/MM/YYYY, inserting slashes at positions 2 and 4.
                 StringBuilder formatted = new StringBuilder();
                 for (int i = 0; i < digits.length(); i++) {
                     if (i == 2 || i == 4) formatted.append('/');
                     formatted.append(digits.charAt(i));
                 }
 
+                // DigitsKeyListener (from inputType="number") is registered as an
+                // InputFilter on the Editable and strips '/' from any replace() call.
+                // Temporarily removing all filters lets '/' through, then we restore them.
+                InputFilter[] saved = s.getFilters();
+                s.setFilters(new InputFilter[0]);
                 s.replace(0, s.length(), formatted);
+                s.setFilters(saved);
+
                 formatting = false;
             }
         });
