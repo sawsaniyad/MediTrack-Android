@@ -195,4 +195,10 @@
 
     <!-- About dialog -->
     <string name="about_dialog_title">אודות האפליקציה</string>
+
+    <!-- Exit confirmation dialog -->
+    <string name="exit_confirm_title">יציאה מהתוכנית</string>
+    <string name="exit_confirm_message">האם אתה בטוח שברצונך לצאת?</string>
+    <string name="exit_confirm_yes">כן</string>
+    <string name="exit_confirm_no">לא</string>
 </resources>

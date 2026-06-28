@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
@@ -100,6 +101,18 @@ public class MedicationListActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_medication_list);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                new AlertDialog.Builder(MedicationListActivity.this)
+                        .setTitle(R.string.exit_confirm_title)
+                        .setMessage(R.string.exit_confirm_message)
+                        .setPositiveButton(R.string.exit_confirm_yes, (d, w) -> finish())
+                        .setNegativeButton(R.string.exit_confirm_no, null)
+                        .show();
+            }
+        });
 
         if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
