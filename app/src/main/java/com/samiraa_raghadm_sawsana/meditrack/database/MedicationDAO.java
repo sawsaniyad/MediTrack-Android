@@ -12,6 +12,24 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * שכבת גישה לנתונים (DAO) - כל פעולות ה-CRUD מול מסד הנתונים
+ * Data Access Object: the single layer that talks to SQLite.
+ *
+ * אחריות / Responsibilities:
+ * - CRUD על שלוש הטבלאות: medications, schedules, intake_log
+ * - המרה דו-כיוונית בין Cursor למודלים (cursorTo... / ...ToContentValues)
+ * - אף Cursor אינו דולף החוצה — כל שאילתה ממופה למודל ונסגרת ב-finally
+ *
+ * הערות / Notes:
+ * - getActiveMedications מחזיר רק תרופות פעילות (is_active = 1)
+ * - deleteMedication הוא מחיקה רכה (soft delete) — השורה נשמרת כדי שההיסטוריה תישרד
+ * - רשימות נטילה מוחזרות לפי scheduled_datetime בסדר עולה (ASC)
+ *
+ * כל הקריאות אמורות לרוץ ב-background thread (AppExecutors.diskIO).
+ *
+ * כותבת: סמירה אבו אל-הווא
+ */
 public class MedicationDAO {
 
     private final DatabaseHelper dbHelper;

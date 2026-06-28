@@ -296,13 +296,44 @@ public class MedicationListActivity extends BaseActivity {
     }
 
     private IntakeLog findLogByScheduledDatetime(List<IntakeLog> logs, String scheduledDatetime) {
+        // 1) Exact match on the full "yyyy-MM-dd HH:mm:ss" string.
         for (int i = logs.size() - 1; i >= 0; i--) {
             IntakeLog log = logs.get(i);
             if (scheduledDatetime.equals(log.getScheduledDatetime())) {
                 return log;
             }
         }
-        return null;
+        // 2) Fallback: same dose slot (same date + HH:mm), preferring an
+        // unresolved (still-pending) log. The alarm-inserted pending log and the
+        // card both target the same slot, but their second-precision strings can
+        // differ; without this fallback we would insert a SECOND log and leave the
+        // original "waiting" — showing both "missed" and "waiting" for one dose.
+        String slotKey = slotKey(scheduledDatetime);
+        if (slotKey == null) {
+            return null;
+        }
+        IntakeLog resolvedMatch = null;
+        for (int i = logs.size() - 1; i >= 0; i--) {
+            IntakeLog log = logs.get(i);
+            if (!slotKey.equals(slotKey(log.getScheduledDatetime()))) {
+                continue;
+            }
+            if (!log.isTaken() && !IntakeLog.STATUS_MISSED.equals(log.getStatus())) {
+                return log; // reuse the pending log for this slot
+            }
+            if (resolvedMatch == null) {
+                resolvedMatch = log;
+            }
+        }
+        return resolvedMatch;
+    }
+
+    /** Slot identity = date + HH:mm (ignores seconds), or null if unparseable. */
+    private String slotKey(String scheduledDatetime) {
+        if (scheduledDatetime == null || scheduledDatetime.length() < 16) {
+            return null;
+        }
+        return scheduledDatetime.substring(0, 16);
     }
 
     private boolean isMissedSlot(LocalDate selectedDate,

@@ -79,7 +79,10 @@ public class MissedDoseReceiver extends BroadcastReceiver {
 
     private IntakeLog findPendingLog(List<IntakeLog> logs, String scheduledDatetime) {
         IntakeLog newestPendingLog = null;
-        for (IntakeLog log : logs) {
+        // MedicationDAO returns logs ordered by scheduled_datetime ASC, so iterate
+        // from the end to make the fallback the NEWEST pending dose, not the oldest.
+        for (int i = logs.size() - 1; i >= 0; i--) {
+            IntakeLog log = logs.get(i);
             if (log.isTaken()) {
                 continue;
             }

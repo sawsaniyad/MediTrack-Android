@@ -78,10 +78,6 @@ public abstract class BaseActivity extends AppCompatActivity {
             showAboutDialog();
             return true;
         }
-        if (id == R.id.action_history) {
-            startActivity(new Intent(this, HistoryActivity.class));
-            return true;
-        }
         if (id == R.id.action_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;

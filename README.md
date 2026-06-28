@@ -38,8 +38,12 @@
 
 APK: `app/build/outputs/apk/debug/app-debug.apk`
 
-## Debug testing
+Package: `com.samiraa_raghadm_sawsana.meditrack`
+
+## Launch
+
+The launcher entry point is `SplashActivity`:
 
 ```bash
-adb shell am start -n com.meditrack.app/.ui.DevTestActivity
+adb shell am start -n com.samiraa_raghadm_sawsana.meditrack/.activities.SplashActivity
 ```
