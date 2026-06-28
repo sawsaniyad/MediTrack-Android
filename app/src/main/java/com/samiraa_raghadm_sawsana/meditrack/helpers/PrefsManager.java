@@ -11,7 +11,7 @@ public final class PrefsManager {
     public static final String KEY_SOUND = "sound_enabled";
     private static final String KEY_ACTION_WINDOW_PREFIX = "action_window_";
 
-    private static final int DEFAULT_REMIND_MIN = 0;
+    private static final int DEFAULT_REMIND_MIN = 15;
 
     private PrefsManager() {
     }
@@ -26,9 +26,9 @@ public final class PrefsManager {
     }
 
     /** How long the user has to confirm a dose before it is marked missed.
-     *  Matches the reminder-advance setting, with a 10-minute floor. */
+     *  Matches the reminder-advance setting exactly; minimum 1 to avoid 0. */
     public static int getActionWindowMinutes(Context ctx) {
-        return Math.max(10, getReminderMinutes(ctx));
+        return Math.max(1, getReminderMinutes(ctx));
     }
 
     public static boolean isVibrateEnabled(Context ctx) {
