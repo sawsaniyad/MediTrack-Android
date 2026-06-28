@@ -112,11 +112,33 @@ public class AddEditMedicationActivity extends BaseActivity {
         btnDelete = findViewById(R.id.btnDelete);
 
         etExpiryDate.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
-            @Override public void onTextChanged(CharSequence s, int st, int b, int c) {
+            private boolean formatting = false;
+
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 tilExpiryDate.setError(null);
             }
-            @Override public void afterTextChanged(Editable s) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (formatting) return;
+                formatting = true;
+
+                // Strip all non-digit characters, keep only raw digits.
+                String digits = s.toString().replaceAll("[^0-9]", "");
+                if (digits.length() > 8) digits = digits.substring(0, 8);
+
+                // Rebuild as DD/MM/YYYY, inserting slashes at positions 2 and 4.
+                StringBuilder formatted = new StringBuilder();
+                for (int i = 0; i < digits.length(); i++) {
+                    if (i == 2 || i == 4) formatted.append('/');
+                    formatted.append(digits.charAt(i));
+                }
+
+                s.replace(0, s.length(), formatted);
+                formatting = false;
+            }
         });
 
         dayCheckboxes[0] = findViewById(R.id.cbMon);
@@ -360,7 +382,7 @@ public class AddEditMedicationActivity extends BaseActivity {
         etMedicationName.setText(medication.getName());
         etDosage.setText(medication.getDosage());
         etInstructions.setText(medication.getInstructions());
-        etExpiryDate.setText(medication.getExpiryDate() != null ? medication.getExpiryDate() : "");
+        etExpiryDate.setText(storedToDisplay(medication.getExpiryDate()));
 
         emergencyContactName = medication.getEmergencyContactName();
         emergencyContactPhone = medication.getEmergencyContactPhone();
@@ -468,7 +490,8 @@ public class AddEditMedicationActivity extends BaseActivity {
         String expiryInput = etExpiryDate.getText().toString().trim();
         if (!TextUtils.isEmpty(expiryInput)) {
             try {
-                LocalDate expiryDate = LocalDate.parse(expiryInput);
+                LocalDate expiryDate = LocalDate.parse(expiryInput,
+                        DateTimeFormatter.ofPattern("dd/MM/yyyy"));
                 if (expiryDate.isBefore(LocalDate.now())) {
                     tilExpiryDate.setError(getString(R.string.msg_expiry_date_past));
                     etExpiryDate.requestFocus();
@@ -491,7 +514,7 @@ public class AddEditMedicationActivity extends BaseActivity {
         medication.setName(name);
         medication.setDosage(etDosage.getText().toString().trim());
         medication.setInstructions(etInstructions.getText().toString().trim());
-        medication.setExpiryDate(etExpiryDate.getText().toString().trim());
+        medication.setExpiryDate(displayToStored(etExpiryDate.getText().toString().trim()));
         medication.setActive(true);
         medication.setEmergencyContactName(emergencyContactName);
         medication.setEmergencyContactPhone(emergencyContactPhone);
@@ -593,6 +616,22 @@ public class AddEditMedicationActivity extends BaseActivity {
             }
         }
         return false;
+    }
+
+    /** Converts stored YYYY-MM-DD → display DD/MM/YYYY. */
+    private String storedToDisplay(String stored) {
+        if (stored == null || stored.isEmpty()) return "";
+        String[] p = stored.split("-");
+        if (p.length == 3) return p[2] + "/" + p[1] + "/" + p[0];
+        return stored;
+    }
+
+    /** Converts display DD/MM/YYYY → stored YYYY-MM-DD. */
+    private String displayToStored(String display) {
+        if (display == null || display.isEmpty()) return "";
+        String[] p = display.split("/");
+        if (p.length == 3) return p[2] + "-" + p[1] + "-" + p[0];
+        return display;
     }
 
     private void confirmDelete() {
