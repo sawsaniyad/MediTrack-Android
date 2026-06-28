@@ -134,6 +134,8 @@ public final class NotificationHelper {
         } else {
             canNotify = true;
         }
+        android.util.Log.d("MediTrack-Alarm", "showNotification: canNotify=" + canNotify
+                + " med=" + medicationName);
         if (canNotify) {
             nm.notify(NOTIFICATION_ID_BASE + scheduleId, builder.build());
         }

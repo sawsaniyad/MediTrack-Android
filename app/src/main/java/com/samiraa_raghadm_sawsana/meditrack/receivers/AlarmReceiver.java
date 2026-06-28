@@ -29,6 +29,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        android.util.Log.d("MediTrack-Alarm", "AlarmReceiver FIRED: " + intent);
         int medicationId = intent.getIntExtra("MEDICATION_ID", -1);
         String medicationName = intent.getStringExtra("MEDICATION_NAME");
         String dosage = intent.getStringExtra("DOSAGE");

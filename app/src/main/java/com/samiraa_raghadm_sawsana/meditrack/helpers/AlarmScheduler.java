@@ -13,6 +13,8 @@ import com.samiraa_raghadm_sawsana.meditrack.receivers.AlarmReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.ExpiryReceiver;
 import com.samiraa_raghadm_sawsana.meditrack.receivers.MissedDoseReceiver;
 
+import android.util.Log;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -141,6 +143,12 @@ public final class AlarmScheduler {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         scheduleAllowWhileIdle(am, cal.getTimeInMillis(), pi);
+
+        Log.d("MediTrack-Alarm", "SCHEDULED: " + medication.getName()
+                + " | intake=" + scheduledDatetime
+                + " | alarm fires at=" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(cal.getTime())
+                + " | reminderOffset=" + remindMinutes + "min"
+                + " | canExact=" + canScheduleExact(am));
     }
 
     public static void scheduleAllAlarms(Context context, MedicationDAO dao) {
