@@ -17,8 +17,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * PendingIntent requestCode ranges:
@@ -84,6 +86,22 @@ public final class AlarmScheduler {
         int hour = Integer.parseInt(parts[0]);
         int minute = Integer.parseInt(parts[1]);
 
+        // Parse allowed days: app numbering 1=Mon…7=Sun → Calendar.DAY_OF_WEEK 2=Mon…1=Sun
+        Set<Integer> allowedCalDays = new HashSet<>();
+        String daysOfWeek = schedule.getDaysOfWeek();
+        if (daysOfWeek != null && !daysOfWeek.isEmpty()) {
+            for (String part : daysOfWeek.split(",")) {
+                try {
+                    int appDay = Integer.parseInt(part.trim());
+                    allowedCalDays.add(appDay % 7 + 1);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        if (allowedCalDays.isEmpty()) {
+            for (int i = 1; i <= 7; i++) allowedCalDays.add(i);
+        }
+
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, hour);
         cal.set(Calendar.MINUTE, minute);
@@ -93,15 +111,29 @@ public final class AlarmScheduler {
         int remindMinutes = PrefsManager.getReminderMinutes(context);
         cal.add(Calendar.MINUTE, -remindMinutes);
 
+        // If today's alarm time has already passed, start looking from tomorrow
         if (cal.getTimeInMillis() <= System.currentTimeMillis()) {
             cal.add(Calendar.DAY_OF_YEAR, 1);
         }
+
+        // Advance to the next allowed day of week (max 7 iterations)
+        for (int i = 0; i < 7; i++) {
+            if (allowedCalDays.contains(cal.get(Calendar.DAY_OF_WEEK))) break;
+            cal.add(Calendar.DAY_OF_YEAR, 1);
+        }
+
+        // Scheduled intake time is the alarm fire time + reminder offset
+        Calendar scheduledCal = (Calendar) cal.clone();
+        scheduledCal.add(Calendar.MINUTE, remindMinutes);
+        String scheduledDatetime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+                .format(scheduledCal.getTime());
 
         Intent intent = new Intent(context, AlarmReceiver.class);
         intent.putExtra("MEDICATION_ID", medication.getId());
         intent.putExtra("MEDICATION_NAME", medication.getName());
         intent.putExtra("DOSAGE", medication.getDosage() != null ? medication.getDosage() : "");
         intent.putExtra("SCHEDULE_ID", schedule.getId());
+        intent.putExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME, scheduledDatetime);
 
         PendingIntent pi = PendingIntent.getBroadcast(context,
                 schedule.getId(),
