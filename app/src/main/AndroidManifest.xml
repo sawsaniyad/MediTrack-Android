@@ -65,6 +65,11 @@
             android:exported="false"
             android:parentActivityName=".activities.MedicationListActivity" />
 
+        <activity
+            android:name=".activities.SnoozePickerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.Dialog.Alert" />
+
         <!-- AlarmReceiver - מקבל התראות מ-AlarmManager -->
         <receiver
             android:name=".receivers.AlarmReceiver"

@@ -153,6 +153,9 @@
     <string name="label_reminder_minutes">דקות תזכורת מראש</string>
     <string name="label_snooze_minutes">משך דחיית תזכורת</string>
     <string name="label_snooze_minutes_default">10 דקות</string>
+    <string name="snooze_picker_title">בחר משך דחייה</string>
+    <string name="snooze_picker_cancel">ביטול</string>
+    <string name="snooze_option_minutes">%d דקות</string>
     <string name="label_vibrate">רטט בתזכורות</string>
     <string name="label_sound">צליל בתזכורות</string>
     <string name="label_reminder_minutes_default">15 דקות</string>

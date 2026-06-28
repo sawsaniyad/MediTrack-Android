@@ -49,40 +49,15 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
             }
         });
 
-        int snoozeMinutes = PrefsManager.getSnoozeDurationMinutes(context);
-        long triggerAt = System.currentTimeMillis() + snoozeMinutes * 60 * 1000L;
-
-        Intent snoozeFireIntent = new Intent(context, AlarmReceiver.class);
-        snoozeFireIntent.putExtra("MEDICATION_ID", medicationId);
-        snoozeFireIntent.putExtra("MEDICATION_NAME", medicationName);
-        snoozeFireIntent.putExtra("DOSAGE", dosage);
-        snoozeFireIntent.putExtra("SCHEDULE_ID", scheduleId);
-        snoozeFireIntent.putExtra(EXTRA_FROM_SNOOZE, true);
-        snoozeFireIntent.putExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME, scheduledDatetime);
-
-        PendingIntent pi = PendingIntent.getBroadcast(context,
-                scheduleId + 20000,
-                snoozeFireIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (am == null) {
-            return;
-        }
-
-        if (canScheduleExact(am)) {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
-        }
-    }
-
-    private boolean canScheduleExact(AlarmManager alarmManager) {
-        try {
-            return (Boolean) AlarmManager.class
-                    .getMethod("canScheduleExactAlarms")
-                    .invoke(alarmManager);
-        } catch (Exception ignored) {
-            return true;
-        }
+        Intent pickerIntent = new Intent(context,
+                com.samiraa_raghadm_sawsana.meditrack.activities.SnoozePickerActivity.class);
+        pickerIntent.putExtra("MEDICATION_ID", medicationId);
+        pickerIntent.putExtra("MEDICATION_NAME", medicationName);
+        pickerIntent.putExtra("DOSAGE", dosage);
+        pickerIntent.putExtra("SCHEDULE_ID", scheduleId);
+        pickerIntent.putExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME, scheduledDatetime);
+        pickerIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        context.startActivity(pickerIntent);
     }
 
     private void cancelMissedDoseCheck(Context context, int medicationId, int scheduleId) {
