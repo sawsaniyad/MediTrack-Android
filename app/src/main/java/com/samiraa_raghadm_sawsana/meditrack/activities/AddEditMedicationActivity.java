@@ -125,6 +125,7 @@ public class AddEditMedicationActivity extends BaseActivity {
             dayCheckboxes[3].setChecked(true); // Thu
             dayCheckboxes[4].setChecked(true); // Fri
             dayCheckboxes[5].setChecked(true); // Sat
+            dayCheckboxes[6].setChecked(true); // Sun
         } else {
             loadMedicationForEdit();
         }
