@@ -43,7 +43,7 @@ public class DevTestActivity extends BaseActivity {
                     Locale.getDefault()).format(new Date());
             AppExecutors.getInstance().diskIO(() -> {
                 MedicationDAO dao = new MedicationDAO(DatabaseHelper.getInstance(this));
-                dao.markAsTaken(1, actualTime);
+                dao.markAsTaken(1, actualTime, false);
             });
             showToast(getString(R.string.dev_test_mark_taken_toast));
         });
