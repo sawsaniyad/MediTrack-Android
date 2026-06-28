@@ -23,7 +23,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -178,9 +177,10 @@ public class MedicationListActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(
+        ContextCompat.registerReceiver(this,
                 medicationDueReceiver,
-                new IntentFilter(getString(R.string.broadcast_medication_due)));
+                new IntentFilter(getString(R.string.broadcast_medication_due)),
+                ContextCompat.RECEIVER_NOT_EXPORTED);
         loadMedications();
         startAutoRefresh();
     }
@@ -188,7 +188,7 @@ public class MedicationListActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(medicationDueReceiver);
+        unregisterReceiver(medicationDueReceiver);
         stopAutoRefresh();
     }
 

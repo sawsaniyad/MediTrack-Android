@@ -6,8 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
 import com.samiraa_raghadm_sawsana.meditrack.R;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
@@ -89,8 +87,8 @@ public class AlarmReceiver extends BroadcastReceiver {
         Intent localIntent = new Intent(context.getString(R.string.broadcast_medication_due));
         localIntent.putExtra(context.getString(R.string.extra_medication_id), medicationId);
         localIntent.putExtra(context.getString(R.string.extra_medication_name), finalMedicationName);
-        LocalBroadcastManager.getInstance(context).sendBroadcast(localIntent);
-
+        localIntent.setPackage(context.getPackageName()); // keep it app-internal
+        context.sendBroadcast(localIntent);
         scheduleMissedDoseCheck(context, medicationId, scheduleId, finalScheduledDatetime,
                 windowMinutes);
 
