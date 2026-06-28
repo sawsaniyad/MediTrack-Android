@@ -43,6 +43,8 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         void onMarkMissed(Medication medication, String scheduledDatetime);
 
         void onSnooze(Medication medication, String scheduledDatetime, int scheduleId);
+
+        void onMarkTakenLate(Medication medication, String scheduledDatetime);
     }
 
     private final List<Medication> medications = new ArrayList<>();
@@ -102,6 +104,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         bindImage(holder, medication.getImagePath());
         bindStatus(holder.itemView, medication.getId(), holder, medicationLogs, relevantSchedules);
         bindQuickActions(holder, medication, medicationLogs, relevantSchedules);
+        bindLateAction(holder, medication, medicationLogs);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -205,6 +208,32 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                 listener.onMarkMissed(medication, actionWindow.scheduledDatetime));
         holder.btnSnooze.setOnClickListener(v ->
                 listener.onSnooze(medication, actionWindow.scheduledDatetime, actionWindow.scheduleId));
+    }
+
+    private void bindLateAction(MedicationViewHolder holder,
+                               Medication medication,
+                               List<IntakeLog> medicationLogs) {
+        holder.btnMarkTakenLate.setOnClickListener(null);
+
+        // Find the most recent missed log for today.
+        String missedDatetime = null;
+        for (int i = medicationLogs.size() - 1; i >= 0; i--) {
+            IntakeLog log = medicationLogs.get(i);
+            if (IntakeLog.STATUS_MISSED.equals(log.getStatus()) && !log.isTaken()) {
+                missedDatetime = log.getScheduledDatetime();
+                break;
+            }
+        }
+
+        if (missedDatetime == null || listener == null) {
+            holder.btnMarkTakenLate.setVisibility(View.GONE);
+            return;
+        }
+
+        final String finalMissedDatetime = missedDatetime;
+        holder.btnMarkTakenLate.setVisibility(View.VISIBLE);
+        holder.btnMarkTakenLate.setOnClickListener(v ->
+                listener.onMarkTakenLate(medication, finalMissedDatetime));
     }
 
     private ActionWindow findActionWindow(View itemView,
@@ -538,6 +567,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         final TextView btnMarkTaken;
         final TextView btnMarkMissed;
         final TextView btnSnooze;
+        final TextView btnMarkTakenLate;
         String boundImagePath;
 
         MedicationViewHolder(@NonNull View itemView) {
@@ -553,6 +583,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             btnMarkTaken = itemView.findViewById(R.id.btnMarkTaken);
             btnMarkMissed = itemView.findViewById(R.id.btnMarkMissed);
             btnSnooze = itemView.findViewById(R.id.btnSnooze);
+            btnMarkTakenLate = itemView.findViewById(R.id.btnMarkTakenLate);
         }
     }
 

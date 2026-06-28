@@ -156,6 +156,11 @@ public class MedicationListActivity extends BaseActivity {
             public void onSnooze(Medication medication, String scheduledDatetime, int scheduleId) {
                 snoozeFromCard(medication, scheduledDatetime, scheduleId);
             }
+
+            @Override
+            public void onMarkTakenLate(Medication medication, String scheduledDatetime) {
+                markMedicationTakenFromCard(medication, scheduledDatetime);
+            }
         });
         recyclerView.setAdapter(adapter);
         attachSwipeToDelete();
