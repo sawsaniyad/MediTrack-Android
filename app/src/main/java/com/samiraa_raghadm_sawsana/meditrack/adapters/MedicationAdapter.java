@@ -451,12 +451,27 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                 }
             }
             if (nextTime != null) {
-                return itemView.getContext().getString(R.string.next_time_upcoming, nextTime);
+                return itemView.getContext().getString(
+                        R.string.next_time_upcoming, formatTimeForDisplay(itemView, nextTime));
             }
         }
 
         nextTime = schedules.get(0).getIntakeTime();
-        return itemView.getContext().getString(R.string.next_time_today, nextTime);
+        return itemView.getContext().getString(
+                R.string.next_time_today, formatTimeForDisplay(itemView, nextTime));
+    }
+
+    private String formatTimeForDisplay(View itemView, String time24) {
+        try {
+            LocalTime lt = LocalTime.parse(time24, TIME_FORMATTER);
+            if (android.text.format.DateFormat.is24HourFormat(itemView.getContext())) {
+                return time24;
+            }
+            DateTimeFormatter fmt12 = DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.getDefault());
+            return lt.format(fmt12);
+        } catch (Exception ignored) {
+            return time24;
+        }
     }
 
     private boolean isDayIncluded(String daysOfWeek, int dayValue) {

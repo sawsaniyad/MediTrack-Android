@@ -398,7 +398,7 @@ public class AddEditMedicationActivity extends BaseActivity {
     private void addTimeRow(String time) {
         View row = LayoutInflater.from(this).inflate(R.layout.layout_time_row, llTimesContainer, false);
         TimePicker timePicker = row.findViewById(R.id.timePicker);
-        timePicker.setIs24HourView(true);
+        timePicker.setIs24HourView(android.text.format.DateFormat.is24HourFormat(this));
         String[] parts = time.split(":");
         if (parts.length == 2) {
             try {
