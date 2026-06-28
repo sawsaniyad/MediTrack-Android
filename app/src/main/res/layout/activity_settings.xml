@@ -105,6 +105,57 @@
                     android:layout_marginBottom="14dp"
                     android:background="#E0E0E0" />
 
+                <!-- Snooze duration row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginEnd="10dp"
+                        android:src="@android:drawable/ic_menu_recent_history"
+                        app:tint="#1976D2" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/label_snooze_minutes"
+                        android:textColor="#212121"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvSnoozeMinutesValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_snooze_minutes_default"
+                        android:textColor="#1976D2"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <SeekBar
+                    android:id="@+id/seekBarSnoozeMinutes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="14dp"
+                    android:max="60"
+                    android:min="1"
+                    android:progress="10"
+                    android:progressTint="#1976D2"
+                    android:thumbTint="#1976D2" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginBottom="14dp"
+                    android:background="#E0E0E0" />
+
                 <!-- Vibrate row -->
                 <LinearLayout
                     android:layout_width="match_parent"

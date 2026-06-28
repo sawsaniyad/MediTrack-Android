@@ -49,7 +49,7 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
             }
         });
 
-        int snoozeMinutes = PrefsManager.getReminderMinutes(context);
+        int snoozeMinutes = PrefsManager.getSnoozeDurationMinutes(context);
         long triggerAt = System.currentTimeMillis() + snoozeMinutes * 60 * 1000L;
 
         Intent snoozeFireIntent = new Intent(context, AlarmReceiver.class);

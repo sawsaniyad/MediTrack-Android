@@ -7,11 +7,13 @@ public final class PrefsManager {
 
     public static final String PREFS_NAME = "MediTrackPrefs";
     public static final String KEY_REMIND_MIN = "remind_minutes";
+    public static final String KEY_SNOOZE_MIN = "snooze_minutes";
     public static final String KEY_VIBRATE = "vibrate_enabled";
     public static final String KEY_SOUND = "sound_enabled";
     private static final String KEY_ACTION_WINDOW_PREFIX = "action_window_";
 
     private static final int DEFAULT_REMIND_MIN = 15;
+    private static final int DEFAULT_SNOOZE_MIN = 10;
 
     private PrefsManager() {
     }
@@ -23,6 +25,14 @@ public final class PrefsManager {
 
     public static int getReminderMinutes(Context ctx) {
         return prefs(ctx).getInt(KEY_REMIND_MIN, DEFAULT_REMIND_MIN);
+    }
+
+    public static int getSnoozeDurationMinutes(Context ctx) {
+        return Math.max(1, prefs(ctx).getInt(KEY_SNOOZE_MIN, DEFAULT_SNOOZE_MIN));
+    }
+
+    public static void setSnoozeDurationMinutes(Context ctx, int minutes) {
+        prefs(ctx).edit().putInt(KEY_SNOOZE_MIN, Math.max(1, minutes)).apply();
     }
 
     /** How long the user has to confirm a dose before it is marked missed.

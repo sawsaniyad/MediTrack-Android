@@ -24,6 +24,8 @@ public class SettingsActivity extends BaseActivity {
 
     private SeekBar seekBarReminderMinutes;
     private TextView tvReminderMinutesValue;
+    private SeekBar seekBarSnoozeMinutes;
+    private TextView tvSnoozeMinutesValue;
     private SwitchMaterial switchVibrate;
     private SwitchMaterial switchSound;
     private SharedPreferences preferences;
@@ -44,6 +46,8 @@ public class SettingsActivity extends BaseActivity {
 
         seekBarReminderMinutes = findViewById(R.id.seekBarReminderMinutes);
         tvReminderMinutesValue = findViewById(R.id.tvReminderMinutesValue);
+        seekBarSnoozeMinutes = findViewById(R.id.seekBarSnoozeMinutes);
+        tvSnoozeMinutesValue = findViewById(R.id.tvSnoozeMinutesValue);
         switchVibrate = findViewById(R.id.switchVibrate);
         switchSound = findViewById(R.id.switchSound);
 
@@ -55,6 +59,11 @@ public class SettingsActivity extends BaseActivity {
         int minutes = PrefsManager.getReminderMinutes(this);
         seekBarReminderMinutes.setProgress(minutes);
         updateMinutesLabel(minutes);
+
+        int snoozeMinutes = PrefsManager.getSnoozeDurationMinutes(this);
+        seekBarSnoozeMinutes.setProgress(snoozeMinutes);
+        updateSnoozeLabel(snoozeMinutes);
+
         switchVibrate.setChecked(PrefsManager.isVibrateEnabled(this));
         switchSound.setChecked(PrefsManager.isSoundEnabled(this));
 
@@ -76,6 +85,22 @@ public class SettingsActivity extends BaseActivity {
             }
         });
 
+        seekBarSnoozeMinutes.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int value = Math.max(1, progress);
+                updateSnoozeLabel(value);
+            }
+
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int value = Math.max(1, seekBar.getProgress());
+                PrefsManager.setSnoozeDurationMinutes(SettingsActivity.this, value);
+            }
+        });
+
         switchVibrate.setOnCheckedChangeListener((buttonView, isChecked) -> {
             PrefsManager.setVibrateEnabled(SettingsActivity.this, isChecked);
             preferences.edit().putBoolean(PrefsManager.KEY_VIBRATE, isChecked).apply();
@@ -94,6 +119,10 @@ public class SettingsActivity extends BaseActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void updateSnoozeLabel(int minutes) {
+        tvSnoozeMinutesValue.setText(getString(R.string.settings_minutes_format, minutes));
     }
 
     private void updateMinutesLabel(int minutes) {
