@@ -107,7 +107,7 @@ public final class NotificationHelper {
                 .setContentText(reminderText)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(reminderText))
                 .setPriority(NotificationCompat.PRIORITY_MAX)
-                .setCategory(NotificationCompat.CATEGORY_REMINDER)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setContentIntent(mainPI)
                 .setAutoCancel(false)

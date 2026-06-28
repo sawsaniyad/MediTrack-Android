@@ -18,7 +18,9 @@ public class BootReceiver extends BroadcastReceiver {
         }
         String action = intent.getAction();
         if (Intent.ACTION_BOOT_COMPLETED.equals(action)
-                || "android.intent.action.QUICKBOOT_POWERON".equals(action)) {
+                || "android.intent.action.QUICKBOOT_POWERON".equals(action)
+                || Intent.ACTION_TIME_SET.equals(action)
+                || Intent.ACTION_TIMEZONE_CHANGED.equals(action)) {
             // FIXED: moved to diskIO — AlarmScheduler.scheduleAllAlarms uses diskIO
             // internally
             AppExecutors.getInstance().diskIO(() -> {
