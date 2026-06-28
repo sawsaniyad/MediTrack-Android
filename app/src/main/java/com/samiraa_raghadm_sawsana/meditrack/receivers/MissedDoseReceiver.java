@@ -25,9 +25,14 @@ public class MissedDoseReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         int medicationId = intent.getIntExtra("MEDICATION_ID", -1);
+        int scheduleId = intent.getIntExtra("SCHEDULE_ID", -1);
         String scheduledDatetime = intent.getStringExtra(AlarmReceiver.EXTRA_SCHEDULED_DATETIME);
         if (medicationId == -1) {
             return;
+        }
+
+        if (scheduleId != -1) {
+            NotificationHelper.cancelReminderNotification(context, scheduleId);
         }
 
         AppExecutors.getInstance().diskIO(() -> {
