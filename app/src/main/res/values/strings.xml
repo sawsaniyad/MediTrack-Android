@@ -35,6 +35,10 @@
     <string name="msg_empty_medications">אין תרופות. לחץ + להוספה.</string>
     <string name="msg_empty_history">אין רשומות</string>
     <string name="msg_saved_success">תרופה נשמרה בהצלחה</string>
+    <string name="msg_saved_with_reminder">תרופה נשמרה! ⏰ תזכורת בעוד %s</string>
+    <string name="msg_reminder_minutes">%d דקות</string>
+    <string name="msg_reminder_hours">%d שעות</string>
+    <string name="msg_reminder_hours_minutes">%d שע\' %d דק\'</string>
     <string name="msg_deleted_success">תרופה נמחקה</string>
     <string name="msg_validation_name">נא להזין שם תרופה</string>
     <string name="msg_validation_time">נא להוסיף לפחות שעת נטילה</string>

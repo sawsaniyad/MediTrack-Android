@@ -37,6 +37,11 @@ import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 
 import java.io.File;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -502,12 +507,63 @@ public class AddEditMedicationActivity extends BaseActivity {
                 AlarmScheduler.scheduleExpiryAlarm(appContext, savedMedication);
             }
 
+            final String reminderMsg = buildNextReminderMessage(times, daysOfWeek);
             AppExecutors.getInstance().mainThread(() -> {
                 hideLoading();
-                showToast(getString(R.string.msg_saved_success));
+                showToast(reminderMsg);
                 finish();
             });
         });
+    }
+
+    private String buildNextReminderMessage(List<String> times, String daysOfWeek) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm");
+        LocalDateTime now = LocalDateTime.now();
+        long minMinutes = Long.MAX_VALUE;
+
+        for (String timeStr : times) {
+            try {
+                LocalTime lt = LocalTime.parse(timeStr, fmt);
+                for (int ahead = 0; ahead <= 7; ahead++) {
+                    LocalDate date = now.toLocalDate().plusDays(ahead);
+                    if (!reminderDayIncluded(daysOfWeek, date.getDayOfWeek().getValue())) continue;
+                    LocalDateTime candidate = date.atTime(lt);
+                    if (candidate.isAfter(now)) {
+                        long mins = Duration.between(now, candidate).toMinutes();
+                        if (mins < minMinutes) minMinutes = mins;
+                        break;
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (minMinutes == Long.MAX_VALUE) {
+            return getString(R.string.msg_saved_success);
+        }
+
+        String remaining;
+        long hours = minMinutes / 60;
+        long mins = minMinutes % 60;
+        if (minMinutes < 60) {
+            remaining = getString(R.string.msg_reminder_minutes, minMinutes);
+        } else if (mins == 0) {
+            remaining = getString(R.string.msg_reminder_hours, hours);
+        } else {
+            remaining = getString(R.string.msg_reminder_hours_minutes, hours, mins);
+        }
+        return getString(R.string.msg_saved_with_reminder, remaining);
+    }
+
+    private boolean reminderDayIncluded(String daysOfWeek, int value) {
+        if (TextUtils.isEmpty(daysOfWeek)) return true;
+        for (String part : daysOfWeek.split(",")) {
+            try {
+                if (Integer.parseInt(part.trim()) == value) return true;
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return false;
     }
 
     private void confirmDelete() {
