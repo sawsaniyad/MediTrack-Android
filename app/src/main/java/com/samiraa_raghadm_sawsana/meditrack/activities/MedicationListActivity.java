@@ -40,6 +40,7 @@ import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.PermissionManager;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
@@ -89,6 +90,7 @@ public class MedicationListActivity extends BaseActivity {
             if (medName == null) {
                 medName = getString(R.string.default_medication_name);
             }
+            loadMedications();
             showMedicationDueSnackbar(medName, medicationId);
         }
     };
@@ -250,22 +252,30 @@ public class MedicationListActivity extends BaseActivity {
         DashboardStats stats = new DashboardStats();
         for (Medication medication : medications) {
             List<Schedule> schedules = schedulesMap.get(medication.getId());
-            if (schedules == null) {
-                continue;
-            }
-            for (Schedule schedule : schedules) {
-                if (!schedule.isEnabled() || !isScheduledForDate(schedule, selectedDate)) {
-                    continue;
-                }
-                stats.total++;
+            int relevantSlots = 0;
+            if (schedules != null) {
+                for (Schedule schedule : schedules) {
+                    if (!schedule.isEnabled() || !isScheduledForDate(schedule, selectedDate)) {
+                        continue;
+                    }
+                    relevantSlots++;
+                    stats.total++;
                 IntakeLog matchingLog = findMatchingLog(dayLogs, medication.getId(), schedule.getIntakeTime());
                 if (matchingLog != null && matchingLog.isTaken()) {
                     stats.taken++;
-                } else if (isMissedSlot(selectedDate, schedule, matchingLog)) {
+                } else if (isMissedSlot(selectedDate, medication.getId(), schedule, matchingLog)) {
                     stats.missed++;
                 } else {
                     stats.pending++;
                 }
+            }
+            }
+            // A medication with no scheduled slot for today still appears on the
+            // home list as a pending card, so count it once here to keep the
+            // dashboard totals consistent with what the user sees.
+            if (relevantSlots == 0) {
+                stats.total++;
+                stats.pending++;
             }
         }
         return stats;
@@ -287,22 +297,62 @@ public class MedicationListActivity extends BaseActivity {
     }
 
     private IntakeLog findLogByScheduledDatetime(List<IntakeLog> logs, String scheduledDatetime) {
+        // 1) Exact match on the full "yyyy-MM-dd HH:mm:ss" string.
         for (int i = logs.size() - 1; i >= 0; i--) {
             IntakeLog log = logs.get(i);
             if (scheduledDatetime.equals(log.getScheduledDatetime())) {
                 return log;
             }
         }
-        return null;
+        // 2) Fallback: same dose slot (same date + HH:mm), preferring an
+        // unresolved (still-pending) log. The alarm-inserted pending log and the
+        // card both target the same slot, but their second-precision strings can
+        // differ; without this fallback we would insert a SECOND log and leave the
+        // original "waiting" — showing both "missed" and "waiting" for one dose.
+        String slotKey = slotKey(scheduledDatetime);
+        if (slotKey == null) {
+            return null;
+        }
+        IntakeLog resolvedMatch = null;
+        for (int i = logs.size() - 1; i >= 0; i--) {
+            IntakeLog log = logs.get(i);
+            if (!slotKey.equals(slotKey(log.getScheduledDatetime()))) {
+                continue;
+            }
+            if (!log.isTaken() && !IntakeLog.STATUS_MISSED.equals(log.getStatus())) {
+                return log; // reuse the pending log for this slot
+            }
+            if (resolvedMatch == null) {
+                resolvedMatch = log;
+            }
+        }
+        return resolvedMatch;
     }
 
-    private boolean isMissedSlot(LocalDate selectedDate, Schedule schedule, IntakeLog matchingLog) {
+    /** Slot identity = date + HH:mm (ignores seconds), or null if unparseable. */
+    private String slotKey(String scheduledDatetime) {
+        if (scheduledDatetime == null || scheduledDatetime.length() < 16) {
+            return null;
+        }
+        return scheduledDatetime.substring(0, 16);
+    }
+
+    private boolean isMissedSlot(LocalDate selectedDate,
+                                 int medicationId,
+                                 Schedule schedule,
+                                 IntakeLog matchingLog) {
         if (matchingLog != null) {
             if (matchingLog.isTaken()) {
                 return false;
             }
             String status = matchingLog.getStatus();
             if (IntakeLog.STATUS_MISSED.equals(status)) {
+                return true;
+            }
+            String scheduledDatetime = matchingLog.getScheduledDatetime();
+            long expiresAt = PrefsManager.getDoseActionWindowExpiry(
+                    this, medicationId, scheduledDatetime);
+            if (expiresAt >= 0L && expiresAt <= System.currentTimeMillis()) {
                 return true;
             }
             if (selectedDate.isBefore(LocalDate.now())) {
@@ -323,7 +373,9 @@ public class MedicationListActivity extends BaseActivity {
         try {
             LocalTime intakeTime = LocalTime.parse(schedule.getIntakeTime(), TIME_FORMATTER);
             LocalDateTime scheduledStart = selectedDate.atTime(intakeTime);
-            LocalDateTime actionWindowEnd = scheduledStart.plusMinutes(10);
+            int remindMinutes = PrefsManager.getReminderMinutes(this);
+            LocalDateTime actionWindowEnd = scheduledStart.minusMinutes(remindMinutes)
+                    .plusMinutes(10);
             return !actionWindowEnd.isAfter(LocalDateTime.now());
         } catch (Exception ignored) {
             return false;
@@ -484,6 +536,10 @@ public class MedicationListActivity extends BaseActivity {
             IntakeLog targetLog = findLatestOpenLog(logs);
             if (targetLog != null) {
                 dao.markAsTaken(targetLog.getId(), actualTime);
+                PrefsManager.clearDoseActionWindow(
+                        this, medicationId, targetLog.getScheduledDatetime());
+            } else {
+                PrefsManager.clearDoseActionWindowsForMedication(this, medicationId);
             }
             AppExecutors.getInstance().mainThread(this::loadMedications);
         });
@@ -507,6 +563,7 @@ public class MedicationListActivity extends BaseActivity {
                 log.setStatus(IntakeLog.STATUS_TAKEN);
                 dao.insertIntakeLog(log);
             }
+            PrefsManager.clearDoseActionWindow(this, medication.getId(), scheduledDatetime);
             AppExecutors.getInstance().mainThread(this::loadMedications);
         });
     }
@@ -526,6 +583,7 @@ public class MedicationListActivity extends BaseActivity {
                 log.setStatus(IntakeLog.STATUS_MISSED);
                 dao.insertIntakeLog(log);
             }
+            PrefsManager.clearDoseActionWindow(this, medication.getId(), scheduledDatetime);
             AppExecutors.getInstance().mainThread(this::loadMedications);
         });
     }

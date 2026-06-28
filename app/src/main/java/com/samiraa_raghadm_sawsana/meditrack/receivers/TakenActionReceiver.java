@@ -9,6 +9,7 @@ import android.content.Intent;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AppExecutors;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
@@ -57,6 +58,7 @@ public class TakenActionReceiver extends BroadcastReceiver {
 
             cancelMissedDoseCheck(context, medicationId, scheduleId);
             cancelSnoozedReminder(context, medicationId, scheduleId);
+            PrefsManager.clearDoseActionWindow(context, medicationId, scheduledDatetime);
         });
 
         if (notificationId != -1) {
@@ -121,7 +123,10 @@ public class TakenActionReceiver extends BroadcastReceiver {
 
     private IntakeLog findPendingLog(List<IntakeLog> logs, String scheduledDatetime) {
         IntakeLog newestPendingLog = null;
-        for (IntakeLog log : logs) {
+        // MedicationDAO returns logs ordered by scheduled_datetime ASC, so iterate
+        // from the end to make the fallback the NEWEST pending dose, not the oldest.
+        for (int i = logs.size() - 1; i >= 0; i--) {
+            IntakeLog log = logs.get(i);
             if (log.isTaken()) {
                 continue;
             }
@@ -129,7 +134,6 @@ public class TakenActionReceiver extends BroadcastReceiver {
                 return log;
             }
             if (newestPendingLog == null) {
-                // MedicationDAO returns logs ordered by scheduled_datetime DESC.
                 newestPendingLog = log;
             }
         }

@@ -16,6 +16,7 @@ import com.samiraa_raghadm_sawsana.meditrack.database.DatabaseHelper;
 import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.NotificationHelper;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.PermissionManager;
+import com.samiraa_raghadm_sawsana.meditrack.helpers.PrefsManager;
 
 import java.util.List;
 
@@ -37,6 +38,8 @@ public class MissedDoseReceiver extends BroadcastReceiver {
             if (pendingLog == null) {
                 return;
             }
+
+            PrefsManager.clearDoseActionWindow(context, medicationId, scheduledDatetime);
 
             Medication med = dao.getMedicationById(medicationId);
             if (med == null) {
@@ -76,7 +79,10 @@ public class MissedDoseReceiver extends BroadcastReceiver {
 
     private IntakeLog findPendingLog(List<IntakeLog> logs, String scheduledDatetime) {
         IntakeLog newestPendingLog = null;
-        for (IntakeLog log : logs) {
+        // MedicationDAO returns logs ordered by scheduled_datetime ASC, so iterate
+        // from the end to make the fallback the NEWEST pending dose, not the oldest.
+        for (int i = logs.size() - 1; i >= 0; i--) {
+            IntakeLog log = logs.get(i);
             if (log.isTaken()) {
                 continue;
             }
