@@ -25,6 +25,12 @@ public final class PrefsManager {
         return prefs(ctx).getInt(KEY_REMIND_MIN, DEFAULT_REMIND_MIN);
     }
 
+    /** How long the user has to confirm a dose before it is marked missed.
+     *  Matches the reminder-advance setting, with a 10-minute floor. */
+    public static int getActionWindowMinutes(Context ctx) {
+        return Math.max(10, getReminderMinutes(ctx));
+    }
+
     public static boolean isVibrateEnabled(Context ctx) {
         return prefs(ctx).getBoolean(KEY_VIBRATE, true);
     }

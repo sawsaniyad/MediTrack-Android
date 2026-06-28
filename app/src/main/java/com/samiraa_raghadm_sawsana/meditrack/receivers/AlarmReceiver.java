@@ -26,7 +26,6 @@ import java.util.Locale;
 public class AlarmReceiver extends BroadcastReceiver {
 
     public static final String EXTRA_SCHEDULED_DATETIME = "SCHEDULED_DATETIME";
-    private static final int MISSED_DOSE_DELAY_MINUTES = 10;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -48,6 +47,7 @@ public class AlarmReceiver extends BroadcastReceiver {
             return;
         }
 
+        final int windowMinutes = PrefsManager.getActionWindowMinutes(context);
         final String finalMedicationName = medicationName;
         final String finalDosage = dosage;
         final String finalScheduledDatetime = scheduledDatetime != null
@@ -64,11 +64,11 @@ public class AlarmReceiver extends BroadcastReceiver {
                 context,
                 medicationId,
                 finalScheduledDatetime,
-                MISSED_DOSE_DELAY_MINUTES * 60 * 1000L);
+                windowMinutes * 60 * 1000L);
 
         NotificationHelper.showMedicationReminder(
                 context, medicationId, finalMedicationName, finalDosage, scheduleId,
-                finalScheduledDatetime, MISSED_DOSE_DELAY_MINUTES);
+                finalScheduledDatetime, windowMinutes);
 
         Intent localIntent = new Intent(context.getString(R.string.broadcast_medication_due));
         localIntent.putExtra(context.getString(R.string.extra_medication_id), medicationId);
@@ -76,7 +76,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         LocalBroadcastManager.getInstance(context).sendBroadcast(localIntent);
 
         scheduleMissedDoseCheck(context, medicationId, scheduleId, finalScheduledDatetime,
-                fromSnooze);
+                fromSnooze, windowMinutes);
 
         if (!fromSnooze) {
             AppExecutors.getInstance().diskIO(() -> scheduleNextDailyReminder(
@@ -122,8 +122,9 @@ public class AlarmReceiver extends BroadcastReceiver {
                                          int medicationId,
                                          int scheduleId,
                                          String scheduledDatetime,
-                                         boolean fromSnooze) {
-        long checkAt = System.currentTimeMillis() + MISSED_DOSE_DELAY_MINUTES * 60 * 1000L;
+                                         boolean fromSnooze,
+                                         int windowMinutes) {
+        long checkAt = System.currentTimeMillis() + windowMinutes * 60 * 1000L;
 
         Intent checkIntent = new Intent(context, MissedDoseReceiver.class);
         checkIntent.putExtra("MEDICATION_ID", medicationId);

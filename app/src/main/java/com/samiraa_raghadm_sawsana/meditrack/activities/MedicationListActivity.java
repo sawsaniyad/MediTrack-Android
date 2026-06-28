@@ -373,9 +373,8 @@ public class MedicationListActivity extends BaseActivity {
         try {
             LocalTime intakeTime = LocalTime.parse(schedule.getIntakeTime(), TIME_FORMATTER);
             LocalDateTime scheduledStart = selectedDate.atTime(intakeTime);
-            int remindMinutes = PrefsManager.getReminderMinutes(this);
-            LocalDateTime actionWindowEnd = scheduledStart.minusMinutes(remindMinutes)
-                    .plusMinutes(10);
+            int windowMinutes = PrefsManager.getActionWindowMinutes(this);
+            LocalDateTime actionWindowEnd = scheduledStart.plusMinutes(windowMinutes);
             return !actionWindowEnd.isAfter(LocalDateTime.now());
         } catch (Exception ignored) {
             return false;

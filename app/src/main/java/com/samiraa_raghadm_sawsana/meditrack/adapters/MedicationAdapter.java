@@ -361,7 +361,9 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             }
         }
 
-        if (activeOrLatestPastSlot != null && activeOrLatestPastSlot.isWithinActionWindow(now)
+        int windowMinutes = PrefsManager.getActionWindowMinutes(itemView.getContext());
+
+        if (activeOrLatestPastSlot != null && activeOrLatestPastSlot.isWithinActionWindow(now, windowMinutes)
                 && !activeOrLatestPastSlot.isResolved()) {
             return new StatusInfo(itemView.getContext().getString(R.string.status_pending),
                     colorFromRes(itemView, R.color.status_pending));
@@ -377,7 +379,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                 return new StatusInfo(itemView.getContext().getString(R.string.status_taken),
                         colorFromRes(itemView, R.color.status_taken));
             }
-            if (activeOrLatestPastSlot.isMissed() || activeOrLatestPastSlot.isWindowExpired(now)) {
+            if (activeOrLatestPastSlot.isMissed() || activeOrLatestPastSlot.isWindowExpired(now, windowMinutes)) {
                 return new StatusInfo(itemView.getContext().getString(R.string.status_missed),
                         colorFromRes(itemView, R.color.status_missed));
             }
@@ -534,12 +536,12 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             this.log = log;
         }
 
-        boolean isWithinActionWindow(LocalDateTime now) {
-            return !now.isBefore(start) && now.isBefore(start.plusMinutes(10));
+        boolean isWithinActionWindow(LocalDateTime now, int windowMinutes) {
+            return !now.isBefore(start) && now.isBefore(start.plusMinutes(windowMinutes));
         }
 
-        boolean isWindowExpired(LocalDateTime now) {
-            return !start.plusMinutes(10).isAfter(now);
+        boolean isWindowExpired(LocalDateTime now, int windowMinutes) {
+            return !start.plusMinutes(windowMinutes).isAfter(now);
         }
 
         boolean isResolved() {
