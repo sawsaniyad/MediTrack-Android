@@ -40,7 +40,6 @@ import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 
 import java.io.File;
-import java.time.LocalDate;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
