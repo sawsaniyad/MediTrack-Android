@@ -24,7 +24,7 @@
     <string name="label_emergency_contact">איש קשר לחירום</string>
 
     <string name="hint_medication_name">שם תרופה *</string>
-    <string name="hint_dosage">מינון (לדוג׳ 500מ״ג)</string>
+    <string name="hint_dosage">מינון במ"ג (למשל: 500)</string>
     <string name="hint_instructions">הוראות / הערות</string>
     <string name="hint_expiry_date">DD/MM/YYYY</string>
 
@@ -62,7 +62,7 @@
     <string name="notif_taken_action">✓ נלקח</string>
     <string name="notif_snooze_action">⏰ דחה</string>
     <string name="notif_reminder_title">💊 %1$s</string>
-    <string name="notif_reminder_text">הגיע הזמן לקחת %1$s %2$s</string>
+    <string name="notif_reminder_text">הגיע הזמן לקחת %1$s %2$s מ"ג</string>
     <string name="notif_advance_text">נותר %2$d דקות לקחת %1$s</string>
 
     <string name="error_camera">שגיאה בצילום: %1$s</string>
@@ -195,4 +195,10 @@
 
     <!-- About dialog -->
     <string name="about_dialog_title">אודות האפליקציה</string>
+
+    <!-- Exit confirmation dialog -->
+    <string name="exit_confirm_title">יציאה מהתוכנית</string>
+    <string name="exit_confirm_message">האם אתה בטוח שברצונך לצאת?</string>
+    <string name="exit_confirm_yes">כן</string>
+    <string name="exit_confirm_no">לא</string>
 </resources>

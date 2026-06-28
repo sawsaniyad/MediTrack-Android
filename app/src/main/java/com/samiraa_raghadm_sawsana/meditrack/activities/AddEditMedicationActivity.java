@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -39,7 +40,6 @@ import com.samiraa_raghadm_sawsana.meditrack.database.MedicationDAO;
 import com.samiraa_raghadm_sawsana.meditrack.helpers.AlarmScheduler;
 
 import java.io.File;
-import java.time.LocalDate;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -125,18 +125,23 @@ public class AddEditMedicationActivity extends BaseActivity {
                 if (formatting) return;
                 formatting = true;
 
-                // Strip all non-digit characters, keep only raw digits.
                 String digits = s.toString().replaceAll("[^0-9]", "");
                 if (digits.length() > 8) digits = digits.substring(0, 8);
 
-                // Rebuild as DD/MM/YYYY, inserting slashes at positions 2 and 4.
                 StringBuilder formatted = new StringBuilder();
                 for (int i = 0; i < digits.length(); i++) {
                     if (i == 2 || i == 4) formatted.append('/');
                     formatted.append(digits.charAt(i));
                 }
 
+                // DigitsKeyListener (from inputType="number") is registered as an
+                // InputFilter on the Editable and strips '/' from any replace() call.
+                // Temporarily removing all filters lets '/' through, then we restore them.
+                InputFilter[] saved = s.getFilters();
+                s.setFilters(new InputFilter[0]);
                 s.replace(0, s.length(), formatted);
+                s.setFilters(saved);
+
                 formatting = false;
             }
         });

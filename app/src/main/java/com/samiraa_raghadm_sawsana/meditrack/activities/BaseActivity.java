@@ -83,7 +83,12 @@ public abstract class BaseActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.action_exit) {
-            finishAffinity();
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.exit_confirm_title)
+                    .setMessage(R.string.exit_confirm_message)
+                    .setPositiveButton(R.string.exit_confirm_yes, (d, w) -> finishAffinity())
+                    .setNegativeButton(R.string.exit_confirm_no, null)
+                    .show();
             return true;
         }
         return false;

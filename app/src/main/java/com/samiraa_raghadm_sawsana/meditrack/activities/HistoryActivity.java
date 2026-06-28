@@ -179,11 +179,7 @@ public class HistoryActivity extends BaseActivity {
     }
 
     private List<IntakeLog> getAllHistoryLogs() {
-        List<IntakeLog> allLogs = new ArrayList<>();
-        for (Medication medication : dao.getAllMedications()) {
-            allLogs.addAll(dao.getLogsByMedication(medication.getId()));
-        }
-        return allLogs;
+        return dao.getAllLogs();
     }
 
     private List<IntakeLog> filterByDate(List<IntakeLog> logs, String dateFilter) {

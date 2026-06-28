@@ -201,6 +201,20 @@ public class MedicationDAO {
         }
     }
 
+    public List<IntakeLog> getAllLogs() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(DatabaseHelper.TABLE_INTAKE_LOG, null,
+                    null, null, null, null,
+                    DatabaseHelper.COL_LOG_SCHEDULED_DATETIME + " ASC");
+            return cursorToIntakeLogList(cursor);
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+    }
+
     public void insertIntakeLog(IntakeLog log) {
         dbHelper.getWritableDatabase().insert(
                 DatabaseHelper.TABLE_INTAKE_LOG, null, intakeLogToContentValues(log));
