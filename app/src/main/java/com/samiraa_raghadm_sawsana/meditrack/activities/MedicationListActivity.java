@@ -576,6 +576,7 @@ public class MedicationListActivity extends BaseActivity {
                 dao.insertIntakeLog(log);
             }
             PrefsManager.clearDoseActionWindow(this, medication.getId(), scheduledDatetime);
+            NotificationHelper.cancelMissedDoseNotification(this, medication.getName());
             AppExecutors.getInstance().mainThread(this::loadMedications);
         });
     }

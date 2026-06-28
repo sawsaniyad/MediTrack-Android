@@ -178,6 +178,12 @@ public final class NotificationHelper {
         NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_BASE + scheduleId);
     }
 
+    public static void cancelMissedDoseNotification(Context context, String medicationName) {
+        if (medicationName == null) return;
+        NotificationManagerCompat.from(context)
+                .cancel(MISSED_DOSE_NOTIFICATION_ID + medicationName.hashCode());
+    }
+
     public static void showMissedDoseAlert(Context context, String medicationName) {
         createNotificationChannel(context);
 

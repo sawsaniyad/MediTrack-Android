@@ -59,6 +59,14 @@ public class TakenActionReceiver extends BroadcastReceiver {
             cancelMissedDoseCheck(context, medicationId, scheduleId);
             cancelSnoozedReminder(context, medicationId, scheduleId);
             PrefsManager.clearDoseActionWindow(context, medicationId, scheduledDatetime);
+
+            // Cancel any missed-dose notification that may have been posted before the user acted.
+            String resolvedName = medicationName;
+            if (resolvedName == null) {
+                Medication med = dao.getMedicationById(medicationId);
+                if (med != null) resolvedName = med.getName();
+            }
+            NotificationHelper.cancelMissedDoseNotification(context, resolvedName);
         });
 
         if (notificationId != -1) {
