@@ -41,6 +41,8 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         void onMarkTaken(Medication medication, String scheduledDatetime);
 
         void onMarkMissed(Medication medication, String scheduledDatetime);
+
+        void onSnooze(Medication medication, String scheduledDatetime, int scheduleId);
     }
 
     private final List<Medication> medications = new ArrayList<>();
@@ -191,6 +193,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
 
         holder.btnMarkTaken.setOnClickListener(null);
         holder.btnMarkMissed.setOnClickListener(null);
+        holder.btnSnooze.setOnClickListener(null);
 
         if (!showActions) {
             return;
@@ -200,6 +203,8 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                 listener.onMarkTaken(medication, actionWindow.scheduledDatetime));
         holder.btnMarkMissed.setOnClickListener(v ->
                 listener.onMarkMissed(medication, actionWindow.scheduledDatetime));
+        holder.btnSnooze.setOnClickListener(v ->
+                listener.onSnooze(medication, actionWindow.scheduledDatetime, actionWindow.scheduleId));
     }
 
     private ActionWindow findActionWindow(View itemView,
@@ -211,7 +216,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         }
 
         ActionWindow logDrivenWindow = findActionWindowFromLogs(
-                itemView, medicationId, medicationLogs);
+                itemView, medicationId, schedules, medicationLogs);
         if (logDrivenWindow != null) {
             return logDrivenWindow;
         }
@@ -234,7 +239,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                     continue;
                 }
                 if (bestWindow == null || start.isAfter(bestWindow.start)) {
-                    bestWindow = new ActionWindow(start, scheduledDatetime);
+                    bestWindow = new ActionWindow(start, scheduledDatetime, schedule.getId());
                 }
             } catch (Exception ignored) {
             }
@@ -244,6 +249,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
 
     private ActionWindow findActionWindowFromLogs(View itemView,
                                                   int medicationId,
+                                                  List<Schedule> schedules,
                                                   List<IntakeLog> medicationLogs) {
         ActionWindow bestWindow = null;
         for (IntakeLog log : medicationLogs) {
@@ -259,15 +265,24 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                 continue;
             }
             try {
-                LocalDateTime start = LocalDateTime.parse(
-                        scheduledDatetime, DATE_TIME_FORMATTER);
+                LocalDateTime start = LocalDateTime.parse(scheduledDatetime, DATE_TIME_FORMATTER);
                 if (bestWindow == null || start.isAfter(bestWindow.start)) {
-                    bestWindow = new ActionWindow(start, scheduledDatetime);
+                    int scheduleId = resolveScheduleId(schedules, scheduledDatetime);
+                    bestWindow = new ActionWindow(start, scheduledDatetime, scheduleId);
                 }
             } catch (Exception ignored) {
             }
         }
         return bestWindow;
+    }
+
+    private int resolveScheduleId(List<Schedule> schedules, String scheduledDatetime) {
+        if (scheduledDatetime == null || scheduledDatetime.length() < 16) return -1;
+        String hhmm = scheduledDatetime.substring(11, 16);
+        for (Schedule s : schedules) {
+            if (hhmm.equals(s.getIntakeTime())) return s.getId();
+        }
+        return -1;
     }
 
     private boolean hasResolvedLog(List<IntakeLog> medicationLogs, String scheduledDatetime) {
@@ -522,6 +537,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         final LinearLayout llQuickActions;
         final TextView btnMarkTaken;
         final TextView btnMarkMissed;
+        final TextView btnSnooze;
         String boundImagePath;
 
         MedicationViewHolder(@NonNull View itemView) {
@@ -536,6 +552,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             llQuickActions = itemView.findViewById(R.id.llQuickActions);
             btnMarkTaken = itemView.findViewById(R.id.btnMarkTaken);
             btnMarkMissed = itemView.findViewById(R.id.btnMarkMissed);
+            btnSnooze = itemView.findViewById(R.id.btnSnooze);
         }
     }
 
@@ -552,10 +569,12 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
     private static class ActionWindow {
         final LocalDateTime start;
         final String scheduledDatetime;
+        final int scheduleId;
 
-        ActionWindow(LocalDateTime start, String scheduledDatetime) {
+        ActionWindow(LocalDateTime start, String scheduledDatetime, int scheduleId) {
             this.start = start;
             this.scheduledDatetime = scheduledDatetime;
+            this.scheduleId = scheduleId;
         }
     }
 

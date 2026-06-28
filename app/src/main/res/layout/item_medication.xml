@@ -154,6 +154,18 @@
                 android:textColor="#C62828"
                 android:textStyle="bold" />
 
+            <TextView
+                android:id="@+id/btnSnooze"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_marginStart="8dp"
+                android:background="#FFF8E1"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="⏰"
+                android:textSize="13sp" />
+
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
