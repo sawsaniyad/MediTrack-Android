@@ -23,6 +23,7 @@ public final class NotificationHelper {
 
     public static final String CHANNEL_ID = "medication_reminders";
     public static final int NOTIFICATION_ID_BASE = 1000;
+    public static final int ADVANCE_NOTIFICATION_ID_BASE = 2000;
     public static final int MISSED_DOSE_NOTIFICATION_ID = 9000;
 
     private NotificationHelper() {
@@ -51,13 +52,46 @@ public final class NotificationHelper {
         }
     }
 
+    public static void showAdvanceReminder(Context context,
+                                           String medicationName,
+                                           int scheduleId,
+                                           int minutesLeft) {
+        createNotificationChannel(context);
+        if (medicationName == null) {
+            medicationName = context.getString(R.string.default_medication_name);
+        }
+        String text = context.getString(R.string.notif_advance_text, medicationName, minutesLeft);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle(context.getString(R.string.notif_reminder_title, medicationName))
+                .setContentText(text)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true);
+
+        NotificationManagerCompat nm = NotificationManagerCompat.from(context);
+        boolean canNotify;
+        if (Build.VERSION.SDK_INT >= 33) {
+            canNotify = ActivityCompat.checkSelfPermission(context,
+                    "android.permission.POST_NOTIFICATIONS")
+                    == PackageManager.PERMISSION_GRANTED;
+        } else {
+            canNotify = true;
+        }
+        if (canNotify) {
+            nm.notify(ADVANCE_NOTIFICATION_ID_BASE + scheduleId, builder.build());
+        }
+    }
+
+    public static void cancelAdvanceNotification(Context context, int scheduleId) {
+        NotificationManagerCompat.from(context).cancel(ADVANCE_NOTIFICATION_ID_BASE + scheduleId);
+    }
+
     public static void showMedicationReminder(Context context,
                                               int medicationId,
                                               String medicationName,
                                               String dosage,
                                               int scheduleId,
-                                              String scheduledDatetime,
-                                              int windowMinutes) {
+                                              String scheduledDatetime) {
         createNotificationChannel(context);
 
         if (medicationName == null) {
@@ -100,7 +134,7 @@ public final class NotificationHelper {
         boolean vibrate = PrefsManager.isVibrateEnabled(context);
         boolean sound = PrefsManager.isSoundEnabled(context);
         String reminderText = context.getString(
-                R.string.notif_reminder_text, medicationName, dosage, windowMinutes);
+                R.string.notif_reminder_text, medicationName, dosage);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)

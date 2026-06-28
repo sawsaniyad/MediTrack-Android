@@ -19,6 +19,7 @@ import com.samiraa_raghadm_sawsana.meditrack.models.IntakeLog;
 import com.samiraa_raghadm_sawsana.meditrack.models.Medication;
 import com.samiraa_raghadm_sawsana.meditrack.models.Schedule;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -26,6 +27,7 @@ import java.util.Locale;
 public class AlarmReceiver extends BroadcastReceiver {
 
     public static final String EXTRA_SCHEDULED_DATETIME = "SCHEDULED_DATETIME";
+    public static final String EXTRA_IS_EXACT_TIME = "IS_EXACT_TIME";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -34,6 +36,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         String dosage = intent.getStringExtra("DOSAGE");
         int scheduleId = intent.getIntExtra("SCHEDULE_ID", -1);
         boolean fromSnooze = intent.getBooleanExtra(SnoozeActionReceiver.EXTRA_FROM_SNOOZE, false);
+        boolean isExactTime = intent.getBooleanExtra(EXTRA_IS_EXACT_TIME, false);
         String scheduledDatetime = intent.getStringExtra(EXTRA_SCHEDULED_DATETIME);
 
         if (medicationName == null) {
@@ -42,18 +45,34 @@ public class AlarmReceiver extends BroadcastReceiver {
         if (dosage == null) {
             dosage = "";
         }
-
         if (medicationId == -1 || scheduleId == -1) {
             return;
         }
 
-        final int windowMinutes = PrefsManager.getActionWindowMinutes(context);
         final String finalMedicationName = medicationName;
         final String finalDosage = dosage;
         final String finalScheduledDatetime = scheduledDatetime != null
                 ? scheduledDatetime
-                : new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
-                Locale.getDefault()).format(new Date());
+                : new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
+
+        int remindMinutes = PrefsManager.getReminderMinutes(context);
+
+        // Snooze re-alarms and zero-advance-reminder go straight to "הגיע הזמן".
+        boolean showExactTime = isExactTime || fromSnooze || remindMinutes == 0;
+
+        if (!showExactTime) {
+            // Advance notification: simple text, no action buttons.
+            NotificationHelper.showAdvanceReminder(
+                    context, finalMedicationName, scheduleId, remindMinutes);
+            scheduleExactTimeAlarm(context, medicationId, finalMedicationName, finalDosage,
+                    scheduleId, finalScheduledDatetime);
+            return;
+        }
+
+        // Exact-time: cancel advance notification, show full "הגיע הזמן" notification.
+        NotificationHelper.cancelAdvanceNotification(context, scheduleId);
+
+        final int windowMinutes = PrefsManager.getActionWindowMinutes(context);
 
         if (!fromSnooze) {
             AppExecutors.getInstance().diskIO(() -> insertPendingLog(
@@ -61,14 +80,11 @@ public class AlarmReceiver extends BroadcastReceiver {
         }
 
         PrefsManager.activateDoseActionWindow(
-                context,
-                medicationId,
-                finalScheduledDatetime,
-                windowMinutes * 60 * 1000L);
+                context, medicationId, finalScheduledDatetime, windowMinutes * 60 * 1000L);
 
         NotificationHelper.showMedicationReminder(
                 context, medicationId, finalMedicationName, finalDosage, scheduleId,
-                finalScheduledDatetime, windowMinutes);
+                finalScheduledDatetime);
 
         Intent localIntent = new Intent(context.getString(R.string.broadcast_medication_due));
         localIntent.putExtra(context.getString(R.string.extra_medication_id), medicationId);
@@ -76,7 +92,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         LocalBroadcastManager.getInstance(context).sendBroadcast(localIntent);
 
         scheduleMissedDoseCheck(context, medicationId, scheduleId, finalScheduledDatetime,
-                fromSnooze, windowMinutes);
+                windowMinutes);
 
         if (!fromSnooze) {
             AppExecutors.getInstance().diskIO(() -> scheduleNextDailyReminder(
@@ -107,14 +123,57 @@ public class AlarmReceiver extends BroadcastReceiver {
                 break;
             }
         }
-
         if (schedule == null) {
             return;
         }
-
         Medication medication = dao.getMedicationById(medicationId);
         if (medication != null && medication.isActive()) {
             AlarmScheduler.scheduleAlarm(context.getApplicationContext(), schedule, medication);
+        }
+    }
+
+    private void scheduleExactTimeAlarm(Context context,
+                                        int medicationId,
+                                        String medicationName,
+                                        String dosage,
+                                        int scheduleId,
+                                        String scheduledDatetime) {
+        long triggerAt;
+        try {
+            Date scheduled = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+                    .parse(scheduledDatetime);
+            triggerAt = scheduled != null ? scheduled.getTime() : System.currentTimeMillis();
+        } catch (ParseException e) {
+            triggerAt = System.currentTimeMillis();
+        }
+
+        Intent exactIntent = new Intent(context, AlarmReceiver.class);
+        exactIntent.putExtra("MEDICATION_ID", medicationId);
+        exactIntent.putExtra("MEDICATION_NAME", medicationName);
+        exactIntent.putExtra("DOSAGE", dosage);
+        exactIntent.putExtra("SCHEDULE_ID", scheduleId);
+        exactIntent.putExtra(EXTRA_SCHEDULED_DATETIME, scheduledDatetime);
+        exactIntent.putExtra(EXTRA_IS_EXACT_TIME, true);
+
+        if (triggerAt <= System.currentTimeMillis()) {
+            context.sendBroadcast(exactIntent);
+            return;
+        }
+
+        PendingIntent pi = PendingIntent.getBroadcast(context,
+                scheduleId + 45000,
+                exactIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (am == null) {
+            return;
+        }
+
+        if (canScheduleExact(am)) {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
+        } else {
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
         }
     }
 
@@ -122,7 +181,6 @@ public class AlarmReceiver extends BroadcastReceiver {
                                          int medicationId,
                                          int scheduleId,
                                          String scheduledDatetime,
-                                         boolean fromSnooze,
                                          int windowMinutes) {
         long checkAt = System.currentTimeMillis() + windowMinutes * 60 * 1000L;
 

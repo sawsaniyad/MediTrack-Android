@@ -32,7 +32,7 @@ public class DevTestActivity extends BaseActivity {
                         getString(R.string.dev_test_sample_name),
                         getString(R.string.dev_test_sample_dosage), 1,
                         new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
-                                Locale.getDefault()).format(new Date()), 10));
+                                Locale.getDefault()).format(new Date())));
 
         findViewById(R.id.btnTestBoot).setOnClickListener(v ->
                 new BootReceiver().onReceive(this,

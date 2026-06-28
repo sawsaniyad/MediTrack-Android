@@ -60,7 +60,8 @@
     <string name="notif_taken_action">✓ נלקח</string>
     <string name="notif_snooze_action">⏰ דחה</string>
     <string name="notif_reminder_title">💊 %1$s</string>
-    <string name="notif_reminder_text">הגיע הזמן לקחת %1$s %2$s\nנותרו %3$d דקות לאישור</string>
+    <string name="notif_reminder_text">הגיע הזמן לקחת %1$s %2$s</string>
+    <string name="notif_advance_text">נותר %2$d דקות לקחת %1$s</string>
 
     <string name="error_camera">שגיאה בצילום: %1$s</string>
     <string name="error_camera_open">שגיאה בפתיחת המצלמה: %1$s</string>

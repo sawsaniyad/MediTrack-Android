@@ -136,12 +136,15 @@ public final class AlarmScheduler {
         if (am == null) {
             return;
         }
+        // Cancel advance alarm
         Intent intent = new Intent(context, AlarmReceiver.class);
         PendingIntent pi = PendingIntent.getBroadcast(context,
                 scheduleId,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         am.cancel(pi);
+        // Cancel exact-time alarm
+        cancelBroadcast(context, AlarmReceiver.class, scheduleId + 45000);
     }
 
     // Must be called on a background thread — performs DB reads.
