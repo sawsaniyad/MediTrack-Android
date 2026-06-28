@@ -249,13 +249,18 @@ public class MedicationListActivity extends BaseActivity {
         DashboardStats stats = new DashboardStats();
         for (Medication medication : medications) {
             List<Schedule> schedules = schedulesMap.get(medication.getId());
-            if (schedules == null) {
+            if (schedules == null || schedules.isEmpty()) {
+                // Mirrors resolveStatus(): no schedules at all → shown as pending in the card.
+                stats.total++;
+                stats.pending++;
                 continue;
             }
+            boolean hasScheduleToday = false;
             for (Schedule schedule : schedules) {
                 if (!schedule.isEnabled() || !isScheduledForDate(schedule, selectedDate)) {
                     continue;
                 }
+                hasScheduleToday = true;
                 stats.total++;
                 IntakeLog matchingLog = findMatchingLog(dayLogs, medication.getId(), schedule.getIntakeTime());
                 if (matchingLog != null && matchingLog.isTaken()) {
@@ -265,6 +270,11 @@ public class MedicationListActivity extends BaseActivity {
                 } else {
                     stats.pending++;
                 }
+            }
+            if (!hasScheduleToday) {
+                // Has schedules but none for today → shown as pending in the card.
+                stats.total++;
+                stats.pending++;
             }
         }
         return stats;
