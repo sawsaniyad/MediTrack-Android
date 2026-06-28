@@ -494,16 +494,51 @@ public class AddEditMedicationActivity extends BaseActivity {
 
         String expiryInput = etExpiryDate.getText().toString().trim();
         if (!TextUtils.isEmpty(expiryInput)) {
+            // 1. Format check: must be exactly DD/MM/YYYY
+            if (expiryInput.length() != 10
+                    || expiryInput.charAt(2) != '/'
+                    || expiryInput.charAt(5) != '/') {
+                tilExpiryDate.setError(getString(R.string.msg_expiry_date_invalid));
+                etExpiryDate.requestFocus();
+                return;
+            }
             try {
-                LocalDate expiryDate = LocalDate.parse(expiryInput,
-                        DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                int day   = Integer.parseInt(expiryInput.substring(0, 2));
+                int month = Integer.parseInt(expiryInput.substring(3, 5));
+                int year  = Integer.parseInt(expiryInput.substring(6, 10));
+
+                // 2. Day range
+                if (day < 1 || day > 31) {
+                    tilExpiryDate.setError(getString(R.string.msg_expiry_day_invalid));
+                    etExpiryDate.requestFocus();
+                    return;
+                }
+                // 3. Month range
+                if (month < 1 || month > 12) {
+                    tilExpiryDate.setError(getString(R.string.msg_expiry_month_invalid));
+                    etExpiryDate.requestFocus();
+                    return;
+                }
+                // 4. Year sanity
+                if (year < 2000 || year > 2100) {
+                    tilExpiryDate.setError(getString(R.string.msg_expiry_year_invalid));
+                    etExpiryDate.requestFocus();
+                    return;
+                }
+                // 5. Full parse: catches combos like 31/04 or 29/02 on non-leap years
+                LocalDate expiryDate = LocalDate.of(year, month, day);
+                // 6. Past date
                 if (expiryDate.isBefore(LocalDate.now())) {
                     tilExpiryDate.setError(getString(R.string.msg_expiry_date_past));
                     etExpiryDate.requestFocus();
                     return;
                 }
-            } catch (Exception e) {
+            } catch (NumberFormatException e) {
                 tilExpiryDate.setError(getString(R.string.msg_expiry_date_invalid));
+                etExpiryDate.requestFocus();
+                return;
+            } catch (Exception e) {
+                tilExpiryDate.setError(getString(R.string.msg_expiry_day_month_mismatch));
                 etExpiryDate.requestFocus();
                 return;
             }

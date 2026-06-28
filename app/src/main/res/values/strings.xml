@@ -44,6 +44,10 @@
     <string name="msg_validation_time">נא להוסיף לפחות שעת נטילה</string>
     <string name="msg_expiry_date_past">תאריך התפוגה חייב להיות מהיום ואילך</string>
     <string name="msg_expiry_date_invalid">פורמט תאריך שגוי — יש להשתמש בתבנית DD/MM/YYYY</string>
+    <string name="msg_expiry_day_invalid">יום לא תקין — יש להזין יום בין 1 ל-31</string>
+    <string name="msg_expiry_month_invalid">חודש לא תקין — יש להזין חודש בין 1 ל-12</string>
+    <string name="msg_expiry_day_month_mismatch">תאריך לא קיים — בדוק את מספר הימים בחודש</string>
+    <string name="msg_expiry_year_invalid">שנה לא תקינה</string>
     <string name="msg_medication_not_found">תרופה לא נמצאה</string>
     <string name="msg_notifications_disabled">התראות מושבתות — תזכורות לא יוצגו</string>
     <string name="msg_medication_due">הגיע הזמן לקחת: %1$s</string>
