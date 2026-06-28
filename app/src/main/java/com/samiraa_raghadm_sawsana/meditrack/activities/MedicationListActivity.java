@@ -350,10 +350,18 @@ public class MedicationListActivity extends BaseActivity {
                 return true;
             }
             String scheduledDatetime = matchingLog.getScheduledDatetime();
-            long expiresAt = PrefsManager.getDoseActionWindowExpiry(
-                    this, medicationId, scheduledDatetime);
-            if (expiresAt >= 0L && expiresAt <= System.currentTimeMillis()) {
-                return true;
+            // Only treat an expired action window as missed if the scheduled time has passed.
+            try {
+                LocalDateTime scheduled = LocalDateTime.parse(scheduledDatetime,
+                        java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                if (!scheduled.isAfter(LocalDateTime.now())) {
+                    long expiresAt = PrefsManager.getDoseActionWindowExpiry(
+                            this, medicationId, scheduledDatetime);
+                    if (expiresAt >= 0L && expiresAt <= System.currentTimeMillis()) {
+                        return true;
+                    }
+                }
+            } catch (Exception ignored) {
             }
             if (selectedDate.isBefore(LocalDate.now())) {
                 return true;
