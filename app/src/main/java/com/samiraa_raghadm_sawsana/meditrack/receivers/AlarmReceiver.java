@@ -92,7 +92,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         LocalBroadcastManager.getInstance(context).sendBroadcast(localIntent);
 
         scheduleMissedDoseCheck(context, medicationId, scheduleId, finalScheduledDatetime,
-                windowMinutes);
+                finalMedicationName, finalDosage);
 
         if (!fromSnooze) {
             AppExecutors.getInstance().diskIO(() -> scheduleNextDailyReminder(
@@ -181,13 +181,18 @@ public class AlarmReceiver extends BroadcastReceiver {
                                          int medicationId,
                                          int scheduleId,
                                          String scheduledDatetime,
-                                         int windowMinutes) {
-        long checkAt = System.currentTimeMillis() + windowMinutes * 60 * 1000L;
+                                         String medicationName,
+                                         String dosage) {
+        int snoozeDuration = PrefsManager.getSnoozeDurationMinutes(context);
+        long checkAt = System.currentTimeMillis() + snoozeDuration * 60 * 1000L;
 
         Intent checkIntent = new Intent(context, MissedDoseReceiver.class);
         checkIntent.putExtra("MEDICATION_ID", medicationId);
         checkIntent.putExtra("SCHEDULE_ID", scheduleId);
         checkIntent.putExtra(EXTRA_SCHEDULED_DATETIME, scheduledDatetime);
+        checkIntent.putExtra("MEDICATION_NAME", medicationName);
+        checkIntent.putExtra("DOSAGE", dosage);
+        checkIntent.putExtra(MissedDoseReceiver.EXTRA_REPEAT_COUNT, 0);
 
         PendingIntent checkPI = PendingIntent.getBroadcast(context,
                 scheduleId + 30000,
@@ -203,6 +208,8 @@ public class AlarmReceiver extends BroadcastReceiver {
         if (canScheduleExact(alarmManager)) {
             alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP, checkAt, checkPI);
+        } else {
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, checkAt, checkPI);
         }
     }
 
